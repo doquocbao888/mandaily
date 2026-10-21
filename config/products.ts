@@ -1,12 +1,39 @@
+export interface ProductVariant {
+  id: string;
+  name: string;
+  badge?: string;
+  price: string;
+  originalPrice: string;
+  saving?: string;
+}
+
 export interface ProductItem {
   id: string;
   title: string;
   subtitle: string;
+  categoryPath: string[];
   vipPrice: string;
   regularPrice: string;
   href: string;
   imageSrc: string;
   imageAlt: string;
+  thumbnails: string[];
+  badge?: string;
+  rating: number;
+  reviewCount: string;
+  soldCount: string;
+  salesBadge?: string;
+  shortDescription: string;
+  highlights: string[];
+  reviewSample: {
+    author: string;
+    rating: number;
+    comment: string;
+  };
+  variants: ProductVariant[];
+  gifts: string[];
+  cashbackText: string;
+  warrantyText: string;
 }
 
 export interface FeaturedProductsConfig {
@@ -23,21 +50,121 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       id: 'lawn-mower-ultra-6',
       title: 'The Lawn Mower® Ultra Gen 6 - NEW!',
       subtitle: 'Groin & Body Hair Trimmer',
+      categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
       vipPrice: '$109.99',
       regularPrice: '$119.99',
-      href: '#',
+      href: '/products/lawn-mower-ultra-6',
       imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
       imageAlt: 'The Lawn Mower Ultra Gen 6 Trimmer with blade attachment',
+      thumbnails: [
+        '/assets/aistudio/30-00006-NA_f201a618.png',
+        '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
+        '/assets/aistudio/b72c1da980f6_e399d627.webp',
+        '/assets/aistudio/e25de805d015_f449fce7.webp',
+        '/assets/aistudio/e38aa911b5e9_8252c23e.webp',
+        '/assets/aistudio/fac0fd606c51_4d3a1ba2.webp',
+        '/assets/aistudio/685d42568afa_98fc3951.webp',
+        '/assets/aistudio/25106398e899_13ff16c1.webp',
+      ],
+      badge: 'QUÀ TẶNG ĐỘC QUYỀN TRÊN WEBSITE • Dung Dịch Vệ Sinh Nam',
+      rating: 5.0,
+      reviewCount: '1,671 đánh giá',
+      soldCount: 'Đã bán 75.8k',
+      salesBadge: 'Best Seller Shopee & TikTok Shop',
+      shortDescription: 'Máy cạo lông vùng kín chuyên dụng cao cấp, chống nước IPX7, lưỡi SkinSafe™ bo tròn – an toàn tuyệt đối, không lo trầy xước.',
+      highlights: [
+        'Sạch chỉ 1 lần lướt',
+        'Không đau, không xước (SkinSafe™)',
+        'Da mịn, không ngứa rát',
+        'Tự tin khi gần gũi'
+      ],
+      reviewSample: {
+        author: 'Chi Hùng',
+        rating: 5,
+        comment: 'Giao hàng nhanh chóng sản phẩm dễ dùng đi lông khá là sạch mà vẫn khá mượt'
+      },
+      variants: [
+        {
+          id: 'lite',
+          name: 'TRIMDAY LITE / Ultra Gen 6',
+          badge: 'Gọn nhẹ',
+          price: '$109.99',
+          originalPrice: '$119.99',
+          saving: 'Tiết kiệm $10.00'
+        },
+        {
+          id: 'max',
+          name: 'The Performance Package Ultra 6',
+          badge: 'Đầy đủ',
+          price: '$159.99',
+          originalPrice: '$179.99',
+          saving: 'Tiết kiệm $20.00'
+        }
+      ],
+      gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml', 'Tặng kèm Túi Đựng Chống Nước Du Lịch'],
+      cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
     },
     {
-      id: 'performance-package-ultra-6',
+      id: 'the-performance-package-ultra-6',
       title: 'The Performance Package Ultra Gen 6 - NEW!',
       subtitle: 'Deluxe Full Body Grooming Kit',
+      categoryPath: ['Trang chủ', 'PERFORMANCE PACK', 'The Performance Package Ultra Gen 6'],
       vipPrice: '$159.99',
       regularPrice: '$179.99',
-      href: '#',
-      imageSrc: '/assets/aistudio/70-00186_98c22891.png',
-      imageAlt: 'The Performance Package Ultra Gen 6 Deluxe Grooming Kit contents',
-    },
+      href: '/products/the-performance-package-ultra-6',
+      imageSrc: '/assets/aistudio/the-performance-package-6_product_desktop_401c846d.jpg',
+      imageAlt: 'The Performance Package Ultra Gen 6 Deluxe Grooming Kit',
+      thumbnails: [
+        '/assets/aistudio/the-performance-package-6_product_desktop_401c846d.jpg',
+        '/assets/aistudio/70-00186_98c22891.png',
+        '/assets/aistudio/70-00186_4597ae5e.jpg',
+        '/assets/aistudio/image_2826e1f4.png',
+        '/assets/aistudio/image_31568bb9.png',
+      ],
+      badge: 'BỘ KIT TOÀN DIỆN • Giảm giá sốc',
+      rating: 4.9,
+      reviewCount: '2,480 đánh giá',
+      soldCount: 'Đã bán 92.4k',
+      salesBadge: 'Top #1 Best Seller Toàn Cầu',
+      shortDescription: 'Bộ combo hoàn hảo gồm Máy cạo lông Ultra Gen 6, Crop Preserver lotion chống hăm, Crop Reviver xịt thơm và túi đựng du lịch cao cấp.',
+      highlights: [
+        'Chăm sóc toàn diện từ đầu tới chân',
+        'Công nghệ SkinSafe™ chống cắt xước',
+        'Kháng khuẩn & lưu hương nam tính',
+        'Tiết kiệm hơn 25% khi mua trọn bộ'
+      ],
+      reviewSample: {
+        author: 'Minh Tuấn',
+        rating: 5,
+        comment: 'Bộ sản phẩm đỉnh cao, mùi thơm dễ chịu, máy cạo cực kỳ êm ái không bị rát.'
+      },
+      variants: [
+        {
+          id: 'standard-kit',
+          name: 'The Performance Package Ultra 6',
+          badge: 'Gói Chuẩn',
+          price: '$159.99',
+          originalPrice: '$179.99',
+          saving: 'Tiết kiệm $20.00'
+        },
+        {
+          id: 'platinum-kit',
+          name: 'The Platinum Package Ultra 6',
+          badge: 'Cao Cấp',
+          price: '$219.99',
+          originalPrice: '$249.99',
+          saving: 'Tiết kiệm $30.00'
+        }
+      ],
+      gifts: ['Tặng Crop Preserver 100ml', 'Tặng Hộp Đựng Hạng Sang (Luxe Case)'],
+      cashbackText: 'Được hoàn lên đến 85.000 SpotCredit',
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+    }
   ],
 };
+
+export function getProductById(id: string): ProductItem | undefined {
+  return featuredProductsConfig.products.find((p) => p.id === id);
+}
+
