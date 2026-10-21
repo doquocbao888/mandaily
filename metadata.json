@@ -1,0 +1,6 @@
+{
+  "name": "Pixel-Perfect UI Builder",
+  "description": "Tái tạo giao diện website chính xác từ screenshot và thiết kế tham chiếu bằng Next.js và Tailwind CSS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
