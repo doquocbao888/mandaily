@@ -153,10 +153,10 @@ export default function VideoReviewsSection({
           </p>
         </div>
 
-        {/* Video Cards Row */}
+        {/* Desktop View: 3 side-by-side expanding cards (Kept 100% intact) */}
         <div 
           ref={containerRef}
-          className="flex items-center justify-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-6 px-2 scrollbar-none"
+          className="hidden sm:flex items-center justify-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-6 px-2 scrollbar-none"
         >
           {displayReviews.map((review, idx) => {
             const isActive = idx === activeIndex;
@@ -314,6 +314,121 @@ export default function VideoReviewsSection({
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile View: Single Large Active Video on Top + Thumbnails Row underneath */}
+        <div className="sm:hidden flex flex-col items-center w-full max-w-[340px] mx-auto">
+          {/* Large Active Video Card */}
+          <div className="relative w-full h-[520px] rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-300 shadow-xl select-none">
+            {/* Top-Right Unmute/Mute Pill Button */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              className="absolute top-4 right-4 z-30 bg-black/90 hover:bg-black text-white px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 shadow-md active:scale-95 transition-all"
+            >
+              {isMuted ? (
+                <>
+                  <VolumeX className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>Unmute</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Mute</span>
+                </>
+              )}
+            </button>
+
+            {/* YouTube Badge */}
+            <div className="absolute top-4 left-4 z-30 bg-red-600 text-white px-2.5 py-1 rounded-md text-[10px] font-bold flex items-center space-x-1 shadow">
+              <Youtube className="w-3.5 h-3.5" />
+              <span>Shorts</span>
+            </div>
+
+            {/* YouTube Iframe Embed */}
+            <div className="w-full h-full relative pointer-events-none">
+              <iframe
+                src={getYouTubeEmbedUrl(displayReviews[activeIndex].videoUrl, isPlaying, isMuted, false)}
+                title={displayReviews[activeIndex].name}
+                className="w-full h-full object-cover border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+
+            {/* Bottom Control Bar */}
+            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-30">
+              <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-xs px-3 py-2 rounded-xl border border-white/10">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="text-white hover:text-amber-400 transition flex-shrink-0"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                </button>
+                <span className="bg-white text-neutral-900 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs flex-shrink-0">
+                  {formatTime(currentTime)}
+                </span>
+                <div
+                  onClick={handleSeek}
+                  className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer relative"
+                >
+                  <div className="h-full bg-white rounded-full" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  className="text-white/80 hover:text-white transition flex-shrink-0"
+                >
+                  {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setVideoModalReview(displayReviews[activeIndex]);
+                  }}
+                  className="text-white/80 hover:text-white transition flex-shrink-0"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Handle underneath */}
+          <div className="w-full text-left mt-3">
+            <span className="text-sm font-semibold text-neutral-900">
+              @{displayReviews[activeIndex].handle}
+            </span>
+          </div>
+
+          {/* Thumbnails Row underneath */}
+          <div className="flex items-center space-x-3 mt-3 w-full justify-start">
+            {displayReviews.map((review, idx) => {
+              const isSel = idx === activeIndex;
+              return (
+                <button
+                  key={review.id || idx}
+                  onClick={() => selectVideo(idx)}
+                  className={`relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all cursor-pointer bg-neutral-900 ${
+                    isSel
+                      ? 'border-amber-600 ring-2 ring-amber-600/30 scale-105 shadow-md'
+                      : 'border-neutral-300 opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <Image
+                    src={review.compactPoster || review.largePoster}
+                    alt={review.name}
+                    fill
+                    sizes="90px"
+                    className="object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </button>
+              );
+            })}
+          </div>
         </div>
 
       </div>
