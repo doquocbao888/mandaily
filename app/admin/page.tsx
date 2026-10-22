@@ -342,7 +342,7 @@ export default function AdminPage() {
         name: 'Pierre Dalati',
         compactPoster: '/assets/aistudio/review_pierre_compact.png',
         largePoster: '/assets/aistudio/review_pierredalati.png',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        videoUrl: 'https://www.youtube.com/shorts/9bZkp7q19f0',
         quote: 'The Lawn Mower 6.0 is hands down the best trimmer I have used. Zero tugging, super smooth on sensitive skin.'
       },
       {
@@ -351,7 +351,7 @@ export default function AdminPage() {
         name: 'Blaise Ffrench',
         compactPoster: '/assets/aistudio/review_blaiseffrench.png',
         largePoster: '/assets/aistudio/review_blaise_large.png',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        videoUrl: 'https://www.youtube.com/shorts/3JZ_D3ELwOQ',
         quote: 'Design, ergonomics, and battery life are unmatched. It feels luxury in your hand.'
       },
       {
@@ -360,7 +360,7 @@ export default function AdminPage() {
         name: 'Caleigh Mackenzie',
         compactPoster: '/assets/aistudio/review_caleighmackenzie.png',
         largePoster: '/assets/aistudio/review_caleigh_large.png',
-        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+        videoUrl: 'https://www.youtube.com/shorts/jfKfPfyJRdk',
         quote: 'Got this as a gift and we both love it. 100% waterproof and remarkably quiet.'
       }
     ];
@@ -1188,7 +1188,7 @@ export default function AdminPage() {
                       <span>Video Reviews cho sản phẩm này (&ldquo;The buzz is real.&rdquo;)</span>
                     </h4>
                     <p className="text-xs text-neutral-500 mt-0.5">
-                      Tải lên hoặc thay thế 3 video review hiển thị ở trang chi tiết sản phẩm. Bấm nút chọn để tải tệp video (.mp4) từ máy tính của bạn.
+                      Cấu hình 3 video review hiển thị ở trang chi tiết sản phẩm bằng link YouTube hoặc YouTube Shorts.
                     </p>
                   </div>
                 </div>
@@ -1242,20 +1242,15 @@ export default function AdminPage() {
                         </div>
                       </div>
 
-                      {/* Video URL with Upload / Pick button */}
+                      {/* Video URL input */}
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-[11px] font-bold text-neutral-700">
-                            Đường dẫn Video (.mp4 / .webm) *
+                            Link YouTube / YouTube Shorts *
                           </label>
-                          <button
-                            type="button"
-                            onClick={() => setMediaPickerTarget(`edit-video-${rIdx}`)}
-                            className="text-[11px] text-amber-600 font-bold hover:underline flex items-center space-x-1 cursor-pointer"
-                          >
-                            <Upload className="w-3 h-3" />
-                            <span>Tải video từ máy / Chọn từ Media</span>
-                          </button>
+                          <span className="text-[10px] text-neutral-500 font-semibold">
+                            (Dán link YouTube Shorts hoặc Watch)
+                          </span>
                         </div>
                         <input
                           type="text"
@@ -1265,7 +1260,7 @@ export default function AdminPage() {
                             next[rIdx] = { ...next[rIdx], videoUrl: e.target.value };
                             setEditingProduct({ ...editingProduct, videoReviews: next });
                           }}
-                          placeholder="/uploads/... hoặc https://..."
+                          placeholder="https://www.youtube.com/shorts/... hoặc https://youtu.be/..."
                           required
                           className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white font-mono focus:outline-none focus:border-amber-600"
                         />

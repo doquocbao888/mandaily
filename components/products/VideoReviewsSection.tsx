@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { Play, Pause, Volume2, VolumeX, Maximize2, X } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize2, X, Youtube } from 'lucide-react';
 import type { VideoReviewItem } from '@/config/products';
 
 export type VideoReview = VideoReviewItem;
@@ -14,7 +14,7 @@ const REVIEWS: VideoReview[] = [
     name: 'Pierre Dalati',
     compactPoster: '/assets/aistudio/review_pierre_compact.png',
     largePoster: '/assets/aistudio/review_pierredalati.png',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    videoUrl: 'https://www.youtube.com/shorts/9bZkp7q19f0',
     quote: 'The Lawn Mower 6.0 is hands down the best trimmer I have used. Zero tugging, super smooth on sensitive skin.'
   },
   {
@@ -23,7 +23,7 @@ const REVIEWS: VideoReview[] = [
     name: 'Blaise Ffrench',
     compactPoster: '/assets/aistudio/review_blaiseffrench.png',
     largePoster: '/assets/aistudio/review_blaise_large.png',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    videoUrl: 'https://www.youtube.com/shorts/3JZ_D3ELwOQ',
     quote: 'Design, ergonomics, and battery life are unmatched. It feels luxury in your hand.'
   },
   {
@@ -32,7 +32,7 @@ const REVIEWS: VideoReview[] = [
     name: 'Caleigh Mackenzie',
     compactPoster: '/assets/aistudio/review_caleighmackenzie.png',
     largePoster: '/assets/aistudio/review_caleigh_large.png',
-    videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    videoUrl: 'https://www.youtube.com/shorts/jfKfPfyJRdk',
     quote: 'Got this as a gift and we both love it. 100% waterproof and remarkably quiet.'
   }
 ];
@@ -41,6 +41,46 @@ export interface VideoReviewsSectionProps {
   reviews?: VideoReview[];
   title?: string;
   subtitle?: string;
+}
+
+export function getYouTubeEmbedUrl(url: string, isPlaying: boolean, isMuted: boolean, showControls = false): string {
+  if (!url) return '';
+  let videoId = '';
+  if (url.includes('youtube.com/shorts/')) {
+    const parts = url.split('/shorts/');
+    videoId = parts[1]?.split('?')[0];
+  } else if (url.includes('youtu.be/')) {
+    const parts = url.split('youtu.be/');
+    videoId = parts[1]?.split('?')[0];
+  } else if (url.includes('youtube.com/watch')) {
+    try {
+      const urlObj = new URL(url.includes('http') ? url : `https://${url}`);
+      videoId = urlObj.searchParams.get('v') || '';
+    } catch {
+      videoId = '';
+    }
+  } else if (url.includes('youtube.com/embed/')) {
+    const parts = url.split('/embed/');
+    videoId = parts[1]?.split('?')[0];
+  } else {
+    videoId = url;
+  }
+
+  if (!videoId) return url;
+
+  const params = new URLSearchParams({
+    autoplay: isPlaying ? '1' : '0',
+    mute: isMuted ? '1' : '0',
+    loop: '1',
+    playlist: videoId,
+    controls: showControls ? '1' : '0',
+    rel: '0',
+    modestbranding: '1',
+    playsinline: '1',
+    enablejsapi: '1'
+  });
+
+  return `https://www.youtube.com/embed/${videoId}?${params.toString()}`;
 }
 
 export default function VideoReviewsSection({
@@ -53,11 +93,20 @@ export default function VideoReviewsSection({
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(15);
+  const [duration] = useState(15);
   const [videoModalReview, setVideoModalReview] = useState<VideoReview | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let interval: any;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setCurrentTime((prev) => (prev >= duration ? 0 : prev + 0.25));
+      }, 250);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, duration]);
 
   const selectVideo = (idx: number) => {
     setActiveIndex(idx);
@@ -65,56 +114,21 @@ export default function VideoReviewsSection({
     setIsPlaying(true);
   };
 
-  // When active video changes, reset DOM video element and play
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
-    }
-  }, [activeIndex]);
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-      if (videoRef.current.duration) {
-        setDuration(videoRef.current.duration);
-      }
-    }
-  };
-
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
-      }
-    } else {
-      setIsPlaying(!isPlaying);
-    }
+    setIsPlaying(!isPlaying);
   };
 
   const toggleMute = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    } else {
-      setIsMuted(!isMuted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
-    if (videoRef.current && duration > 0) {
-      const newTime = pos * duration;
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
+    setCurrentTime(pos * duration);
   };
 
   const formatTime = (secs: number) => {
@@ -129,7 +143,7 @@ export default function VideoReviewsSection({
     <section className="w-full py-16 sm:py-24 bg-white border-t border-neutral-100 overflow-hidden">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Header matching Manscaped reference */}
+        {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#a6741b] tracking-tight">
             {title}
@@ -139,7 +153,7 @@ export default function VideoReviewsSection({
           </p>
         </div>
 
-        {/* Video Cards Row: 3 columns in fixed order, active item expands in place */}
+        {/* Video Cards Row */}
         <div 
           ref={containerRef}
           className="flex items-center justify-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-6 px-2 scrollbar-none"
@@ -149,7 +163,7 @@ export default function VideoReviewsSection({
 
             return (
               <div 
-                key={review.id} 
+                key={review.id || idx} 
                 className="flex flex-col flex-shrink-0 transition-all duration-500 ease-in-out"
               >
                 {/* Video Card Container */}
@@ -167,14 +181,14 @@ export default function VideoReviewsSection({
                       : 'w-[150px] sm:w-[185px] lg:w-[215px] h-[260px] sm:h-[325px] lg:h-[370px] shadow-md border-neutral-200/90 opacity-90 hover:opacity-100 hover:scale-[1.03]'
                   }`}
                 >
-                  {/* Active Large Video View */}
+                  {/* Active Large Video View (YouTube Embed) */}
                   {isActive ? (
                     <>
                       {/* Top-Right Unmute/Mute Pill Button */}
                       <button
                         type="button"
                         onClick={toggleMute}
-                        className="absolute top-4 right-4 z-20 bg-black/90 hover:bg-black text-white px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 shadow-md active:scale-95 transition-all"
+                        className="absolute top-4 right-4 z-30 bg-black/90 hover:bg-black text-white px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 shadow-md active:scale-95 transition-all"
                         aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
                       >
                         {isMuted ? (
@@ -190,30 +204,25 @@ export default function VideoReviewsSection({
                         )}
                       </button>
 
-                      {/* Video Element with Poster */}
-                      <video
-                        ref={videoRef}
-                        src={review.videoUrl}
-                        poster={review.largePoster}
-                        muted={isMuted}
-                        loop
-                        playsInline
-                        autoPlay
-                        onTimeUpdate={handleTimeUpdate}
-                        className="w-full h-full object-cover"
-                      />
+                      {/* YouTube Badge */}
+                      <div className="absolute top-4 left-4 z-30 bg-red-600 text-white px-2.5 py-1 rounded-md text-[10px] font-bold flex items-center space-x-1 shadow">
+                        <Youtube className="w-3.5 h-3.5" />
+                        <span>Shorts</span>
+                      </div>
 
-                      {/* Center Play/Pause Indicator on hover/pause */}
-                      {!isPlaying && (
-                        <div className="absolute inset-0 bg-black/25 flex items-center justify-center z-15 pointer-events-none">
-                          <div className="w-14 h-14 rounded-full bg-white/95 text-neutral-900 flex items-center justify-center shadow-2xl">
-                            <Play className="w-6 h-6 fill-current ml-1" />
-                          </div>
-                        </div>
-                      )}
+                      {/* YouTube Iframe Embed */}
+                      <div className="w-full h-full relative pointer-events-none">
+                        <iframe
+                          src={getYouTubeEmbedUrl(review.videoUrl, isPlaying, isMuted, false)}
+                          title={review.name}
+                          className="w-full h-full object-cover border-0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
 
-                      {/* Bottom Control Bar matching screenshot */}
-                      <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-20">
+                      {/* Bottom Control Bar */}
+                      <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-30">
                         <div className="flex items-center space-x-2.5 bg-black/80 backdrop-blur-xs px-3 py-2 rounded-xl border border-white/10">
                           {/* Play/Pause Button */}
                           <button
@@ -273,7 +282,7 @@ export default function VideoReviewsSection({
                     /* Inactive Compact Card */
                     <>
                       <Image
-                        src={review.compactPoster}
+                        src={review.compactPoster || review.largePoster}
                         alt={review.name}
                         fill
                         sizes="240px"
@@ -281,11 +290,9 @@ export default function VideoReviewsSection({
                         referrerPolicy="no-referrer"
                       />
 
-                      {/* White Circular Play Button in Center */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/25 transition-colors">
-                        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white text-neutral-900 flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-amber-400 transition-all duration-300">
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
-                        </div>
+                      {/* YouTube Icon badge on compact card */}
+                      <div className="absolute top-2.5 right-2.5 z-10 bg-red-600/90 text-white p-1 rounded-md shadow">
+                        <Youtube className="w-3 h-3" />
                       </div>
 
                       {/* Hover text label */}
@@ -311,7 +318,7 @@ export default function VideoReviewsSection({
 
       </div>
 
-      {/* Fullscreen Video Modal (Optional deep dive) */}
+      {/* Fullscreen Video Modal */}
       {videoModalReview && (
         <div 
           className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
@@ -328,13 +335,12 @@ export default function VideoReviewsSection({
               <X className="w-5 h-5" />
             </button>
 
-            <video
-              src={videoModalReview.videoUrl}
-              poster={videoModalReview.largePoster}
-              controls
-              autoPlay
-              playsInline
-              className="w-full h-full object-cover"
+            <iframe
+              src={getYouTubeEmbedUrl(videoModalReview.videoUrl, true, false, true)}
+              title={videoModalReview.name}
+              className="w-full h-full object-cover border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
             />
           </div>
         </div>
