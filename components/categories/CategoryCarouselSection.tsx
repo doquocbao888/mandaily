@@ -15,109 +15,106 @@ export default function CategoryCarouselSection({
 }: CategoryCarouselSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
+  const isProgrammaticScroll = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Touch tracking
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchStartTime = useRef<number>(0);
 
   const totalItems = config.items.length;
 
   const scrollToCard = useCallback((index: number) => {
     if (containerRef.current) {
       const container = containerRef.current;
+      const clampedIndex = Math.max(0, Math.min(index, totalItems - 1));
+      setCurrentIndex(clampedIndex);
+
       const cards = container.children;
-      if (cards[index]) {
-        const cardNode = cards[index] as HTMLElement;
+      if (cards[clampedIndex]) {
+        isProgrammaticScroll.current = true;
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+        const cardNode = cards[clampedIndex] as HTMLElement;
         const containerWidth = container.clientWidth;
         const cardWidth = cardNode.offsetWidth;
         const cardLeft = cardNode.offsetLeft;
-        // Center the card or align left
         const targetScroll = cardLeft - (containerWidth - cardWidth) / 2;
+
         container.scrollTo({
           left: targetScroll,
           behavior: 'smooth',
         });
+
+        scrollTimeoutRef.current = setTimeout(() => {
+          isProgrammaticScroll.current = false;
+        }, 500);
       }
     }
-  }, []);
+  }, [totalItems]);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     const nextIndex = Math.max(0, currentIndex - 1);
-    setCurrentIndex(nextIndex);
     scrollToCard(nextIndex);
-  };
+  }, [currentIndex, scrollToCard]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     const nextIndex = Math.min(totalItems - 1, currentIndex + 1);
-    setCurrentIndex(nextIndex);
     scrollToCard(nextIndex);
-  };
+  }, [currentIndex, totalItems, scrollToCard]);
 
-  // Mouse / Touch drag handlers for single-item snapping
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setStartX(e.pageX - (containerRef.current?.offsetLeft || 0));
-    setScrollLeft(containerRef.current?.scrollLeft || 0);
-  };
+  // Synchronize index when scrolling
+  const handleScroll = useCallback(() => {
+    if (isProgrammaticScroll.current || !containerRef.current) return;
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setIsDragging(true);
-    setStartX(e.touches[0].pageX - (containerRef.current?.offsetLeft || 0));
-    setScrollLeft(containerRef.current?.scrollLeft || 0);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !containerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - (containerRef.current.offsetLeft || 0);
-    const walk = (x - startX) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || !containerRef.current) return;
-    const x = e.touches[0].pageX - (containerRef.current.offsetLeft || 0);
-    const walk = (x - startX) * 1.5;
-    containerRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const handleDragEnd = useCallback(() => {
-    if (!isDragging || !containerRef.current) return;
-    setIsDragging(false);
-
-    // Snap to closest card index
     const container = containerRef.current;
-    const scrollPos = container.scrollLeft;
-    const cards = container.children;
+    const containerCenter = container.scrollLeft + container.clientWidth / 2;
+    const cards = Array.from(container.children) as HTMLElement[];
+
     let closestIndex = 0;
     let minDiff = Infinity;
 
-    for (let i = 0; i < cards.length; i++) {
-      const cardNode = cards[i] as HTMLElement;
-      const cardLeft = cardNode.offsetLeft;
-      const diff = Math.abs(cardLeft - scrollPos);
+    cards.forEach((card, index) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const diff = Math.abs(containerCenter - cardCenter);
       if (diff < minDiff) {
         minDiff = diff;
-        closestIndex = i;
+        closestIndex = index;
+      }
+    });
+
+    if (closestIndex !== currentIndex) {
+      setCurrentIndex(closestIndex);
+    }
+  }, [currentIndex]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartX.current - touchEndX;
+    const diffY = touchStartY.current - touchEndY;
+    const timeTaken = Date.now() - touchStartTime.current;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      const isFastFlick = timeTaken < 300 && Math.abs(diffX) > 25;
+      const isStandardSwipe = Math.abs(diffX) > 40;
+
+      if (isFastFlick || isStandardSwipe) {
+        if (diffX > 0) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
       }
     }
-
-    setCurrentIndex(closestIndex);
-    scrollToCard(closestIndex);
-  }, [isDragging, scrollToCard]);
-
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (isDragging) {
-        handleDragEnd();
-      }
-    };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    window.addEventListener('touchend', handleGlobalMouseUp);
-    return () => {
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      window.removeEventListener('touchend', handleGlobalMouseUp);
-    };
-  }, [isDragging, handleDragEnd]);
+  };
 
   return (
     <section
@@ -144,14 +141,11 @@ export default function CategoryCarouselSection({
         <div className="w-full relative">
           <div
             ref={containerRef}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleDragEnd}
-            onMouseLeave={handleDragEnd}
+            onScroll={handleScroll}
             onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleDragEnd}
-            className="flex items-stretch gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-6 px-4 sm:px-6 lg:px-12 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none scroll-smooth [scroll-behavior:smooth] touch-pan-y"
+            onTouchEnd={handleTouchEnd}
+            className="flex items-stretch gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-6 px-4 sm:px-6 lg:px-12 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none touch-pan-y"
+            style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {config.items.map((item) => (
               <div
@@ -203,10 +197,10 @@ export default function CategoryCarouselSection({
               type="button"
               onClick={handlePrev}
               disabled={currentIndex === 0}
-              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ${
+              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs active:scale-95 ${
                 currentIndex === 0
                   ? 'bg-neutral-300 opacity-50 cursor-not-allowed'
-                  : 'bg-[#b98141] hover:bg-[#a57134]'
+                  : 'bg-[#b98141] hover:bg-[#a57134] cursor-pointer'
               }`}
               aria-label="Scroll left"
             >
@@ -220,7 +214,6 @@ export default function CategoryCarouselSection({
                   key={idx}
                   type="button"
                   onClick={() => {
-                    setCurrentIndex(idx);
                     scrollToCard(idx);
                   }}
                   className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
@@ -235,10 +228,10 @@ export default function CategoryCarouselSection({
               type="button"
               onClick={handleNext}
               disabled={currentIndex === totalItems - 1}
-              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer ${
+              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs active:scale-95 ${
                 currentIndex === totalItems - 1
                   ? 'bg-neutral-300 opacity-50 cursor-not-allowed'
-                  : 'bg-[#b98141] hover:bg-[#a57134]'
+                  : 'bg-[#b98141] hover:bg-[#a57134] cursor-pointer'
               }`}
               aria-label="Scroll right"
             >

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 
 interface TechItem {
@@ -51,34 +51,121 @@ export default function GameChangingTechSection() {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const isProgrammaticScroll = useRef<boolean>(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const scrollToCard = (index: number) => {
-    setActiveIndex(index);
-    const node = itemRefs.current[index];
-    if (node && scrollContainerRef.current) {
-      node.scrollIntoView({
+  // Touch gesture tracking for effortless responsive swiping on mobile
+  const touchStartX = useRef<number>(0);
+  const touchStartY = useRef<number>(0);
+  const touchStartTime = useRef<number>(0);
+
+  const scrollToCard = useCallback((index: number) => {
+    const clampedIndex = Math.max(0, Math.min(index, techItems.length - 1));
+    setActiveIndex(clampedIndex);
+
+    const node = itemRefs.current[clampedIndex];
+    const container = scrollContainerRef.current;
+    if (node && container) {
+      isProgrammaticScroll.current = true;
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+      const targetLeft = node.offsetLeft - (container.clientWidth - node.offsetWidth) / 2;
+      container.scrollTo({
+        left: targetLeft,
         behavior: 'smooth',
-        inline: 'center',
-        block: 'nearest',
       });
+
+      scrollTimeoutRef.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 600);
+    }
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    const nextIdx = activeIndex > 0 ? activeIndex - 1 : techItems.length - 1;
+    scrollToCard(nextIdx);
+  }, [activeIndex, scrollToCard]);
+
+  const handleNext = useCallback(() => {
+    const nextIdx = activeIndex < techItems.length - 1 ? activeIndex + 1 : 0;
+    scrollToCard(nextIdx);
+  }, [activeIndex, scrollToCard]);
+
+  // Sync activeIndex whenever user scrolls with touch or mouse
+  const handleScroll = useCallback(() => {
+    if (isProgrammaticScroll.current || !scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const containerCenter = container.scrollLeft + container.clientWidth / 2;
+
+    let closestIndex = 0;
+    let minDiff = Infinity;
+
+    itemRefs.current.forEach((ref, index) => {
+      if (ref) {
+        const cardCenter = ref.offsetLeft + ref.offsetWidth / 2;
+        const diff = Math.abs(containerCenter - cardCenter);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestIndex = index;
+        }
+      }
+    });
+
+    if (closestIndex !== activeIndex) {
+      setActiveIndex(closestIndex);
+    }
+  }, [activeIndex]);
+
+  // Touch gesture handlers for quick, light swipes
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartTime.current = Date.now();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartX.current - touchEndX;
+    const diffY = touchStartY.current - touchEndY;
+    const timeTaken = Date.now() - touchStartTime.current;
+
+    // Only trigger if primarily horizontal swipe
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      // Swipe threshold: 40px or fast flick under 300ms
+      const isFastFlick = timeTaken < 300 && Math.abs(diffX) > 25;
+      const isStandardSwipe = Math.abs(diffX) > 40;
+
+      if (isFastFlick || isStandardSwipe) {
+        if (diffX > 0) {
+          // Swipe left -> go to next slide
+          if (activeIndex < techItems.length - 1) {
+            scrollToCard(activeIndex + 1);
+          }
+        } else {
+          // Swipe right -> go to previous slide
+          if (activeIndex > 0) {
+            scrollToCard(activeIndex - 1);
+          }
+        }
+      }
     }
   };
 
-  const handlePrev = () => {
-    const nextIdx = activeIndex > 0 ? activeIndex - 1 : techItems.length - 1;
-    scrollToCard(nextIdx);
-  };
-
-  const handleNext = () => {
-    const nextIdx = activeIndex < techItems.length - 1 ? activeIndex + 1 : 0;
-    scrollToCard(nextIdx);
-  };
+  // Center initial active card on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToCard(0);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [scrollToCard]);
 
   return (
-    <section className="relative w-full bg-[#f7f4ee] py-16 lg:py-24 overflow-hidden select-none">
+    <section className="relative w-full bg-[#f7f4ee] py-14 sm:py-20 lg:py-24 overflow-hidden select-none">
       <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12 sm:mb-16">
+        <div className="text-center mb-10 sm:mb-16">
           <span className="inline-block text-[#b98141] text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-2">
             MADE FOR YOU
           </span>
@@ -90,8 +177,11 @@ export default function GameChangingTechSection() {
         {/* Scrollable Peek Carousel Container */}
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-6 sm:gap-8 overflow-x-auto scrollbar-none scroll-smooth px-[5vw] py-8 snap-x snap-mandatory cursor-grab active:cursor-grabbing"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          onScroll={handleScroll}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          className="flex items-center gap-4 sm:gap-8 overflow-x-auto scrollbar-none px-[6vw] sm:px-[10vw] py-6 snap-x snap-mandatory cursor-grab active:cursor-grabbing touch-pan-y"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {techItems.map((item, index) => {
             const isActive = index === activeIndex;
@@ -102,26 +192,29 @@ export default function GameChangingTechSection() {
                   itemRefs.current[index] = el;
                 }}
                 onClick={() => scrollToCard(index)}
-                className={`snap-center flex-shrink-0 w-[85vw] sm:w-[600px] lg:w-[720px] cursor-pointer transition-all duration-500 ease-out flex flex-col ${
-                  isActive ? 'scale-100 opacity-150 z-20' : 'scale-[0.88] opacity-50 hover:opacity-80 z-10'
+                className={`snap-center flex-shrink-0 w-[84vw] sm:w-[580px] lg:w-[720px] cursor-pointer transition-all duration-300 ease-out flex flex-col ${
+                  isActive
+                    ? 'scale-100 opacity-100 z-20 shadow-2xl'
+                    : 'scale-[0.92] sm:scale-[0.90] opacity-60 hover:opacity-85 z-10'
                 }`}
               >
                 {/* Image Card */}
-                <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[460px] rounded-2xl overflow-hidden bg-neutral-900 shadow-xl">
+                <div className="relative w-full h-[320px] sm:h-[420px] lg:h-[480px] rounded-2xl overflow-hidden bg-neutral-900 shadow-xl">
                   <Image
                     src={item.imageSrc}
                     alt={item.imageAlt}
                     fill
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 600px, 720px"
                     quality={100}
+                    priority={index === 0}
                     className="object-cover object-center"
                     referrerPolicy="no-referrer"
                   />
 
                   {/* Floating Product Pill at Bottom Center of the card */}
-                  <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-[320px] bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg flex items-center justify-between gap-3 border border-neutral-100">
+                  <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-[92%] max-w-[340px] bg-white/95 backdrop-blur-md rounded-xl p-3 shadow-lg flex items-center justify-between gap-3 border border-neutral-100/80">
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="relative w-11 h-11 flex-shrink-0 bg-neutral-100 rounded-lg overflow-hidden">
+                      <div className="relative w-11 h-11 flex-shrink-0 bg-neutral-100 rounded-lg overflow-hidden border border-neutral-200/50">
                         <Image
                           src={item.productImg}
                           alt={item.productTitle}
@@ -144,7 +237,7 @@ export default function GameChangingTechSection() {
                       onClick={(e) => {
                         e.stopPropagation();
                       }}
-                      className="flex-shrink-0 bg-[#b98141] hover:bg-[#a57134] text-white text-xs font-bold px-3.5 py-1.5 rounded-full transition-colors cursor-pointer shadow-xs"
+                      className="flex-shrink-0 bg-[#b98141] hover:bg-[#a57134] active:scale-95 text-white text-xs font-bold px-4 py-1.5 rounded-full transition-all cursor-pointer shadow-sm"
                     >
                       Add
                     </button>
@@ -152,7 +245,11 @@ export default function GameChangingTechSection() {
                 </div>
 
                 {/* Title & Description Directly Underneath EACH Card */}
-                <div className={`text-center mt-6 px-4 transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+                <div
+                  className={`text-center mt-6 px-4 transition-all duration-300 ${
+                    isActive ? 'opacity-100 transform-none' : 'opacity-50'
+                  }`}
+                >
                   <h3 className="text-xl sm:text-2xl font-black text-neutral-900 mb-2 tracking-tight">
                     {item.title}
                   </h3>
@@ -166,10 +263,10 @@ export default function GameChangingTechSection() {
         </div>
 
         {/* Carousel Navigation Dots & Arrows */}
-        <div className="flex items-center justify-center gap-4 mt-12 sm:mt-16">
+        <div className="flex items-center justify-center gap-4 mt-8 sm:mt-12">
           <button
             onClick={handlePrev}
-            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] text-white flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] active:scale-95 text-white flex items-center justify-center shadow-md transition-all cursor-pointer"
             aria-label="Previous tech card"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +279,7 @@ export default function GameChangingTechSection() {
               <button
                 key={idx}
                 onClick={() => scrollToCard(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
+                className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                   activeIndex === idx ? 'w-8 bg-[#b98141]' : 'w-2.5 bg-neutral-300 hover:bg-neutral-400'
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
@@ -192,7 +289,7 @@ export default function GameChangingTechSection() {
 
           <button
             onClick={handleNext}
-            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] text-white flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] active:scale-95 text-white flex items-center justify-center shadow-md transition-all cursor-pointer"
             aria-label="Next tech card"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
