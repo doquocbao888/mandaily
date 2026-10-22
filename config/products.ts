@@ -7,6 +7,16 @@ export interface ProductVariant {
   saving?: string;
 }
 
+export interface VideoReviewItem {
+  id: string;
+  handle: string;
+  name: string;
+  compactPoster: string;
+  largePoster: string;
+  videoUrl: string;
+  quote?: string;
+}
+
 export interface ProductItem {
   id: string;
   orderIndex?: number;
@@ -35,6 +45,7 @@ export interface ProductItem {
   gifts: string[];
   cashbackText: string;
   warrantyText: string;
+  videoReviews?: VideoReviewItem[];
 }
 
 export interface FeaturedProductsConfig {

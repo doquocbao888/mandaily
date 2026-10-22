@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,10 +8,13 @@ import { getProductById, type ProductItem } from '@/config/products';
 import { subscribeProductById, createOrderInDb } from '@/lib/dbService';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
+import VideoReviewsSection from '@/components/products/VideoReviewsSection';
 import { 
   CheckCircle2, 
   ChevronDown, 
   ChevronUp, 
+  ChevronLeft,
+  ChevronRight,
   ShieldCheck, 
   Sparkles,
   ShoppingBag,
@@ -30,6 +33,53 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
+
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
+  const mobileThumbnailsRef = useRef<HTMLDivElement>(null);
+  const isScrollingRef = useRef(false);
+
+  const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (isScrollingRef.current) return;
+    const container = e.currentTarget;
+    if (!container) return;
+    const scrollLeft = container.scrollLeft;
+    const width = container.clientWidth;
+    if (width > 0) {
+      const newIndex = Math.round(scrollLeft / width);
+      if (
+        product?.thumbnails &&
+        newIndex >= 0 &&
+        newIndex < product.thumbnails.length &&
+        newIndex !== selectedImageIndex
+      ) {
+        setSelectedImageIndex(newIndex);
+      }
+    }
+  };
+
+  const handleSelectImage = (idx: number) => {
+    setSelectedImageIndex(idx);
+    if (mobileScrollRef.current) {
+      isScrollingRef.current = true;
+      const width = mobileScrollRef.current.clientWidth;
+      mobileScrollRef.current.scrollTo({
+        left: idx * width,
+        behavior: 'smooth',
+      });
+      setTimeout(() => {
+        isScrollingRef.current = false;
+      }, 350);
+    }
+  };
+
+  useEffect(() => {
+    if (mobileThumbnailsRef.current) {
+      const activeThumb = mobileThumbnailsRef.current.children[selectedImageIndex] as HTMLElement;
+      if (activeThumb) {
+        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [selectedImageIndex]);
 
   useEffect(() => {
     if (!id) return;
@@ -110,8 +160,8 @@ export default function ProductDetailPage() {
         {/* Main Product Layout matching Manscaped reference */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
           
-          {/* Left Column: Vertical Thumbnails + Large Main Image Display */}
-          <div className="lg:col-span-7 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
+          {/* Desktop Gallery: Vertical Thumbnails on Left + Large Main Image (Retained 100% intact for desktop) */}
+          <div className="hidden sm:flex lg:col-span-7 sm:flex-row gap-3 sm:gap-4 items-start">
             
             {/* Vertical Thumbnail List on Left (Compact size & subtle custom scrollbar) */}
             <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[620px] lg:max-h-[680px] flex-shrink-0 w-full sm:w-[64px] md:w-[70px] pb-2 sm:pb-0 sm:pr-1 [scrollbar-width:thin] [scrollbar-color:#d4d4d4_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
@@ -158,6 +208,110 @@ export default function ProductDetailPage() {
                 />
               </div>
 
+            </div>
+          </div>
+
+          {/* Mobile Gallery: Main Image on top (swipeable horizontally) + Thumbnails collection underneath */}
+          <div className="sm:hidden flex flex-col gap-3 w-full">
+            {/* Main Image Box on Mobile with Horizontal Swipe */}
+            <div className="relative w-full aspect-square min-h-[300px] bg-[#f5f3ec] rounded-2xl overflow-hidden border border-neutral-200/80 shadow-sm">
+              {/* Top-Left 'New' Badge */}
+              <div className="absolute top-3 left-3 z-20 bg-[#1c2833] text-white px-2.5 py-1 rounded-[4px] text-[11px] font-bold tracking-wider uppercase shadow-xs pointer-events-none">
+                New
+              </div>
+
+              {/* Top-Right Image Counter */}
+              <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider pointer-events-none">
+                {selectedImageIndex + 1} / {product.thumbnails.length}
+              </div>
+
+              {/* Swipeable Horizontal Slider */}
+              <div
+                ref={mobileScrollRef}
+                onScroll={handleMobileScroll}
+                className="w-full h-full flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden touch-pan-x"
+              >
+                {product.thumbnails.map((img, idx) => (
+                  <div key={idx} className="relative min-w-full w-full h-full snap-center flex-shrink-0">
+                    <Image
+                      src={img}
+                      alt={`${product.imageAlt} ${idx + 1}`}
+                      fill
+                      priority={idx === 0}
+                      sizes="100vw"
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Left / Right Quick Navigation Buttons on Mobile */}
+              {product.thumbnails.length > 1 && (
+                <>
+                  {selectedImageIndex > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectImage(selectedImageIndex - 1)}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 shadow-md flex items-center justify-center text-neutral-800 active:scale-95 transition-transform"
+                      aria-label="Ảnh trước"
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                  )}
+                  {selectedImageIndex < product.thumbnails.length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelectImage(selectedImageIndex + 1)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/85 shadow-md flex items-center justify-center text-neutral-800 active:scale-95 transition-transform"
+                      aria-label="Ảnh tiếp theo"
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Dots indicator at the bottom */}
+              <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center items-center space-x-1.5 pointer-events-none">
+                {product.thumbnails.map((_, idx) => (
+                  <span
+                    key={idx}
+                    className={`transition-all duration-300 rounded-full ${
+                      selectedImageIndex === idx
+                        ? 'w-5 h-1.5 bg-neutral-900 shadow-xs'
+                        : 'w-1.5 h-1.5 bg-neutral-400/80'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Thumbnails Collection positioned BELOW the Main Image on Mobile */}
+            <div
+              ref={mobileThumbnailsRef}
+              className="flex space-x-2.5 overflow-x-auto w-full py-1 px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {product.thumbnails.map((thumb, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectImage(idx)}
+                  className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
+                    selectedImageIndex === idx
+                      ? 'border-neutral-900 ring-2 ring-neutral-900/20 scale-[1.03] shadow-sm'
+                      : 'border-neutral-200/80 opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <Image
+                    src={thumb}
+                    alt={`Thumbnail ${idx + 1}`}
+                    fill
+                    sizes="56px"
+                    className="object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </button>
+              ))}
             </div>
           </div>
 
@@ -335,6 +489,9 @@ export default function ProductDetailPage() {
           </div>
 
         </div>
+
+        {/* Next Section: UGC Video Reviews 'The buzz is real' */}
+        <VideoReviewsSection reviews={product?.videoReviews} />
 
       </main>
     </div>

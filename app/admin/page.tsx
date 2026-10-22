@@ -26,9 +26,11 @@ import {
   AlertTriangle,
   ArrowUp,
   ArrowDown,
-  ArrowUpDown
+  ArrowUpDown,
+  Film,
+  Upload
 } from 'lucide-react';
-import { featuredProductsConfig, type ProductItem } from '@/config/products';
+import { featuredProductsConfig, type ProductItem, type VideoReviewItem } from '@/config/products';
 import MediaManager from '@/components/admin/MediaManager';
 import { 
   subscribeProducts, 
@@ -124,7 +126,7 @@ export default function AdminPage() {
 
   // Media state
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
-  const [mediaPickerTarget, setMediaPickerTarget] = useState<'add-main' | 'add-thumb' | 'edit-main' | 'edit-thumb' | null>(null);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<string | null>(null);
 
   // Add Product Form State
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -333,9 +335,40 @@ export default function AdminPage() {
 
   const handleOpenEditModal = (product: ProductItem) => {
     const curIndex = products.findIndex(p => p.id === product.id);
+    const defaultReviews: VideoReviewItem[] = [
+      {
+        id: 'review-1',
+        handle: 'pierredalati',
+        name: 'Pierre Dalati',
+        compactPoster: '/assets/aistudio/review_pierre_compact.png',
+        largePoster: '/assets/aistudio/review_pierredalati.png',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        quote: 'The Lawn Mower 6.0 is hands down the best trimmer I have used. Zero tugging, super smooth on sensitive skin.'
+      },
+      {
+        id: 'review-2',
+        handle: 'blaiseffrench',
+        name: 'Blaise Ffrench',
+        compactPoster: '/assets/aistudio/review_blaiseffrench.png',
+        largePoster: '/assets/aistudio/review_blaise_large.png',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+        quote: 'Design, ergonomics, and battery life are unmatched. It feels luxury in your hand.'
+      },
+      {
+        id: 'review-3',
+        handle: 'caleighmackenzie',
+        name: 'Caleigh Mackenzie',
+        compactPoster: '/assets/aistudio/review_caleighmackenzie.png',
+        largePoster: '/assets/aistudio/review_caleigh_large.png',
+        videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+        quote: 'Got this as a gift and we both love it. 100% waterproof and remarkably quiet.'
+      }
+    ];
+
     setEditingProduct({ 
       ...product,
-      orderIndex: typeof product.orderIndex === 'number' ? product.orderIndex : curIndex
+      orderIndex: typeof product.orderIndex === 'number' ? product.orderIndex : curIndex,
+      videoReviews: (product.videoReviews && product.videoReviews.length > 0) ? product.videoReviews : defaultReviews
     });
     setEditThumbnailsText(product.thumbnails.join('\n'));
     setShowEditModal(true);
@@ -1146,6 +1179,152 @@ export default function AdminPage() {
                 </p>
               </div>
 
+              {/* VIDEO REVIEWS SECTION */}
+              <div className="pt-5 border-t border-neutral-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h4 className="text-sm font-bold text-neutral-900 flex items-center space-x-2">
+                      <Film className="w-4 h-4 text-amber-600" />
+                      <span>Video Reviews cho sản phẩm này (&ldquo;The buzz is real.&rdquo;)</span>
+                    </h4>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      Tải lên hoặc thay thế 3 video review hiển thị ở trang chi tiết sản phẩm. Bấm nút chọn để tải tệp video (.mp4) từ máy tính của bạn.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {(editingProduct.videoReviews || []).map((review, rIdx) => (
+                    <div key={review.id || rIdx} className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-700 uppercase tracking-wider flex items-center space-x-1.5">
+                          <Film className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Video Review #{rIdx + 1} {rIdx === 0 ? '(Mở đầu / Mặc định)' : ''}</span>
+                        </span>
+                        <span className="text-[11px] text-neutral-400 font-mono">
+                          Slot {rIdx + 1}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                            Tên tài khoản (Handle)
+                          </label>
+                          <input
+                            type="text"
+                            value={review.handle}
+                            onChange={(e) => {
+                              const next = [...(editingProduct.videoReviews || [])];
+                              next[rIdx] = { ...next[rIdx], handle: e.target.value.replace(/^@/, '') };
+                              setEditingProduct({ ...editingProduct, videoReviews: next });
+                            }}
+                            placeholder="ví dụ: pierredalati"
+                            className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                            Tên hiển thị Reviewer
+                          </label>
+                          <input
+                            type="text"
+                            value={review.name}
+                            onChange={(e) => {
+                              const next = [...(editingProduct.videoReviews || [])];
+                              next[rIdx] = { ...next[rIdx], name: e.target.value };
+                              setEditingProduct({ ...editingProduct, videoReviews: next });
+                            }}
+                            placeholder="ví dụ: Pierre Dalati"
+                            className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Video URL with Upload / Pick button */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-neutral-700">
+                            Đường dẫn Video (.mp4 / .webm) *
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setMediaPickerTarget(`edit-video-${rIdx}`)}
+                            className="text-[11px] text-amber-600 font-bold hover:underline flex items-center space-x-1 cursor-pointer"
+                          >
+                            <Upload className="w-3 h-3" />
+                            <span>Tải video từ máy / Chọn từ Media</span>
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={review.videoUrl}
+                          onChange={(e) => {
+                            const next = [...(editingProduct.videoReviews || [])];
+                            next[rIdx] = { ...next[rIdx], videoUrl: e.target.value };
+                            setEditingProduct({ ...editingProduct, videoReviews: next });
+                          }}
+                          placeholder="/uploads/... hoặc https://..."
+                          required
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white font-mono focus:outline-none focus:border-amber-600"
+                        />
+                      </div>
+
+                      {/* Poster image with Pick button */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-[11px] font-bold text-neutral-700">
+                            Ảnh đại diện (Poster Thumbnail)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setMediaPickerTarget(`edit-poster-${rIdx}`)}
+                            className="text-[11px] text-amber-600 font-bold hover:underline flex items-center space-x-1 cursor-pointer"
+                          >
+                            <ImageIcon className="w-3 h-3" />
+                            <span>Tải ảnh từ máy / Chọn từ Media</span>
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={review.largePoster}
+                          onChange={(e) => {
+                            const next = [...(editingProduct.videoReviews || [])];
+                            next[rIdx] = { 
+                              ...next[rIdx], 
+                              largePoster: e.target.value,
+                              compactPoster: next[rIdx].compactPoster || e.target.value
+                            };
+                            setEditingProduct({ ...editingProduct, videoReviews: next });
+                          }}
+                          placeholder="/assets/aistudio/... hoặc /uploads/..."
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white font-mono focus:outline-none focus:border-amber-600"
+                        />
+                      </div>
+
+                      {/* Quote */}
+                      <div>
+                        <label className="block text-[11px] font-bold text-neutral-700 mb-1">
+                          Trích dẫn nhận xét (Quote)
+                        </label>
+                        <input
+                          type="text"
+                          value={review.quote || ''}
+                          onChange={(e) => {
+                            const next = [...(editingProduct.videoReviews || [])];
+                            next[rIdx] = { ...next[rIdx], quote: e.target.value };
+                            setEditingProduct({ ...editingProduct, videoReviews: next });
+                          }}
+                          placeholder="Cảm nhận của người dùng về sản phẩm..."
+                          className="w-full border border-neutral-300 rounded-lg px-3 py-1.5 text-xs bg-white focus:outline-none focus:border-amber-600"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex justify-end space-x-3 pt-4 border-t border-neutral-100 sticky bottom-0 bg-white py-3">
                 <button
                   type="button"
@@ -1194,6 +1373,26 @@ export default function AdminPage() {
                     setEditingProduct({ ...editingProduct, imageSrc: url });
                   } else if (mediaPickerTarget === 'edit-thumb') {
                     setEditThumbnailsText((prev) => (prev ? `${prev}\n${url}` : url));
+                  } else if (mediaPickerTarget?.startsWith('edit-video-') && editingProduct) {
+                    const rIdx = parseInt(mediaPickerTarget.replace('edit-video-', ''), 10);
+                    const currentReviews = [...(editingProduct.videoReviews || [])];
+                    if (currentReviews[rIdx]) {
+                      currentReviews[rIdx] = { ...currentReviews[rIdx], videoUrl: url };
+                      setEditingProduct({ ...editingProduct, videoReviews: currentReviews });
+                      showToast(`Đã gán video cho Review #${rIdx + 1}!`);
+                    }
+                  } else if (mediaPickerTarget?.startsWith('edit-poster-') && editingProduct) {
+                    const rIdx = parseInt(mediaPickerTarget.replace('edit-poster-', ''), 10);
+                    const currentReviews = [...(editingProduct.videoReviews || [])];
+                    if (currentReviews[rIdx]) {
+                      currentReviews[rIdx] = { 
+                        ...currentReviews[rIdx], 
+                        largePoster: url, 
+                        compactPoster: currentReviews[rIdx].compactPoster || url 
+                      };
+                      setEditingProduct({ ...editingProduct, videoReviews: currentReviews });
+                      showToast(`Đã gán poster cho Review #${rIdx + 1}!`);
+                    }
                   }
                   setMediaPickerTarget(null);
                 }}

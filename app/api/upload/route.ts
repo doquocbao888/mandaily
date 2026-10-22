@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     let publicUrl = '';
 
-    // Attempt to write to local public/uploads directory
+    // Attempt to write to local public/uploads directory, fallback to base64 data URL if read-only or error
     try {
       const uploadDir = path.join(process.cwd(), 'public', 'uploads');
       await mkdir(uploadDir, { recursive: true });
@@ -38,18 +38,13 @@ export async function POST(req: NextRequest) {
       await writeFile(filePath, buffer);
       publicUrl = `/uploads/${filename}`;
     } catch (fsErr: any) {
-      // On Vercel / serverless environment, filesystem is read-only (EROFS)
-      // Fallback: Store as Data URL (Base64) so it works seamlessly without server storage
-      if (
-        fsErr?.code === 'EROFS' || 
-        String(fsErr?.message || '').toLowerCase().includes('read-only') ||
-        process.env.VERCEL
-      ) {
-        const base64 = buffer.toString('base64');
-        publicUrl = `data:${mimeType};base64,${base64}`;
-      } else {
-        throw fsErr;
-      }
+      console.warn('Filesystem write warning, falling back to base64 data URL:', fsErr);
+    }
+
+    // If local write didn't set publicUrl or if we want guaranteed bulletproof availability, fallback to Data URL
+    if (!publicUrl) {
+      const base64 = buffer.toString('base64');
+      publicUrl = `data:${mimeType};base64,${base64}`;
     }
 
     return NextResponse.json({
