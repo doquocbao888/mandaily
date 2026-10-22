@@ -24,6 +24,7 @@ export default function ProductDetailPage() {
   const initialProduct = getProductById(id);
 
   const [product, setProduct] = useState<ProductItem | null>(initialProduct || null);
+  const [loading, setLoading] = useState(!initialProduct);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<'vip' | 'regular'>('vip');
   const [quantity, setQuantity] = useState(1);
@@ -34,8 +35,11 @@ export default function ProductDetailPage() {
     if (!id) return;
     let isMounted = true;
     const unsub = subscribeProductById(id, (updatedProd) => {
-      if (isMounted && updatedProd) {
-        setProduct(updatedProd);
+      if (isMounted) {
+        if (updatedProd) {
+          setProduct(updatedProd);
+        }
+        setLoading(false);
       }
     });
     return () => {
@@ -47,6 +51,14 @@ export default function ProductDetailPage() {
       }
     };
   }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!product) {
     notFound();
@@ -93,23 +105,23 @@ export default function ProductDetailPage() {
         </div>
       )}
 
-      <main className="flex-1 max-w-[1360px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Main Product Layout matching Manscaped reference */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 xl:gap-10 items-start">
           
           {/* Left Column: Vertical Thumbnails + Large Main Image Display */}
-          <div className="lg:col-span-7 flex flex-col sm:flex-row gap-4">
+          <div className="lg:col-span-7 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start">
             
-            {/* Vertical Thumbnail List on Left */}
-            <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-3 overflow-x-auto sm:overflow-y-auto sm:max-h-[600px] scrollbar-thin">
+            {/* Vertical Thumbnail List on Left (Compact size & subtle custom scrollbar) */}
+            <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[620px] lg:max-h-[680px] flex-shrink-0 w-full sm:w-[64px] md:w-[70px] pb-2 sm:pb-0 sm:pr-1 [scrollbar-width:thin] [scrollbar-color:#d4d4d4_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
               {product.thumbnails.map((thumb, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
+                  className={`relative flex-shrink-0 w-13 h-13 sm:w-[56px] sm:h-[56px] md:w-[62px] md:h-[62px] rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
                     selectedImageIndex === idx 
-                      ? 'border-neutral-900 ring-2 ring-neutral-900/10 scale-105 shadow-sm' 
+                      ? 'border-neutral-900 ring-2 ring-neutral-900/10 scale-[1.03] shadow-sm' 
                       : 'border-neutral-200/80 opacity-75 hover:opacity-100'
                   }`}
                 >
@@ -117,7 +129,7 @@ export default function ProductDetailPage() {
                     src={thumb}
                     alt={`Thumbnail ${idx}`}
                     fill
-                    sizes="80px"
+                    sizes="64px"
                     className="object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -125,11 +137,11 @@ export default function ProductDetailPage() {
               ))}
             </div>
 
-            {/* Main Image Box */}
-            <div className="relative flex-1 aspect-[1/1] sm:aspect-[4/3.8] bg-[#f5f3ec] rounded-xl overflow-hidden flex items-center justify-center p-0 border border-neutral-200/80 shadow-sm group">
+            {/* Main Image Box (Enlarged with generous aspect ratio & min-height) */}
+            <div className="relative flex-1 w-full aspect-[1/1] sm:aspect-[4/4.2] min-h-[380px] sm:min-h-[520px] lg:min-h-[620px] xl:min-h-[660px] bg-[#f5f3ec] rounded-2xl overflow-hidden flex items-center justify-center p-0 border border-neutral-200/80 shadow-sm group">
               
               {/* Top-Left 'New' Badge */}
-              <div className="absolute top-4 left-4 z-10 bg-[#1c2833] text-white px-3 py-1 rounded text-xs font-bold tracking-wider uppercase shadow">
+              <div className="absolute top-4 left-4 z-10 bg-[#1c2833] text-white px-2.5 py-1 rounded-[4px] text-[11px] font-bold tracking-wider uppercase shadow-xs">
                 New
               </div>
 
@@ -140,7 +152,7 @@ export default function ProductDetailPage() {
                   alt={product.imageAlt}
                   fill
                   priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 850px"
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />

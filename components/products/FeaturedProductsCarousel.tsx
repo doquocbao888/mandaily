@@ -4,17 +4,38 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { type FeaturedProductsConfig, type ProductItem } from '@/config/products';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { subscribeProducts, seedInitialProductsIfNeeded } from '@/lib/dbService';
 
 interface FeaturedProductsSectionProps {
   config: FeaturedProductsConfig;
 }
 
 export default function FeaturedProductsSection({ config }: FeaturedProductsSectionProps) {
-  const [products] = useState<ProductItem[]>(config.products);
+  const [products, setProducts] = useState<ProductItem[]>(config.products);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    seedInitialProductsIfNeeded().catch(() => {});
+
+    const unsubscribe = subscribeProducts((updatedProducts) => {
+      if (isMounted && updatedProducts && updatedProducts.length > 0) {
+        setProducts(updatedProducts);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      try {
+        unsubscribe();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
 
   // Touch gesture tracking for snappy mobile swipe
   const touchStartX = useRef<number>(0);
@@ -171,9 +192,9 @@ export default function FeaturedProductsSection({ config }: FeaturedProductsSect
 
             <button
               onClick={handleNext}
-              disabled={currentIndex === totalItems - 1}
+              disabled={currentIndex >= totalItems - 1}
               className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-xs active:scale-95 ${
-                currentIndex === totalItems - 1 ? 'bg-neutral-300 opacity-50 cursor-not-allowed' : 'bg-[#b98141] hover:bg-[#a57134] text-white cursor-pointer'
+                currentIndex >= totalItems - 1 ? 'bg-neutral-300 opacity-50 cursor-not-allowed' : 'bg-[#b98141] hover:bg-[#a57134] text-white cursor-pointer'
               }`}
             >
               <ChevronRight className="w-5 h-5" />

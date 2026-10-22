@@ -39,7 +39,17 @@ export default function MediaManager({
   const [showAddUrlModal, setShowAddUrlModal] = useState(false);
   const [customUrl, setCustomUrl] = useState('');
   const [customName, setCustomName] = useState('');
+  const [mediaToDelete, setMediaToDelete] = useState<MediaItem | null>(null);
+  const [isDeletingMedia, setIsDeletingMedia] = useState(false);
+  const [mediaToast, setMediaToast] = useState<{ text: string; isError?: boolean } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (text: string, isError = false) => {
+    setMediaToast({ text, isError });
+    setTimeout(() => {
+      setMediaToast(null);
+    }, 3500);
+  };
 
   const handleAddCustomUrl = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +74,10 @@ export default function MediaManager({
       setCustomUrl('');
       setCustomName('');
       setShowAddUrlModal(false);
-    } catch (err) {
+      showToast('Đã thêm tệp media vào hệ thống thành công!');
+    } catch (err: any) {
       console.error('Lỗi khi lưu media:', err);
-      alert('Không thể lưu media vào hệ thống.');
+      showToast(err?.message || 'Không thể lưu media vào hệ thống.', true);
     }
   };
 
@@ -134,12 +145,13 @@ export default function MediaManager({
       if (data.success && data.media) {
         await saveMediaToDb(data.media);
         setLastUploadedUrl(data.url);
+        showToast('Đã tải lên tệp media thành công!');
       } else {
-        alert(data.error || 'Tải file lên thất bại.');
+        showToast(data.error || 'Tải file lên thất bại.', true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi khi tải file:', err);
-      alert('Đã xảy ra lỗi khi tải file lên server.');
+      showToast(err?.message || 'Đã xảy ra lỗi khi tải file lên server.', true);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -148,13 +160,18 @@ export default function MediaManager({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa tệp media này khỏi hệ thống?')) {
-      try {
-        await deleteMediaFromDb(id);
-      } catch (err) {
-        console.error('Lỗi khi xóa media:', err);
-      }
+  const executeDeleteMedia = async () => {
+    if (!mediaToDelete) return;
+    setIsDeletingMedia(true);
+    try {
+      await deleteMediaFromDb(mediaToDelete.id);
+      showToast('Đã xóa tệp media thành công!');
+      setMediaToDelete(null);
+    } catch (err: any) {
+      console.error('Lỗi khi xóa media:', err);
+      showToast(err?.message || 'Không thể xóa tệp media.', true);
+    } finally {
+      setIsDeletingMedia(false);
     }
   };
 
@@ -389,8 +406,8 @@ export default function MediaManager({
                       <span>Xem</span>
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      onClick={() => setMediaToDelete(item)}
+                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                       title="Xóa tệp"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -535,6 +552,70 @@ export default function MediaManager({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Media Delete Confirmation Modal */}
+      {mediaToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-neutral-900">Xác nhận xóa tệp media</h3>
+                <p className="text-xs text-neutral-500">Thao tác này sẽ xóa tệp vĩnh viễn</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-700 mb-2">
+              Bạn có chắc chắn muốn xóa tệp: <strong className="text-neutral-900">{mediaToDelete.name}</strong>?
+            </p>
+            <div className="bg-neutral-100 p-2.5 rounded-xl text-[11px] font-mono text-neutral-600 break-all mb-5 border border-neutral-200">
+              {mediaToDelete.url}
+            </div>
+
+            <div className="flex items-center justify-end space-x-2.5">
+              <button
+                type="button"
+                disabled={isDeletingMedia}
+                onClick={() => setMediaToDelete(null)}
+                className="px-4 py-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingMedia}
+                onClick={executeDeleteMedia}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isDeletingMedia ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Đang xóa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Xác nhận xóa</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {mediaToast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-xl border text-xs font-bold flex items-center space-x-2 ${
+          mediaToast.isError 
+            ? 'bg-red-900 text-white border-red-700' 
+            : 'bg-neutral-900 text-white border-neutral-800'
+        }`}>
+          <span>{mediaToast.text}</span>
         </div>
       )}
 

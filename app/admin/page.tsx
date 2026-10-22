@@ -21,7 +21,12 @@ import {
   ShieldCheck,
   Search,
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  RotateCcw,
+  AlertTriangle,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from 'lucide-react';
 import { featuredProductsConfig, type ProductItem } from '@/config/products';
 import MediaManager from '@/components/admin/MediaManager';
@@ -32,9 +37,11 @@ import {
   saveProductToDb, 
   deleteProductFromDb, 
   updateOrderStatusInDb, 
+  updateProductOrderInDb,
   seedInitialProductsIfNeeded, 
   seedInitialOrdersIfNeeded,
   seedInitialMediaIfNeeded,
+  restoreDefaultProducts,
   type OrderItem,
   type MediaItem
 } from '@/lib/dbService';
@@ -133,6 +140,19 @@ export default function AdminPage() {
   const [editingProduct, setEditingProduct] = useState<ProductItem | null>(null);
   const [editThumbnailsText, setEditThumbnailsText] = useState('');
 
+  // Delete & Confirmation States
+  const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+  const [isRestoringDefaults, setIsRestoringDefaults] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
+
+  const showToast = (text: string, isError = false) => {
+    setToastMessage({ text, isError });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
   useEffect(() => {
     let isMounted = true;
     // Seed initial data if Firestore is empty
@@ -195,13 +215,70 @@ export default function AdminPage() {
     window.dispatchEvent(new Event('manscaped_auth_change'));
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi cơ sở dữ liệu?')) {
-      try {
-        await deleteProductFromDb(id);
-      } catch (err) {
-        console.error('Lỗi khi xóa sản phẩm:', err);
-      }
+  const executeDeleteProduct = async () => {
+    if (!productToDelete) return;
+    const target = productToDelete;
+    setIsDeletingProduct(true);
+    try {
+      // Optimistically update local state so table updates immediately
+      setProducts(prev => prev.filter(p => p.id !== target.id));
+      await deleteProductFromDb(target.id);
+      showToast(`Đã xóa vĩnh viễn sản phẩm "${target.title}" thành công!`);
+      setProductToDelete(null);
+    } catch (err: any) {
+      console.error('Lỗi khi xóa sản phẩm:', err);
+      showToast(err?.message || 'Không thể xóa sản phẩm khỏi cơ sở dữ liệu.', true);
+    } finally {
+      setIsDeletingProduct(false);
+    }
+  };
+
+  const handleRestoreDefaultProducts = async () => {
+    setIsRestoringDefaults(true);
+    try {
+      await restoreDefaultProducts();
+      showToast('Đã khôi phục thành công 5 sản phẩm danh mục gốc!');
+    } catch (err: any) {
+      console.error('Lỗi khi khôi phục sản phẩm gốc:', err);
+      showToast('Không thể khôi phục sản phẩm gốc.', true);
+    } finally {
+      setIsRestoringDefaults(false);
+    }
+  };
+
+  const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+
+  const handleMoveProduct = async (productId: string, direction: 'up' | 'down') => {
+    const currentIndex = products.findIndex(p => p.id === productId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= products.length) return;
+
+    // Create a new array with items swapped
+    const reordered = [...products];
+    const [movedItem] = reordered.splice(currentIndex, 1);
+    reordered.splice(targetIndex, 0, movedItem);
+
+    // Update orderIndex sequentially
+    const updatedWithIndex = reordered.map((item, idx) => ({
+      ...item,
+      orderIndex: idx,
+    }));
+
+    // Optimistic UI update
+    setProducts(updatedWithIndex);
+    setIsUpdatingOrder(true);
+
+    try {
+      await updateProductOrderInDb(
+        updatedWithIndex.map((p, idx) => ({ id: p.id, orderIndex: idx }))
+      );
+      showToast(`Đã chuyển sản phẩm "${movedItem.title}" sang vị trí #${targetIndex + 1}!`);
+    } catch (err: any) {
+      console.error('Lỗi khi cập nhật thứ tự sản phẩm:', err);
+      showToast('Lỗi khi lưu thứ tự sản phẩm.', true);
+    } finally {
+      setIsUpdatingOrder(false);
     }
   };
 
@@ -216,6 +293,7 @@ export default function AdminPage() {
 
     const newProd: ProductItem = {
       id: `prod-${Date.now()}`,
+      orderIndex: products.length,
       title: newTitle,
       subtitle: newSubtitle || 'Groin & Body Hair Trimmer',
       categoryPath: ['Trang chủ', 'PRODUCTS', newTitle],
@@ -246,13 +324,19 @@ export default function AdminPage() {
       setShowAddProductModal(false);
       setNewTitle('');
       setNewSubtitle('');
-    } catch (err) {
+      showToast(`Đã thêm mới sản phẩm "${newProd.title}" thành công!`);
+    } catch (err: any) {
       console.error('Lỗi khi thêm sản phẩm:', err);
+      showToast(err?.message || 'Lỗi khi thêm sản phẩm.', true);
     }
   };
 
   const handleOpenEditModal = (product: ProductItem) => {
-    setEditingProduct({ ...product });
+    const curIndex = products.findIndex(p => p.id === product.id);
+    setEditingProduct({ 
+      ...product,
+      orderIndex: typeof product.orderIndex === 'number' ? product.orderIndex : curIndex
+    });
     setEditThumbnailsText(product.thumbnails.join('\n'));
     setShowEditModal(true);
   };
@@ -266,25 +350,42 @@ export default function AdminPage() {
       .map(s => s.trim())
       .filter(Boolean);
 
-    const updated = {
+    const updated: ProductItem = {
       ...editingProduct,
       thumbnails: parsedThumbnails.length > 0 ? parsedThumbnails : [editingProduct.imageSrc]
     };
 
     try {
+      // Re-order if position was changed in modal
+      const oldIndex = products.findIndex(p => p.id === updated.id);
+      const targetOrder = typeof updated.orderIndex === 'number'
+        ? Math.max(0, Math.min(updated.orderIndex, products.length - 1))
+        : (oldIndex >= 0 ? oldIndex : products.length - 1);
+
+      const otherProducts = products.filter(p => p.id !== updated.id);
+      otherProducts.splice(targetOrder, 0, updated);
+      const reordered = otherProducts.map((p, idx) => ({ ...p, orderIndex: idx }));
+
+      setProducts(reordered);
       await saveProductToDb(updated);
+      await updateProductOrderInDb(reordered.map((p, idx) => ({ id: p.id, orderIndex: idx })));
+
       setShowEditModal(false);
       setEditingProduct(null);
-    } catch (err) {
+      showToast(`Đã cập nhật sản phẩm "${updated.title}" thành công!`);
+    } catch (err: any) {
       console.error('Lỗi khi sửa sản phẩm:', err);
+      showToast(err?.message || 'Lỗi khi cập nhật sản phẩm.', true);
     }
   };
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderItem['status']) => {
     try {
       await updateOrderStatusInDb(orderId, newStatus);
-    } catch (err) {
+      showToast(`Đã cập nhật trạng thái đơn ${orderId} thành "${newStatus}"!`);
+    } catch (err: any) {
       console.error('Lỗi khi cập nhật trạng thái đơn hàng:', err);
+      showToast(err?.message || 'Lỗi cập nhật trạng thái.', true);
     }
   };
 
@@ -582,13 +683,40 @@ export default function AdminPage() {
                   />
                 </div>
 
-                <button
-                  onClick={() => setShowAddProductModal(true)}
-                  className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Thêm sản phẩm mới</span>
-                </button>
+                <div className="flex items-center space-x-2.5 w-full sm:w-auto">
+                  <button
+                    onClick={handleRestoreDefaultProducts}
+                    disabled={isRestoringDefaults}
+                    className="flex-1 sm:flex-initial bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold px-4 py-2.5 rounded-xl border border-neutral-300 transition-all flex items-center justify-center space-x-1.5 text-xs sm:text-sm cursor-pointer disabled:opacity-50"
+                    title="Khôi phục lại 5 sản phẩm mặc định của hệ thống"
+                  >
+                    <RotateCcw className={`w-4 h-4 text-neutral-600 ${isRestoringDefaults ? 'animate-spin' : ''}`} />
+                    <span>{isRestoringDefaults ? 'Đang khôi phục...' : 'Khôi phục 5 SP gốc'}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowAddProductModal(true)}
+                    className="flex-1 sm:flex-initial bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Thêm sản phẩm mới</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Product Reorder Tip Banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex items-center justify-between text-xs text-amber-900">
+                <div className="flex items-center space-x-2.5">
+                  <ArrowUpDown className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                  <span>
+                    <strong>Sắp xếp thứ tự sản phẩm:</strong> Bấm nút <strong>↑</strong> (Lên) hoặc <strong>↓</strong> (Xuống) ở cột <strong>Thứ tự</strong> để đổi vị trí hiển thị trên Trang chủ và các danh mục.
+                  </span>
+                </div>
+                {isUpdatingOrder && (
+                  <span className="text-[11px] font-semibold text-amber-700 flex items-center space-x-1 animate-pulse">
+                    <span>Đang lưu...</span>
+                  </span>
+                )}
               </div>
 
               {/* Product List Table */}
@@ -596,6 +724,7 @@ export default function AdminPage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-neutral-50 border-b border-neutral-200 text-xs text-neutral-500 uppercase">
                     <tr>
+                      <th className="p-4 font-semibold text-center w-28">Thứ tự</th>
                       <th className="p-4 font-semibold">Ảnh chính & phụ</th>
                       <th className="p-4 font-semibold">Tên sản phẩm</th>
                       <th className="p-4 font-semibold">Mô tả / Subtitle</th>
@@ -607,47 +736,75 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-neutral-100">
                     {products
                       .filter(p => p.title.toLowerCase().includes(searchProduct.toLowerCase()))
-                      .map((p) => (
-                        <tr key={p.id} className="hover:bg-neutral-50/80">
-                          <td className="p-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="relative w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden border flex-shrink-0">
-                                <Image
-                                  src={p.imageSrc}
-                                  alt={p.imageAlt}
-                                  fill
-                                  sizes="48px"
-                                  className="object-contain"
-                                  referrerPolicy="no-referrer"
-                                />
+                      .map((p) => {
+                        const globalIndex = products.findIndex(item => item.id === p.id);
+                        return (
+                          <tr key={p.id} className="hover:bg-neutral-50/80 transition-colors">
+                            <td className="p-4 text-center">
+                              <div className="inline-flex items-center space-x-1 bg-neutral-100/90 rounded-lg p-1 border border-neutral-200">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveProduct(p.id, 'up')}
+                                  disabled={globalIndex <= 0 || isUpdatingOrder}
+                                  className="p-1 rounded text-neutral-600 hover:text-amber-800 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-neutral-600 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                  title="Chuyển lên trên"
+                                >
+                                  <ArrowUp className="w-3.5 h-3.5" />
+                                </button>
+                                <span className="font-mono text-xs font-bold text-amber-900 px-1 min-w-[28px] text-center select-none">
+                                  #{globalIndex + 1}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveProduct(p.id, 'down')}
+                                  disabled={globalIndex >= products.length - 1 || isUpdatingOrder}
+                                  className="p-1 rounded text-neutral-600 hover:text-amber-800 hover:bg-white disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-neutral-600 transition-all cursor-pointer disabled:cursor-not-allowed"
+                                  title="Chuyển xuống dưới"
+                                >
+                                  <ArrowDown className="w-3.5 h-3.5" />
+                                </button>
                               </div>
-                              <span className="text-xs text-neutral-500 font-medium">
-                                ({p.thumbnails?.length || 1} ảnh)
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4 font-bold text-neutral-900">{p.title}</td>
-                          <td className="p-4 text-neutral-600 text-xs max-w-xs truncate">{p.subtitle}</td>
-                          <td className="p-4 font-semibold text-amber-700">{p.vipPrice}</td>
-                          <td className="p-4 text-neutral-700">{p.regularPrice}</td>
-                          <td className="p-4 text-right space-x-2">
-                            <button
-                              onClick={() => handleOpenEditModal(p)}
-                              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors inline-block"
-                              title="Sửa thông tin chi tiết sản phẩm"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteProduct(p.id)}
-                              className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors inline-block"
-                              title="Xóa sản phẩm"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                    ))}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="relative w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden border flex-shrink-0">
+                                  <Image
+                                    src={p.imageSrc}
+                                    alt={p.imageAlt}
+                                    fill
+                                    sizes="48px"
+                                    className="object-contain"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
+                                <span className="text-xs text-neutral-500 font-medium">
+                                  ({p.thumbnails?.length || 1} ảnh)
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4 font-bold text-neutral-900">{p.title}</td>
+                            <td className="p-4 text-neutral-600 text-xs max-w-xs truncate">{p.subtitle}</td>
+                            <td className="p-4 font-semibold text-amber-700">{p.vipPrice}</td>
+                            <td className="p-4 text-neutral-700">{p.regularPrice}</td>
+                            <td className="p-4 text-right space-x-2">
+                              <button
+                                onClick={() => handleOpenEditModal(p)}
+                                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors inline-block cursor-pointer"
+                                title="Sửa thông tin chi tiết sản phẩm"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setProductToDelete(p)}
+                                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors inline-block cursor-pointer"
+                                title="Xóa sản phẩm khỏi database"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -919,6 +1076,30 @@ export default function AdminPage() {
               </div>
 
               <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Vị trí thứ tự hiển thị (1 đến {products.length})
+                </label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="number"
+                    min={1}
+                    max={products.length}
+                    value={typeof editingProduct.orderIndex === 'number' ? editingProduct.orderIndex + 1 : 1}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val) && val >= 1) {
+                        setEditingProduct({ ...editingProduct, orderIndex: val - 1 });
+                      }
+                    }}
+                    className="w-32 border border-neutral-300 rounded-xl px-4 py-2 text-sm font-mono font-bold focus:outline-none focus:border-amber-600"
+                  />
+                  <span className="text-xs text-neutral-500">
+                    Vị trí #1 sẽ hiển thị đầu tiên trên Trang chủ và danh mục sản phẩm.
+                  </span>
+                </div>
+              </div>
+
+              <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-xs font-bold text-neutral-700">Ảnh chính (Main Image URL / Path) *</label>
                   <button
@@ -1019,6 +1200,97 @@ export default function AdminPage() {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Product Delete Confirmation Modal */}
+      {productToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-fadeIn border border-neutral-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 border border-red-200">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-neutral-900">Xác nhận xóa sản phẩm</h3>
+                <p className="text-xs text-neutral-500">Hành động này sẽ xóa vĩnh viễn sản phẩm</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-600 mb-4">
+              Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh mục bán buôn và cơ sở dữ liệu Firestore?
+            </p>
+
+            {/* Product Snapshot */}
+            <div className="bg-[#f9f9f8] p-3.5 rounded-xl border border-neutral-200 flex items-center space-x-3 mb-6">
+              <div className="relative w-16 h-16 bg-white rounded-lg border border-neutral-200 overflow-hidden flex-shrink-0">
+                <Image
+                  src={productToDelete.imageSrc}
+                  alt={productToDelete.imageAlt || productToDelete.title}
+                  fill
+                  sizes="64px"
+                  className="object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-bold text-sm text-neutral-900 truncate">{productToDelete.title}</h4>
+                <p className="text-xs text-neutral-500 truncate mt-0.5">{productToDelete.subtitle}</p>
+                <div className="flex items-center space-x-2 mt-1">
+                  <span className="text-xs font-bold text-amber-700">{productToDelete.vipPrice}</span>
+                  <span className="text-[11px] text-neutral-400">/ {productToDelete.regularPrice}</span>
+                  <span className="text-[11px] bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded">
+                    {productToDelete.thumbnails?.length || 1} ảnh
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2 border-t border-neutral-100">
+              <button
+                type="button"
+                disabled={isDeletingProduct}
+                onClick={() => setProductToDelete(null)}
+                className="px-5 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 text-sm font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingProduct}
+                onClick={executeDeleteProduct}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center space-x-2 transition-colors cursor-pointer shadow-md disabled:opacity-50"
+              >
+                {isDeletingProduct ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Đang xóa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Xác nhận xóa</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-2xl border text-xs font-bold flex items-center space-x-2.5 ${
+          toastMessage.isError 
+            ? 'bg-red-900 text-white border-red-700' 
+            : 'bg-neutral-900 text-white border-neutral-800'
+        }`}>
+          {toastMessage.isError ? (
+            <AlertTriangle className="w-4 h-4 text-red-300 flex-shrink-0" />
+          ) : (
+            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
         </div>
       )}
 

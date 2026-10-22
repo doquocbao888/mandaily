@@ -7,11 +7,13 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const productHref = (!product.href || product.href === '#' || product.href === '') ? `/products/${product.id}` : product.href;
+
   return (
     <div className="flex flex-col flex-1 bg-transparent group">
       {/* Product Image Card Container */}
       <Link
-        href={product.href}
+        href={productHref}
         className="relative w-full aspect-[1/1] sm:aspect-[4/3.8] bg-[#f0eee6] rounded-[2px] overflow-hidden flex items-center justify-center mb-5 block cursor-pointer transition-transform duration-500 ease-out hover:opacity-98"
       >
         <div className="relative w-full h-full flex items-center justify-center">
@@ -30,7 +32,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Info */}
       <div className="flex flex-col space-y-1">
         <Link
-          href={product.href}
+          href={productHref}
           className="text-neutral-900 text-base sm:text-lg font-bold tracking-tight hover:underline underline-offset-4"
         >
           {product.title}

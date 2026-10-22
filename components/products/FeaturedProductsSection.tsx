@@ -55,7 +55,7 @@ export default function FeaturedProductsSection({
 
         {/* Product Grid (2 columns on desktop, 1 on mobile) */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-          {products.map((product) => (
+          {products.slice(0, 2).map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

@@ -9,6 +9,7 @@ export interface ProductVariant {
 
 export interface ProductItem {
   id: string;
+  orderIndex?: number;
   title: string;
   subtitle: string;
   categoryPath: string[];
@@ -48,6 +49,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
   products: [
     {
       id: 'lawn-mower-ultra-6',
+      orderIndex: 0,
       title: 'The Lawn Mower® Ultra Gen 6 - NEW!',
       subtitle: 'Groin & Body Hair Trimmer',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
@@ -107,6 +109,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
     },
     {
       id: 'the-performance-package-ultra-6',
+      orderIndex: 1,
       title: 'The Performance Package Ultra Gen 6 - NEW!',
       subtitle: 'Deluxe Full Body Grooming Kit',
       categoryPath: ['Trang chủ', 'PERFORMANCE PACK', 'The Performance Package Ultra Gen 6'],
@@ -171,77 +174,122 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
     ...featuredProductsConfig.products,
     {
       id: 'chairman-pro',
+      orderIndex: 2,
       title: 'The Chairman® Pro',
       subtitle: 'Electric Foil Face Shaver',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Chairman® Pro'],
       vipPrice: '$149.99',
       regularPrice: '$159.99',
-      href: '#',
+      href: '/products/chairman-pro',
       imageSrc: '/assets/aistudio/70-00186_4597ae5e.jpg',
       imageAlt: 'The Chairman Pro Shaver',
-      thumbnails: [],
+      thumbnails: [
+        '/assets/aistudio/70-00186_4597ae5e.jpg',
+        '/assets/aistudio/70-00186_98c22891.png',
+        '/assets/aistudio/30-00006-NA_f201a618.png'
+      ],
       badge: 'Best Seller',
       rating: 4.8,
       reviewCount: '1,200 đánh giá',
       soldCount: 'Đã bán 50k',
-      shortDescription: 'Máy cạo râu lá điện tử cao cấp.',
-      highlights: ['Cạo sát', 'Chống nicks'],
-      reviewSample: { author: 'A', rating: 5, comment: 'Tốt' },
-      variants: [],
-      gifts: [],
-      cashbackText: '',
-      warrantyText: 'BẢO HÀNH 12 THÁNG'
+      salesBadge: 'Best Foil Shaver',
+      shortDescription: 'Máy cạo râu lá điện tử cao cấp, ôm sát đường viền khuôn mặt, chống rát da.',
+      highlights: ['Cạo sát êm ái', 'Chống nicks & cuts', 'Chống nước chuẩn IPX7', 'Pin sạc nhanh Type-C'],
+      reviewSample: { author: 'Tuấn Khang', rating: 5, comment: 'Cạo rất sát và êm, không bị rát đỏ.' },
+      variants: [
+        {
+          id: 'chairman-pro-standard',
+          name: 'The Chairman® Pro Standard',
+          badge: 'Khuyên dùng',
+          price: '$149.99',
+          originalPrice: '$159.99',
+          saving: 'Tiết kiệm $10.00'
+        }
+      ],
+      gifts: ['Tặng Dung Dịch Cạo Râu 100ml', 'Tặng Túi Du Lịch'],
+      cashbackText: 'Được hoàn lên đến 75.000 SpotCredit',
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
     },
     {
       id: 'beard-hedger',
+      orderIndex: 3,
       title: 'The Beard Hedger®',
       subtitle: 'Electric Beard Trimmer',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Beard Hedger®'],
       vipPrice: '$89.99',
       regularPrice: '$99.99',
-      href: '#',
+      href: '/products/beard-hedger',
       imageSrc: '/assets/aistudio/image_075587b8.png',
       imageAlt: 'The Beard Hedger Trimmer',
-      thumbnails: [],
+      thumbnails: [
+        '/assets/aistudio/image_075587b8.png',
+        '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
+        '/assets/aistudio/b72c1da980f6_e399d627.webp'
+      ],
       badge: 'Best Seller',
       rating: 4.9,
       reviewCount: '2,000 đánh giá',
       soldCount: 'Đã bán 80k',
-      shortDescription: 'Máy tỉa râu chuyên dụng.',
-      highlights: ['Chính xác', 'Êm ái'],
-      reviewSample: { author: 'B', rating: 5, comment: 'Tuyệt vời' },
-      variants: [],
-      gifts: [],
-      cashbackText: '',
-      warrantyText: 'BẢO HÀNH 12 THÁNG'
+      salesBadge: 'Top Trimmer',
+      shortDescription: 'Máy tỉa râu chuyên dụng với bánh lăn điều chỉnh độ dài 20 mức chính xác.',
+      highlights: ['Bánh lăn 20 cự ly', 'Lưỡi titan siêu bén', 'Không kéo giật râu', 'Pin lithium bền bỉ'],
+      reviewSample: { author: 'Hoàng Long', rating: 5, comment: 'Máy chạy êm, chỉnh độ dài cực tiện lợi.' },
+      variants: [
+        {
+          id: 'beard-hedger-standard',
+          name: 'The Beard Hedger® Standard',
+          badge: 'Tiêu chuẩn',
+          price: '$89.99',
+          originalPrice: '$99.99',
+          saving: 'Tiết kiệm $10.00'
+        }
+      ],
+      gifts: ['Tặng Lược Chải Râu Chuyên Dụng'],
+      cashbackText: 'Được hoàn lên đến 45.000 SpotCredit',
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
     },
     {
       id: 'beard-balls-strays',
+      orderIndex: 4,
       title: 'The Beard, Balls & Strays Bundle',
       subtitle: 'Three-device bundle with next-gen power.',
       categoryPath: ['Trang chủ', 'BUNDLES', 'The Beard, Balls & Strays Bundle'],
       vipPrice: '$199.99',
       regularPrice: '$209.99',
-      href: '#',
+      href: '/products/beard-balls-strays',
       imageSrc: '/assets/aistudio/the-beard-balls-and-strays-bundle_product_desktop_255fa9af.jpg',
       imageAlt: 'Beard, Balls & Strays Bundle',
-      thumbnails: [],
+      thumbnails: [
+        '/assets/aistudio/the-beard-balls-and-strays-bundle_product_desktop_255fa9af.jpg',
+        '/assets/aistudio/70-00186_4597ae5e.jpg',
+        '/assets/aistudio/30-00006-NA_f201a618.png'
+      ],
       badge: 'New',
       rating: 5.0,
       reviewCount: '500 đánh giá',
       soldCount: 'Đã bán 20k',
-      shortDescription: 'Bộ 3 thiết bị tối thượng.',
-      highlights: ['Trọn bộ', 'Tiết kiệm'],
-      reviewSample: { author: 'C', rating: 5, comment: 'Đỉnh' },
-      variants: [],
-      gifts: [],
-      cashbackText: '',
-      warrantyText: 'BẢO HÀNH 12 THÁNG'
+      salesBadge: 'Combo Tiết Kiệm Nhất',
+      shortDescription: 'Bộ 3 thiết bị tối thượng cho râu, cơ thể và vùng nhạy cảm của phái mạnh.',
+      highlights: ['Trọn bộ 3 thiết bị cao cấp', 'Tiết kiệm hơn 30% so với mua lẻ', 'Đầy đủ phụ kiện và quà tặng'],
+      reviewSample: { author: 'Trần Đạt', rating: 5, comment: 'Mua cả set này quá hời, phụ kiện xịn sò.' },
+      variants: [
+        {
+          id: 'bundle-standard',
+          name: 'The Beard, Balls & Strays Complete Set',
+          badge: 'Trọn bộ',
+          price: '$199.99',
+          originalPrice: '$209.99',
+          saving: 'Tiết kiệm $35.00'
+        }
+      ],
+      gifts: ['Tặng Túi Đựng Hạng Sang (Luxe Travel Bag)', 'Tặng Khăn Chuyên Dụng'],
+      cashbackText: 'Được hoàn lên đến 100.000 SpotCredit',
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
     }
   ],
 };
 
 export function getProductById(id: string): ProductItem | undefined {
-  return featuredProductsConfig.products.find((p) => p.id === id);
+  return featuredProductsConfig2.products.find((p) => p.id === id);
 }
 

@@ -5,10 +5,11 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
-  onSnapshot
+  onSnapshot,
+  writeBatch
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
-import { featuredProductsConfig, type ProductItem } from '@/config/products';
+import { featuredProductsConfig, featuredProductsConfig2, type ProductItem } from '@/config/products';
 
 export interface OrderItem {
   id: string;
@@ -30,7 +31,8 @@ let isSeedingProducts = false;
 let hasSeededProducts = false;
 
 /**
- * Seed initial products if collection is empty (guarded to run once)
+ * Seed initial products if collection is completely empty (guarded to run once)
+ * Does NOT resurrect products that were intentionally deleted by the user.
  */
 export async function seedInitialProductsIfNeeded() {
   if (hasSeededProducts || isSeedingProducts) return;
@@ -38,7 +40,11 @@ export async function seedInitialProductsIfNeeded() {
   try {
     const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
     if (snap.empty) {
-      for (const prod of featuredProductsConfig.products) {
+      for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
+        const prod = {
+          ...featuredProductsConfig2.products[i],
+          orderIndex: featuredProductsConfig2.products[i].orderIndex ?? i,
+        };
         await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
       }
     }
@@ -50,6 +56,19 @@ export async function seedInitialProductsIfNeeded() {
     console.warn('Initial products seed note:', err?.message || err);
   } finally {
     isSeedingProducts = false;
+  }
+}
+
+/**
+ * Manually restore the 5 default catalog products if requested by the admin
+ */
+export async function restoreDefaultProducts() {
+  for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
+    const prod = {
+      ...featuredProductsConfig2.products[i],
+      orderIndex: featuredProductsConfig2.products[i].orderIndex ?? i,
+    };
+    await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
   }
 }
 
@@ -122,10 +141,16 @@ export function subscribeProducts(
         items.push(d.data() as ProductItem);
       });
       if (items.length > 0) {
+        items.sort((a, b) => {
+          const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
+          const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
+          if (orderA !== orderB) return orderA - orderB;
+          return a.id.localeCompare(b.id);
+        });
         onData(items);
       } else {
         // Fallback to initial config while loading or empty
-        onData(featuredProductsConfig.products);
+        onData(featuredProductsConfig2.products);
       }
     },
     (error) => {
@@ -186,13 +211,32 @@ export async function saveProductToDb(product: ProductItem) {
 }
 
 /**
+ * Batch update display order of products
+ */
+export async function updateProductOrderInDb(productOrders: { id: string; orderIndex: number }[]) {
+  try {
+    const batch = writeBatch(db);
+    for (const item of productOrders) {
+      const docRef = doc(db, PRODUCTS_COLLECTION, item.id);
+      batch.set(docRef, { orderIndex: item.orderIndex }, { merge: true });
+    }
+    await batch.commit();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, PRODUCTS_COLLECTION);
+    throw error;
+  }
+}
+
+/**
  * Delete product
  */
 export async function deleteProductFromDb(id: string) {
   try {
     await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+    return { success: true };
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `${PRODUCTS_COLLECTION}/${id}`);
+    throw error;
   }
 }
 
@@ -401,7 +445,9 @@ export async function saveMediaToDb(media: MediaItem) {
 export async function deleteMediaFromDb(id: string) {
   try {
     await deleteDoc(doc(db, MEDIA_COLLECTION, id));
+    return { success: true };
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `${MEDIA_COLLECTION}/${id}`);
+    throw error;
   }
 }
