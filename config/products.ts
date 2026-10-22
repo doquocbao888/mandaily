@@ -164,6 +164,83 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
   ],
 };
 
+export const featuredProductsConfig2: FeaturedProductsConfig = {
+  sectionTitle: 'Top-tier essentials.',
+  sectionSubtitle: 'OUR RECOS',
+  products: [
+    ...featuredProductsConfig.products,
+    {
+      id: 'chairman-pro',
+      title: 'The Chairman® Pro',
+      subtitle: 'Electric Foil Face Shaver',
+      categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Chairman® Pro'],
+      vipPrice: '$149.99',
+      regularPrice: '$159.99',
+      href: '#',
+      imageSrc: '/assets/aistudio/70-00186_4597ae5e.jpg',
+      imageAlt: 'The Chairman Pro Shaver',
+      thumbnails: [],
+      badge: 'Best Seller',
+      rating: 4.8,
+      reviewCount: '1,200 đánh giá',
+      soldCount: 'Đã bán 50k',
+      shortDescription: 'Máy cạo râu lá điện tử cao cấp.',
+      highlights: ['Cạo sát', 'Chống nicks'],
+      reviewSample: { author: 'A', rating: 5, comment: 'Tốt' },
+      variants: [],
+      gifts: [],
+      cashbackText: '',
+      warrantyText: 'BẢO HÀNH 12 THÁNG'
+    },
+    {
+      id: 'beard-hedger',
+      title: 'The Beard Hedger®',
+      subtitle: 'Electric Beard Trimmer',
+      categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Beard Hedger®'],
+      vipPrice: '$89.99',
+      regularPrice: '$99.99',
+      href: '#',
+      imageSrc: '/assets/aistudio/image_075587b8.png',
+      imageAlt: 'The Beard Hedger Trimmer',
+      thumbnails: [],
+      badge: 'Best Seller',
+      rating: 4.9,
+      reviewCount: '2,000 đánh giá',
+      soldCount: 'Đã bán 80k',
+      shortDescription: 'Máy tỉa râu chuyên dụng.',
+      highlights: ['Chính xác', 'Êm ái'],
+      reviewSample: { author: 'B', rating: 5, comment: 'Tuyệt vời' },
+      variants: [],
+      gifts: [],
+      cashbackText: '',
+      warrantyText: 'BẢO HÀNH 12 THÁNG'
+    },
+    {
+      id: 'beard-balls-strays',
+      title: 'The Beard, Balls & Strays Bundle',
+      subtitle: 'Three-device bundle with next-gen power.',
+      categoryPath: ['Trang chủ', 'BUNDLES', 'The Beard, Balls & Strays Bundle'],
+      vipPrice: '$199.99',
+      regularPrice: '$209.99',
+      href: '#',
+      imageSrc: '/assets/aistudio/the-beard-balls-and-strays-bundle_product_desktop_255fa9af.jpg',
+      imageAlt: 'Beard, Balls & Strays Bundle',
+      thumbnails: [],
+      badge: 'New',
+      rating: 5.0,
+      reviewCount: '500 đánh giá',
+      soldCount: 'Đã bán 20k',
+      shortDescription: 'Bộ 3 thiết bị tối thượng.',
+      highlights: ['Trọn bộ', 'Tiết kiệm'],
+      reviewSample: { author: 'C', rating: 5, comment: 'Đỉnh' },
+      variants: [],
+      gifts: [],
+      cashbackText: '',
+      warrantyText: 'BẢO HÀNH 12 THÁNG'
+    }
+  ],
+};
+
 export function getProductById(id: string): ProductItem | undefined {
   return featuredProductsConfig.products.find((p) => p.id === id);
 }

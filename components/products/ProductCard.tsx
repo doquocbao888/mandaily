@@ -12,7 +12,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Product Image Card Container */}
       <Link
         href={product.href}
-        className="relative w-full aspect-[1/1] sm:aspect-[4/3.8] bg-[#f0eee6] rounded-[2px] overflow-hidden flex items-center justify-center p-4 sm:p-6 mb-5 block cursor-pointer transition-transform duration-500 ease-out hover:opacity-98"
+        className="relative w-full aspect-[1/1] sm:aspect-[4/3.8] bg-[#f0eee6] rounded-[2px] overflow-hidden flex items-center justify-center mb-5 block cursor-pointer transition-transform duration-500 ease-out hover:opacity-98"
       >
         <div className="relative w-full h-full flex items-center justify-center">
           <Image
@@ -20,7 +20,8 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.imageAlt}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-contain p-2 sm:p-3 scale-[1.08] sm:scale-[1.12] transition-transform duration-500 ease-out group-hover:scale-[1.15]"
+            quality={100}
+            className="object-cover w-full h-full transition-transform duration-500 ease-out group-hover:scale-[1.05]"
           />
         </div>
       </Link>

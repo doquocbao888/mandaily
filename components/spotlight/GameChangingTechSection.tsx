@@ -90,7 +90,7 @@ export default function GameChangingTechSection() {
         {/* Scrollable Peek Carousel Container */}
         <div
           ref={scrollContainerRef}
-          className="flex items-center gap-6 sm:gap-10 overflow-x-auto scrollbar-none scroll-smooth px-[8vw] sm:px-[calc(50%-300px)] lg:px-[calc(50%-380px)] py-8 snap-x snap-mandatory"
+          className="flex items-center gap-6 sm:gap-8 overflow-x-auto scrollbar-none scroll-smooth px-[5vw] py-8 snap-x snap-mandatory cursor-grab active:cursor-grabbing"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {techItems.map((item, index) => {
@@ -113,6 +113,7 @@ export default function GameChangingTechSection() {
                     alt={item.imageAlt}
                     fill
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 600px, 720px"
+                    quality={100}
                     className="object-cover object-center"
                     referrerPolicy="no-referrer"
                   />
@@ -125,6 +126,7 @@ export default function GameChangingTechSection() {
                           src={item.productImg}
                           alt={item.productTitle}
                           fill
+                          quality={100}
                           className="object-cover"
                           referrerPolicy="no-referrer"
                         />

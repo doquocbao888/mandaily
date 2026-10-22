@@ -20,8 +20,9 @@ export default function ProductSpotlightSection({
         alt={config.imageAlt}
         fill
         priority
-        sizes="100vw"
+        sizes="(max-width: 768px) 100vw, 1920px"
         className="object-cover object-center select-none"
+        quality={100}
       />
 
       {/* NEW! Badge in top right corner */}

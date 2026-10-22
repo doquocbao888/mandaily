@@ -23,6 +23,7 @@ export default function TrustBar({ config = trustBarConfig }: TrustBarProps) {
                 alt={item.text}
                 width={item.iconWidth}
                 height={item.iconHeight}
+                quality={100}
                 className="w-auto h-6 sm:h-7 object-contain"
               />
             </div>

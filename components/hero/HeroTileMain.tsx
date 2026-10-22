@@ -16,6 +16,7 @@ export default function HeroTileMain({ tile }: HeroTileMainProps) {
         fill
         priority
         sizes="(max-width: 1024px) 100vw, 62vw"
+        quality={100}
         className="object-cover object-[52%_center] sm:object-right select-none transition-transform duration-700 ease-out group-hover:scale-[1.01]"
       />
 
