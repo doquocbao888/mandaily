@@ -21,6 +21,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             quality={100}
+            unoptimized={product.imageSrc?.startsWith('data:') || product.imageSrc?.startsWith('http')}
             className="object-cover w-full h-full transition-transform duration-500 ease-out group-hover:scale-[1.05]"
           />
         </div>

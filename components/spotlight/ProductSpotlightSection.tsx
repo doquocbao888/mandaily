@@ -23,6 +23,7 @@ export default function ProductSpotlightSection({
         sizes="(max-width: 768px) 100vw, 1920px"
         className="object-cover object-center select-none"
         quality={100}
+        unoptimized={config.imageSrc?.startsWith('data:') || config.imageSrc?.startsWith('http')}
       />
 
       {/* NEW! Badge in top right corner */}

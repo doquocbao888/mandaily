@@ -14,7 +14,8 @@ import {
   X, 
   FileCheck,
   ExternalLink,
-  Plus
+  Plus,
+  Link as LinkIcon
 } from 'lucide-react';
 import { type MediaItem, saveMediaToDb, deleteMediaFromDb } from '@/lib/dbService';
 
@@ -35,7 +36,39 @@ export default function MediaManager({
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'image' | 'video'>('all');
   const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+  const [showAddUrlModal, setShowAddUrlModal] = useState(false);
+  const [customUrl, setCustomUrl] = useState('');
+  const [customName, setCustomName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAddCustomUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = customUrl.trim();
+    if (!url) return;
+
+    const isVideo = url.match(/\.(mp4|webm|mov|mkv)($|\?)/i) !== null;
+    const timestamp = Date.now();
+    const media: MediaItem = {
+      id: `media-${timestamp}`,
+      name: customName.trim() || url.split('/').pop()?.split('?')[0] || `Media ${timestamp}`,
+      url: url,
+      type: isVideo ? 'video/mp4' : 'image/jpeg',
+      mediaType: isVideo ? 'video' : 'image',
+      size: 0,
+      createdAt: new Date().toLocaleString('vi-VN'),
+    };
+
+    try {
+      await saveMediaToDb(media);
+      setLastUploadedUrl(url);
+      setCustomUrl('');
+      setCustomName('');
+      setShowAddUrlModal(false);
+    } catch (err) {
+      console.error('Lỗi khi lưu media:', err);
+      alert('Không thể lưu media vào hệ thống.');
+    }
+  };
 
   const formatFileSize = (bytes?: number) => {
     if (!bytes) return 'N/A';
@@ -151,7 +184,7 @@ export default function MediaManager({
             </div>
           </div>
 
-          <div>
+          <div className="flex items-center space-x-2.5">
             <input
               type="file"
               ref={fileInputRef}
@@ -162,7 +195,7 @@ export default function MediaManager({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center space-x-2 text-sm disabled:opacity-50"
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center space-x-2 text-sm disabled:opacity-50 cursor-pointer"
             >
               {uploading ? (
                 <>
@@ -172,9 +205,16 @@ export default function MediaManager({
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  <span>Chọn tệp tải lên</span>
+                  <span>Tải tệp từ máy</span>
                 </>
               )}
+            </button>
+            <button
+              onClick={() => setShowAddUrlModal(true)}
+              className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold px-4 py-2.5 rounded-xl border border-neutral-300 transition-all flex items-center space-x-1.5 text-sm cursor-pointer"
+            >
+              <LinkIcon className="w-4 h-4 text-neutral-600" />
+              <span>Dán link URL</span>
             </button>
           </div>
         </div>
@@ -284,6 +324,7 @@ export default function MediaManager({
                   alt={item.name}
                   fill
                   sizes="200px"
+                  unoptimized={item.url.startsWith('data:') || item.url.startsWith('http')}
                   className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                   referrerPolicy="no-referrer"
                 />
@@ -394,6 +435,7 @@ export default function MediaManager({
                   src={previewItem.url}
                   alt={previewItem.name}
                   fill
+                  unoptimized={previewItem.url.startsWith('data:') || previewItem.url.startsWith('http')}
                   className="object-contain"
                   referrerPolicy="no-referrer"
                 />
@@ -424,6 +466,74 @@ export default function MediaManager({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Custom URL Modal */}
+      {showAddUrlModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-fadeIn">
+            <div className="flex items-center justify-between mb-4 border-b pb-3">
+              <div className="flex items-center space-x-2">
+                <LinkIcon className="w-5 h-5 text-amber-600" />
+                <h3 className="font-bold text-base text-neutral-900">Thêm tệp bằng URL</h3>
+              </div>
+              <button 
+                onClick={() => setShowAddUrlModal(false)}
+                className="text-neutral-400 hover:text-neutral-700 p-1 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomUrl} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Đường dẫn hình ảnh hoặc video (URL) *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="https://... hoặc /assets/..."
+                  className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none focus:border-amber-600 focus:bg-white"
+                />
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  Hỗ trợ link ảnh trực tiếp từ Imgur, Cloudinary, ImgBB hoặc link ảnh web bất kỳ.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                  Tên gợi nhớ (Tùy chọn)
+                </label>
+                <input
+                  type="text"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Ví dụ: Banner Lawn Mower Gen 6"
+                  className="w-full bg-neutral-50 border border-neutral-300 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-amber-600 focus:bg-white"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUrlModal(false)}
+                  className="px-4 py-2 text-xs font-semibold text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition-colors shadow-sm"
+                >
+                  Lưu vào thư viện
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
