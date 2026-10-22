@@ -151,7 +151,7 @@ export default function CategoryCarouselSection({
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleDragEnd}
-            className="flex items-stretch gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-6 px-4 sm:px-6 lg:px-12 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none scroll-smooth [scroll-behavior:smooth]"
+            className="flex items-stretch gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-6 px-4 sm:px-6 lg:px-12 snap-x snap-mandatory cursor-grab active:cursor-grabbing select-none scroll-smooth [scroll-behavior:smooth] touch-pan-y"
           >
             {config.items.map((item) => (
               <div
