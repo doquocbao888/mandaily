@@ -6,7 +6,6 @@ import FeaturedProductsSection from '@/components/products/FeaturedProductsSecti
 import CategoryCarouselSection from '@/components/categories/CategoryCarouselSection';
 import ProductSpotlightSection from '@/components/spotlight/ProductSpotlightSection';
 import GameChangingTechSection from '@/components/spotlight/GameChangingTechSection';
-import KOLReviewSection from '@/components/spotlight/KOLReviewSection';
 
 export default function HomePage() {
   return (
@@ -35,11 +34,7 @@ export default function HomePage() {
 
         {/* 8. Game-Changing Tech Section ("Made for You. Game-changing tech.") */}
         <GameChangingTechSection />
-
-        {/* 9. KOL & KOC Review Videos Section */}
-        <KOLReviewSection />
       </main>
     </div>
   );
 }
-

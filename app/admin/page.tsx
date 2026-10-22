@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -24,20 +24,20 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { featuredProductsConfig, type ProductItem } from '@/config/products';
-
-interface OrderItem {
-  id: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  productName: string;
-  variant: string;
-  quantity: number;
-  totalPrice: string;
-  status: 'Đang xử lý' | 'Đang giao' | 'Đã giao' | 'Đã hủy';
-  createdAt: string;
-}
-
+import MediaManager from '@/components/admin/MediaManager';
+import { 
+  subscribeProducts, 
+  subscribeOrders, 
+  subscribeMedia,
+  saveProductToDb, 
+  deleteProductFromDb, 
+  updateOrderStatusInDb, 
+  seedInitialProductsIfNeeded, 
+  seedInitialOrdersIfNeeded,
+  seedInitialMediaIfNeeded,
+  type OrderItem,
+  type MediaItem
+} from '@/lib/dbService';
 const initialOrders: OrderItem[] = [
   {
     id: 'ORD-9821',
@@ -78,12 +78,34 @@ const initialOrders: OrderItem[] = [
 ];
 
 export default function AdminPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const isAuth = typeof window !== 'undefined' && localStorage.getItem('manscaped_admin_auth') === 'true';
+      setIsAuthenticated(isAuth);
+    };
+
+    const timer = setTimeout(() => {
+      checkAuth();
+      setMounted(true);
+    }, 0);
+
+    window.addEventListener('storage', checkAuth);
+    window.addEventListener('manscaped_auth_change', checkAuth);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('manscaped_auth_change', checkAuth);
+    };
+  }, []);
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'media'>('overview');
   
   // Products state
   const [products, setProducts] = useState<ProductItem[]>([]);
@@ -92,6 +114,10 @@ export default function AdminPage() {
   // Orders state
   const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
   const [searchOrder, setSearchOrder] = useState('');
+
+  // Media state
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [mediaPickerTarget, setMediaPickerTarget] = useState<'add-main' | 'add-thumb' | 'edit-main' | 'edit-thumb' | null>(null);
 
   // Add Product Form State
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -108,18 +134,55 @@ export default function AdminPage() {
   const [editThumbnailsText, setEditThumbnailsText] = useState('');
 
   useEffect(() => {
-    const logged = localStorage.getItem('manscaped_admin_auth');
-    if (logged === 'true') {
-      setIsLoggedIn(true);
-    }
-    setProducts(featuredProductsConfig.products);
+    let isMounted = true;
+    // Seed initial data if Firestore is empty
+    seedInitialProductsIfNeeded().catch(() => {});
+    seedInitialOrdersIfNeeded().catch(() => {});
+    seedInitialMediaIfNeeded().catch(() => {});
+
+    // Subscribe to real-time products
+    const unsubProducts = subscribeProducts((items) => {
+      if (isMounted) setProducts(items);
+    });
+
+    // Subscribe to real-time orders
+    const unsubOrders = subscribeOrders((items) => {
+      if (isMounted && items && items.length > 0) {
+        setOrders(items);
+      }
+    });
+
+    // Subscribe to real-time media
+    const unsubMedia = subscribeMedia((items) => {
+      if (isMounted) setMediaList(items);
+    });
+
+    return () => {
+      isMounted = false;
+      try {
+        unsubProducts();
+      } catch {
+        // ignore
+      }
+      try {
+        unsubOrders();
+      } catch {
+        // ignore
+      }
+      try {
+        unsubMedia();
+      } catch {
+        // ignore
+      }
+    };
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username === 'admin' && password === 'doquocbao') {
-      setIsLoggedIn(true);
       localStorage.setItem('manscaped_admin_auth', 'true');
+      setIsAuthenticated(true);
+      window.dispatchEvent(new Event('manscaped_auth_change'));
       setLoginError('');
     } else {
       setLoginError('Tài khoản hoặc mật khẩu không chính xác! (id: admin, pass: doquocbao)');
@@ -127,17 +190,22 @@ export default function AdminPage() {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
     localStorage.removeItem('manscaped_admin_auth');
+    setIsAuthenticated(false);
+    window.dispatchEvent(new Event('manscaped_auth_change'));
   };
 
-  const handleDeleteProduct = (id: string) => {
-    if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) {
-      setProducts(products.filter(p => p.id !== id));
+  const handleDeleteProduct = async (id: string) => {
+    if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi cơ sở dữ liệu?')) {
+      try {
+        await deleteProductFromDb(id);
+      } catch (err) {
+        console.error('Lỗi khi xóa sản phẩm:', err);
+      }
     }
   };
 
-  const handleAddProduct = (e: React.FormEvent) => {
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle) return;
 
@@ -173,10 +241,14 @@ export default function AdminPage() {
       warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
     };
 
-    setProducts([newProd, ...products]);
-    setShowAddProductModal(false);
-    setNewTitle('');
-    setNewSubtitle('');
+    try {
+      await saveProductToDb(newProd);
+      setShowAddProductModal(false);
+      setNewTitle('');
+      setNewSubtitle('');
+    } catch (err) {
+      console.error('Lỗi khi thêm sản phẩm:', err);
+    }
   };
 
   const handleOpenEditModal = (product: ProductItem) => {
@@ -185,7 +257,7 @@ export default function AdminPage() {
     setShowEditModal(true);
   };
 
-  const handleSaveEditProduct = (e: React.FormEvent) => {
+  const handleSaveEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
 
@@ -199,16 +271,35 @@ export default function AdminPage() {
       thumbnails: parsedThumbnails.length > 0 ? parsedThumbnails : [editingProduct.imageSrc]
     };
 
-    setProducts(products.map(p => p.id === updated.id ? updated : p));
-    setShowEditModal(false);
-    setEditingProduct(null);
+    try {
+      await saveProductToDb(updated);
+      setShowEditModal(false);
+      setEditingProduct(null);
+    } catch (err) {
+      console.error('Lỗi khi sửa sản phẩm:', err);
+    }
   };
 
-  const handleUpdateOrderStatus = (orderId: string, newStatus: OrderItem['status']) => {
-    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderItem['status']) => {
+    try {
+      await updateOrderStatusInDb(orderId, newStatus);
+    } catch (err) {
+      console.error('Lỗi khi cập nhật trạng thái đơn hàng:', err);
+    }
   };
 
-  if (!isLoggedIn) {
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-[#1c1c1c] border border-neutral-800 rounded-2xl shadow-2xl p-8 text-white flex flex-col items-center justify-center">
+          <div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-xs text-neutral-400">Đang khởi tạo hệ thống quản trị...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#121212] flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-[#1c1c1c] border border-neutral-800 rounded-2xl shadow-2xl p-8 text-white">
@@ -317,6 +408,16 @@ export default function AdminPage() {
               <ShoppingCart className="w-4 h-4" />
               <span>Quản lý Đơn hàng</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('media')}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === 'media' ? 'bg-amber-600 text-white shadow-md' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
+              }`}
+            >
+              <ImageIcon className="w-4 h-4" />
+              <span>Quản lý Media (Ảnh & Video)</span>
+            </button>
           </nav>
         </div>
 
@@ -349,10 +450,15 @@ export default function AdminPage() {
               {activeTab === 'overview' && 'Bảng điều khiển tổng quan'}
               {activeTab === 'products' && 'Quản lý danh mục sản phẩm'}
               {activeTab === 'orders' && 'Quản lý danh sách đơn hàng'}
+              {activeTab === 'media' && 'Thư viện Quản lý Media (Hình ảnh & Video)'}
             </h1>
           </div>
 
           <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Đã đồng bộ Firestore Cloud DB</span>
+            </div>
             <div className="w-9 h-9 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-sm shadow">
               A
             </div>
@@ -622,6 +728,11 @@ export default function AdminPage() {
             </div>
           )}
 
+          {/* MEDIA TAB */}
+          {activeTab === 'media' && (
+            <MediaManager mediaList={mediaList} />
+          )}
+
         </main>
       </div>
 
@@ -684,29 +795,50 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">Ảnh chính (Main Image URL / Path)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">Ảnh chính (Main Image URL / Path) *</label>
+                  <button
+                    type="button"
+                    onClick={() => setMediaPickerTarget('add-main')}
+                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Chọn từ Thư viện Media</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={newImageSrc}
                   onChange={(e) => setNewImageSrc(e.target.value)}
                   required
+                  placeholder="/assets/aistudio/... hoặc /uploads/..."
                   className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-600"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">
-                  Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setMediaPickerTarget('add-thumb')}
+                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Thêm từ Thư viện Media</span>
+                  </button>
+                </div>
                 <textarea
                   value={newThumbnailsText}
                   onChange={(e) => setNewThumbnailsText(e.target.value)}
-                  rows={5}
+                  rows={4}
                   placeholder="/assets/aistudio/image_1.webp&#10;/assets/aistudio/image_2.webp"
                   className="w-full border border-neutral-300 rounded-xl p-3 text-xs font-mono focus:outline-none focus:border-amber-600"
                 />
                 <p className="text-[11px] text-neutral-500 mt-1">
-                  Nhập các đường dẫn ảnh phụ để hiển thị trong cột thumbnail bên trái trang chi tiết sản phẩm.
+                  Nhập các đường dẫn ảnh phụ hoặc bấm nút trên để chọn nhanh từ Thư viện Media.
                 </p>
               </div>
 
@@ -787,7 +919,17 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">Ảnh chính (Main Image URL / Path)</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">Ảnh chính (Main Image URL / Path) *</label>
+                  <button
+                    type="button"
+                    onClick={() => setMediaPickerTarget('edit-main')}
+                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Chọn từ Thư viện Media</span>
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={editingProduct.imageSrc}
@@ -798,18 +940,28 @@ export default function AdminPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-700 mb-1">
-                  Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setMediaPickerTarget('edit-thumb')}
+                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5" />
+                    <span>Thêm từ Thư viện Media</span>
+                  </button>
+                </div>
                 <textarea
                   value={editThumbnailsText}
                   onChange={(e) => setEditThumbnailsText(e.target.value)}
-                  rows={5}
+                  rows={4}
                   placeholder="/assets/aistudio/image_1.webp&#10;/assets/aistudio/image_2.webp"
                   className="w-full border border-neutral-300 rounded-xl p-3 text-xs font-mono focus:outline-none focus:border-amber-600"
                 />
                 <p className="text-[11px] text-neutral-500 mt-1">
-                  Nhập danh sách đường dẫn ảnh phụ để hiển thị trong cột thumbnail trên trang chi tiết sản phẩm.
+                  Nhập danh sách đường dẫn ảnh phụ hoặc bấm nút trên để chọn nhanh từ Thư viện Media.
                 </p>
               </div>
 
@@ -829,6 +981,43 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Media Picker Modal */}
+      {mediaPickerTarget && (
+        <div className="fixed inset-0 z-[60] bg-black/75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+              <h3 className="font-bold text-lg text-neutral-900">
+                Chọn tệp từ Thư viện Media
+              </h3>
+              <button
+                onClick={() => setMediaPickerTarget(null)}
+                className="text-neutral-400 hover:text-neutral-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto pt-4">
+              <MediaManager
+                mediaList={mediaList}
+                selectionMode={true}
+                onSelectMedia={(url) => {
+                  if (mediaPickerTarget === 'add-main') {
+                    setNewImageSrc(url);
+                  } else if (mediaPickerTarget === 'add-thumb') {
+                    setNewThumbnailsText((prev) => (prev ? `${prev}\n${url}` : url));
+                  } else if (mediaPickerTarget === 'edit-main' && editingProduct) {
+                    setEditingProduct({ ...editingProduct, imageSrc: url });
+                  } else if (mediaPickerTarget === 'edit-thumb') {
+                    setEditThumbnailsText((prev) => (prev ? `${prev}\n${url}` : url));
+                  }
+                  setMediaPickerTarget(null);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

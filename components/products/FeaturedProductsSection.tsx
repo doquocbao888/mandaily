@@ -1,5 +1,9 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
-import { featuredProductsConfig, type FeaturedProductsConfig } from '@/config/products';
+import { featuredProductsConfig, type FeaturedProductsConfig, type ProductItem } from '@/config/products';
+import { subscribeProducts, seedInitialProductsIfNeeded } from '@/lib/dbService';
 
 interface FeaturedProductsSectionProps {
   config?: FeaturedProductsConfig;
@@ -8,6 +12,31 @@ interface FeaturedProductsSectionProps {
 export default function FeaturedProductsSection({
   config = featuredProductsConfig,
 }: FeaturedProductsSectionProps) {
+  const [products, setProducts] = useState<ProductItem[]>(config.products);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Seed initial products to Firestore if empty
+    seedInitialProductsIfNeeded().catch(() => {});
+
+    // Subscribe to real-time product updates from Firestore
+    const unsubscribe = subscribeProducts((updatedProducts) => {
+      if (isMounted && updatedProducts && updatedProducts.length > 0) {
+        setProducts(updatedProducts);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      try {
+        unsubscribe();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
   return (
     <section
       aria-label="Featured Products"
@@ -26,7 +55,7 @@ export default function FeaturedProductsSection({
 
         {/* Product Grid (2 columns on desktop, 1 on mobile) */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-          {config.products.map((product) => (
+          {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

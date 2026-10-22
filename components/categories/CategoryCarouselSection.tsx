@@ -80,7 +80,7 @@ export default function CategoryCarouselSection({
     containerRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     if (!isDragging || !containerRef.current) return;
     setIsDragging(false);
 
@@ -103,7 +103,7 @@ export default function CategoryCarouselSection({
 
     setCurrentIndex(closestIndex);
     scrollToCard(closestIndex);
-  };
+  }, [isDragging, scrollToCard]);
 
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -117,7 +117,7 @@ export default function CategoryCarouselSection({
       window.removeEventListener('mouseup', handleGlobalMouseUp);
       window.removeEventListener('touchend', handleGlobalMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, handleDragEnd]);
 
   return (
     <section

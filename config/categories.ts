@@ -51,21 +51,5 @@ export const categoryCarouselConfig: CategoryCarouselConfig = {
       imageSrc: '/assets/aistudio/homepage-superbowl_category-head-and-body_25ee9350.jpg',
       imageAlt: 'Head & Body grooming',
     },
-    {
-      id: 'skincare',
-      title: 'Skincare',
-      ctaText: 'Shop now',
-      ctaHref: '#',
-      imageSrc: '/assets/aistudio/homepage-superbowl_category-skincare_8561400c.jpg',
-      imageAlt: 'Skincare line',
-    },
-    {
-      id: 'apparel-and-accessories',
-      title: 'Apparel & Accessories',
-      ctaText: 'Shop now',
-      ctaHref: '#',
-      imageSrc: '/assets/aistudio/homepage-superbowl_category-apparel-and-accessories_4f8cb740.jpg',
-      imageAlt: 'Apparel and accessories',
-    },
   ],
 };

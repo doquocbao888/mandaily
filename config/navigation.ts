@@ -63,8 +63,5 @@ export const navigationConfig: NavigationConfig = {
     { label: 'Groin', href: '#', hasDropdown: true },
     { label: 'Beard & Face', href: '#', hasDropdown: true },
     { label: 'Head & Body', href: '#', hasDropdown: true },
-    { label: 'Skincare', href: '#', hasDropdown: true },
-    { label: 'Apparel & Accessories', href: '#', hasDropdown: true },
-    { label: 'Shop All', href: '#', hasDropdown: false },
   ],
 };

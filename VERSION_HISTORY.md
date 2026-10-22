@@ -2,6 +2,40 @@
 
 Tài liệu này ghi lại các mốc phiên bản quan trọng của dự án để đảm bảo an toàn, dễ dàng kiểm tra và phục hồi khi cần thiết.
 
+## 📌 v1.0.26 - Khắc phục triệt để lỗi Hydration Mismatch, AbortError WebChannel & Clipboard Permission
+- **Thời gian**: Tháng 10/2026
+- **Trạng thái**: Hoàn thiện & Đã kiểm tra (`Verification passed`).
+- **Nội dung**:
+  - **Khắc phục Hydration Mismatch**: Đồng bộ hóa hoàn toàn render SSR và initial client pass ở trang Quản trị (`/admin`) thông qua trạng thái `mounted` an toàn, loại bỏ triệt để xung đột cây DOM khi đọc `localStorage`.
+  - **Khắc phục `AbortError: signal is aborted without reason`**: Cấu hình `experimentalAutoDetectLongPolling: false` kết hợp `experimentalForceLongPolling: true` cho Firestore WebChannel; tích hợp `ClientErrorGuard` ở cấp độ Root Layout để bắt và triệt tiêu tất cả các lỗi hủy tín hiệu fetch vô hại khi component unmount hoặc hot-reload.
+  - **Khắc phục `NotAllowedError: Write permission denied` (Clipboard)**: Cải tiến hàm sao chép `handleCopy` ưu tiên sử dụng `document.execCommand('copy')` với phần tử ẩn (hoạt động ổn định trong mọi sandbox iframe không yêu cầu quyền writeText), kết hợp bọc `try-catch` an toàn tuyệt đối.
+  - **Chuẩn hóa ESLint & React**: Đạt 0 lỗi lint và 0 cảnh báo linter.
+
+## 📌 v1.0.25 - Hệ thống Quản lý Media (Tải lên Ảnh/Video, cấp link tức thì & chọn nhanh vào sản phẩm)
+- **Thời gian**: Tháng 10/2026
+- **Trạng thái**: Build thành công (`Build succeeded`).
+- **Nội dung**:
+  - Xây dựng phân hệ **Quản lý Media (Hình ảnh & Video)** hoàn chỉnh trong trang Quản trị (`/admin` tab Media).
+  - Hỗ trợ tải lên ảnh (PNG, JPG, WEBP, GIF) và video (MP4, WEBM) thông qua API route `/api/upload`.
+  - Tự động lưu trữ thông tin tệp vào cơ sở dữ liệu Firestore (collection `media`), đồng bộ thời gian thực.
+  - Cung cấp đường dẫn (URL) ngay lập tức khi tải lên kèm nút **Sao chép URL** 1 chạm tiện lợi để nhúng vào bài viết hoặc nội dung bất kỳ.
+  - Hỗ trợ bộ lọc loại tệp (Tất cả / Hình ảnh / Video), tìm kiếm theo tên/link, xem trước toàn màn hình ảnh & phát video trực tiếp.
+  - Tích hợp nút **"Chọn từ Thư viện Media"** trực tiếp vào biểu mẫu Thêm và Sửa sản phẩm giúp quản trị viên gán ảnh chính và danh sách ảnh phụ siêu tốc mà không cần copy paste thủ công.
+
+## 📌 v1.0.24 - Khắc phục lỗi `AbortError: signal is aborted without reason` của Firestore WebChannel
+- **Thời gian**: Tháng 10/2026
+- **Trạng thái**: Build thành công (`Build succeeded`).
+- **Nội dung**: 
+  - Cấu hình `experimentalForceLongPolling: true` trong hàm khởi tạo `initializeFirestore` nhằm tránh lỗi stream fetch bị ngắt kết nối đột ngột của WebChannel trong môi trường trình duyệt.
+  - Bổ sung cơ chế xử lý ngoại lệ graceful cho các tín hiệu abort khi component unmount hoặc khi chuyển trang, đảm bảo ứng dụng hoạt động mượt mà và ổn định tuyệt đối.
+
+## 📌 v1.0.23 - Đồng bộ dữ liệu Sản phẩm & Đơn hàng với Cơ sở dữ liệu đám mây (Firebase Firestore)
+- **Thời gian**: Tháng 10/2026
+- **Trạng thái**: Build thành công (`Build succeeded`).
+- **Nội dung**: Tích hợp cơ sở dữ liệu thời gian thực Firebase Firestore (`products` và `orders`):
+  - Đồng bộ hai chiều: Quản trị viên thêm, sửa, xóa sản phẩm hoặc cập nhật trạng thái đơn hàng trên `/admin`, toàn bộ thay đổi sẽ được lưu trữ đám mây vĩnh viễn và hiển thị tức thời (real-time) cho khách hàng trên trang chủ và trang chi tiết sản phẩm.
+  - Khi khách hàng bấm đặt mua trên trang chi tiết sản phẩm, đơn hàng mới lập tức được tạo trong Firestore và hiển thị theo thời gian thực trên trang quản trị.
+
 ## 📌 v1.0.22 - Cập nhật ảnh sản phẩm trang chi tiết scale full khung (object-cover)
 - **Thời gian**: Tháng 10/2026
 - **Trạng thái**: Build thành công (`Build succeeded`).

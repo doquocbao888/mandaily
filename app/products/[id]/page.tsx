@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getProductById } from '@/config/products';
+import { getProductById, type ProductItem } from '@/config/products';
+import { subscribeProductById, createOrderInDb } from '@/lib/dbService';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import { 
@@ -20,22 +21,59 @@ import {
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params?.id as string;
-  const product = getProductById(id);
+  const initialProduct = getProductById(id);
 
-  if (!product) {
-    notFound();
-  }
-
+  const [product, setProduct] = useState<ProductItem | null>(initialProduct || null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<'vip' | 'regular'>('vip');
   const [quantity, setQuantity] = useState(1);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
 
-  const handleAddToCart = () => {
+  useEffect(() => {
+    if (!id) return;
+    let isMounted = true;
+    const unsub = subscribeProductById(id, (updatedProd) => {
+      if (isMounted && updatedProd) {
+        setProduct(updatedProd);
+      }
+    });
+    return () => {
+      isMounted = false;
+      try {
+        unsub();
+      } catch {
+        // ignore
+      }
+    };
+  }, [id]);
+
+  if (!product) {
+    notFound();
+  }
+
+  const handleAddToCart = async () => {
     setAddedToast(true);
+    // Create new order in Firestore cloud database
+    try {
+      await createOrderInDb({
+        id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+        customerName: 'Khách hàng mới',
+        phone: '0909' + Math.floor(100000 + Math.random() * 900000),
+        address: 'Hồ Chí Minh, Việt Nam',
+        productName: product.title,
+        variant: selectedVariant === 'vip' ? 'VIP Member Price' : 'Regular Price',
+        quantity: quantity,
+        totalPrice: selectedVariant === 'vip' ? product.vipPrice : product.regularPrice,
+        status: 'Đang xử lý',
+        createdAt: new Date().toLocaleString('vi-VN'),
+      });
+    } catch (e) {
+      console.error('Failed to create order:', e);
+    }
     setTimeout(() => setAddedToast(false), 3500);
   };
+
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#1a1a1a] flex flex-col font-sans select-none">
