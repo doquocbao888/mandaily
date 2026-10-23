@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
 
 interface TechItem {
   id: string;
@@ -262,41 +263,15 @@ export default function GameChangingTechSection() {
           })}
         </div>
 
-        {/* Carousel Navigation Dots & Arrows */}
-        <div className="flex items-center justify-center gap-4 mt-8 sm:mt-12">
-          <button
-            onClick={handlePrev}
-            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] active:scale-95 text-white flex items-center justify-center shadow-md transition-all cursor-pointer"
-            aria-label="Previous tech card"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <div className="flex items-center gap-2">
-            {techItems.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => scrollToCard(idx)}
-                className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-                  activeIndex === idx ? 'w-8 bg-[#b98141]' : 'w-2.5 bg-neutral-300 hover:bg-neutral-400'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-
-          <button
-            onClick={handleNext}
-            className="w-10 h-10 rounded-full bg-[#b98141] hover:bg-[#a57134] active:scale-95 text-white flex items-center justify-center shadow-md transition-all cursor-pointer"
-            aria-label="Next tech card"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+        {/* Unified Brown Pill Navigation Bar (matching image_6888aa00.png) */}
+        <CarouselPillNavigation
+          currentIndex={activeIndex}
+          totalItems={techItems.length}
+          onPrev={handlePrev}
+          onNext={handleNext}
+          onSelect={scrollToCard}
+          className="mt-8 sm:mt-12"
+        />
       </div>
     </section>
   );

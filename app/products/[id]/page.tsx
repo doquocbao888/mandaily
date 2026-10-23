@@ -8,6 +8,9 @@ import { getProductById, type ProductItem } from '@/config/products';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import VideoReviewsSection from '@/components/products/VideoReviewsSection';
+import GoesGreatWithSection from '@/components/products/GoesGreatWithSection';
+import ProductFaqSection from '@/components/products/ProductFaqSection';
+import Footer from '@/components/header/Footer';
 import { 
   CheckCircle2, 
   ChevronDown, 
@@ -608,7 +611,16 @@ export default function ProductDetailPage() {
         {/* Next Section: UGC Video Reviews 'The buzz is real' */}
         <VideoReviewsSection reviews={product?.videoReviews} />
 
+        {/* Next Section: 'Goes great with...' Product Carousel (synced with admin in real-time) */}
+        <GoesGreatWithSection currentProductId={id} />
+
       </main>
+
+      {/* Next Section: FAQ / FQA Accordion matching Manscaped specifications */}
+      <ProductFaqSection />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -246,7 +246,7 @@ export default function VideoReviewsSection({
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <section className="w-full py-16 sm:py-24 bg-white border-t border-neutral-100 overflow-hidden">
+    <section className="w-full py-16 sm:py-24 bg-transparent overflow-hidden">
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}

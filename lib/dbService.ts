@@ -47,6 +47,18 @@ export async function seedInitialProductsIfNeeded() {
         };
         await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
       }
+    } else {
+      // Ensure any newly added catalog items exist in Firestore if not already present
+      const existingIds = new Set(snap.docs.map(d => d.id));
+      for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
+        const prod = featuredProductsConfig2.products[i];
+        if (!existingIds.has(prod.id)) {
+          await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), {
+            ...prod,
+            orderIndex: prod.orderIndex ?? i,
+          });
+        }
+      }
     }
     hasSeededProducts = true;
   } catch (err: any) {

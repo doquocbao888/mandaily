@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
 import { categoryCarouselConfig, type CategoryCarouselConfig } from '@/config/categories';
 
 interface CategoryCarouselSectionProps {
@@ -191,53 +192,15 @@ export default function CategoryCarouselSection({
             ))}
           </div>
 
-          {/* Carousel Pagination & Navigation Controls */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button
-              type="button"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs active:scale-95 ${
-                currentIndex === 0
-                  ? 'bg-neutral-300 opacity-50 cursor-not-allowed'
-                  : 'bg-[#b98141] hover:bg-[#a57134] cursor-pointer'
-              }`}
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
-            </button>
-
-            {/* Dots */}
-            <div className="flex items-center gap-2 px-2">
-              {config.items.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    scrollToCard(idx);
-                  }}
-                  className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                    currentIndex === idx ? 'bg-[#b98141] w-4' : 'bg-neutral-300 w-2 hover:bg-neutral-400'
-                  }`}
-                  aria-label={`Go to slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={currentIndex === totalItems - 1}
-              className={`w-10 h-10 rounded-full text-white flex items-center justify-center transition-colors shadow-xs active:scale-95 ${
-                currentIndex === totalItems - 1
-                  ? 'bg-neutral-300 opacity-50 cursor-not-allowed'
-                  : 'bg-[#b98141] hover:bg-[#a57134] cursor-pointer'
-              }`}
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-5 h-5 stroke-[2.2]" />
-            </button>
-          </div>
+          {/* Unified Brown Pill Navigation Bar (matching image_6888aa00.png) */}
+          <CarouselPillNavigation
+            currentIndex={currentIndex}
+            totalItems={totalItems}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            onSelect={scrollToCard}
+            className="mt-10"
+          />
         </div>
       </div>
     </section>
