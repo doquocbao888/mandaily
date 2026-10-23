@@ -4,8 +4,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { type FeaturedProductsConfig, type ProductItem } from '@/config/products';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { subscribeProducts, seedInitialProductsIfNeeded } from '@/lib/dbService';
-
 interface FeaturedProductsSectionProps {
   config: FeaturedProductsConfig;
 }
@@ -19,20 +17,26 @@ export default function FeaturedProductsSection({ config }: FeaturedProductsSect
 
   useEffect(() => {
     let isMounted = true;
-    seedInitialProductsIfNeeded().catch(() => {});
+    let unsubscribe: (() => void) | undefined;
 
-    const unsubscribe = subscribeProducts((updatedProducts) => {
-      if (isMounted && updatedProducts && updatedProducts.length > 0) {
-        setProducts(updatedProducts);
-      }
-    });
+    import('@/lib/dbService').then(({ subscribeProducts, seedInitialProductsIfNeeded }) => {
+      if (!isMounted) return;
+      seedInitialProductsIfNeeded().catch(() => {});
+      unsubscribe = subscribeProducts((updatedProducts) => {
+        if (isMounted && updatedProducts && updatedProducts.length > 0) {
+          setProducts(updatedProducts);
+        }
+      });
+    }).catch(() => {});
 
     return () => {
       isMounted = false;
-      try {
-        unsubscribe();
-      } catch {
-        // ignore
+      if (unsubscribe) {
+        try {
+          unsubscribe();
+        } catch {
+          // ignore
+        }
       }
     };
   }, []);

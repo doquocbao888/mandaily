@@ -3,8 +3,6 @@
 import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { featuredProductsConfig, type FeaturedProductsConfig, type ProductItem } from '@/config/products';
-import { subscribeProducts, seedInitialProductsIfNeeded } from '@/lib/dbService';
-
 interface FeaturedProductsSectionProps {
   config?: FeaturedProductsConfig;
 }
@@ -16,23 +14,26 @@ export default function FeaturedProductsSection({
 
   useEffect(() => {
     let isMounted = true;
+    let unsubscribe: (() => void) | undefined;
 
-    // Seed initial products to Firestore if empty
-    seedInitialProductsIfNeeded().catch(() => {});
-
-    // Subscribe to real-time product updates from Firestore
-    const unsubscribe = subscribeProducts((updatedProducts) => {
-      if (isMounted && updatedProducts && updatedProducts.length > 0) {
-        setProducts(updatedProducts);
-      }
-    });
+    import('@/lib/dbService').then(({ subscribeProducts, seedInitialProductsIfNeeded }) => {
+      if (!isMounted) return;
+      seedInitialProductsIfNeeded().catch(() => {});
+      unsubscribe = subscribeProducts((updatedProducts) => {
+        if (isMounted && updatedProducts && updatedProducts.length > 0) {
+          setProducts(updatedProducts);
+        }
+      });
+    }).catch(() => {});
 
     return () => {
       isMounted = false;
-      try {
-        unsubscribe();
-      } catch {
-        // ignore
+      if (unsubscribe) {
+        try {
+          unsubscribe();
+        } catch {
+          // ignore
+        }
       }
     };
   }, []);

@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   },
   // Allow access to remote image placeholder.
   images: {
+    qualities: [75, 80, 85, 90, 95, 100],
     remotePatterns: [
       {
         protocol: 'https',
@@ -25,8 +26,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['firebase', '@firebase/app', '@firebase/firestore', '@firebase/auth'],
   output: 'standalone',
-  transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modify—file watching is disabled to prevent flickering during agent edits.

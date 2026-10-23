@@ -224,17 +224,17 @@ export default function VideoReviewsSection({
                       {/* Bottom Control Bar */}
                       <div className="absolute inset-x-0 bottom-0 p-3.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-30">
                         <div className="flex items-center space-x-2.5 bg-black/80 backdrop-blur-xs px-3 py-2 rounded-xl border border-white/10">
-                          {/* Play/Pause Button */}
+                          {/* Play/Pause Button: small horizontal rounded rectangle, dark translucent background, white icon */}
                           <button
                             type="button"
                             onClick={togglePlay}
-                            className="text-white hover:text-amber-400 transition flex-shrink-0"
+                            className="text-white bg-black/60 hover:bg-black/80 px-2 py-0.5 h-5 min-w-[28px] rounded-[5px] flex items-center justify-center transition flex-shrink-0 border border-white/10"
                             aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
                           >
                             {isPlaying ? (
-                              <Pause className="w-4 h-4 fill-current" />
+                              <Pause className="w-2.5 h-2.5 fill-current text-white" />
                             ) : (
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                              <Play className="w-2.5 h-2.5 fill-current ml-0.5 text-white" />
                             )}
                           </button>
 
@@ -258,10 +258,10 @@ export default function VideoReviewsSection({
                           <button
                             type="button"
                             onClick={toggleMute}
-                            className="text-white/80 hover:text-white transition flex-shrink-0"
+                            className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
                             title={isMuted ? 'Bật tiếng' : 'Tắt tiếng'}
                           >
-                            {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                            {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 text-amber-400" />}
                           </button>
 
                           <button
@@ -270,10 +270,10 @@ export default function VideoReviewsSection({
                               e.stopPropagation();
                               setVideoModalReview(review);
                             }}
-                            className="text-white/80 hover:text-white transition flex-shrink-0"
+                            className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
                             title="Xem lớn"
                           >
-                            <Maximize2 className="w-3.5 h-3.5" />
+                            <Maximize2 className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
@@ -359,12 +359,18 @@ export default function VideoReviewsSection({
             {/* Bottom Control Bar */}
             <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent z-30">
               <div className="flex items-center space-x-2 bg-black/80 backdrop-blur-xs px-3 py-2 rounded-xl border border-white/10">
+                {/* Play/Pause Button: small horizontal rounded rectangle, dark translucent background, white icon */}
                 <button
                   type="button"
                   onClick={togglePlay}
-                  className="text-white hover:text-amber-400 transition flex-shrink-0"
+                  className="text-white bg-black/60 hover:bg-black/80 px-2 py-0.5 h-5 min-w-[28px] rounded-[5px] flex items-center justify-center transition flex-shrink-0 border border-white/10"
+                  aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}
                 >
-                  {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+                  {isPlaying ? (
+                    <Pause className="w-2.5 h-2.5 fill-current text-white" />
+                  ) : (
+                    <Play className="w-2.5 h-2.5 fill-current ml-0.5 text-white" />
+                  )}
                 </button>
                 <span className="bg-white text-neutral-900 text-[10px] font-bold px-1.5 py-0.5 rounded shadow-xs flex-shrink-0">
                   {formatTime(currentTime)}
@@ -378,9 +384,9 @@ export default function VideoReviewsSection({
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="text-white/80 hover:text-white transition flex-shrink-0"
+                  className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
                 >
-                  {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5 text-amber-400" />}
+                  {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 text-amber-400" />}
                 </button>
                 <button
                   type="button"
@@ -388,9 +394,9 @@ export default function VideoReviewsSection({
                     e.stopPropagation();
                     setVideoModalReview(displayReviews[activeIndex]);
                   }}
-                  className="text-white/80 hover:text-white transition flex-shrink-0"
+                  className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
                 >
-                  <Maximize2 className="w-3.5 h-3.5" />
+                  <Maximize2 className="w-3 h-3" />
                 </button>
               </div>
             </div>

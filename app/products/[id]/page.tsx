@@ -5,7 +5,6 @@ import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProductById, type ProductItem } from '@/config/products';
-import { subscribeProductById, createOrderInDb } from '@/lib/dbService';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import VideoReviewsSection from '@/components/products/VideoReviewsSection';
@@ -33,10 +32,79 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const mobileThumbnailsRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
+
+  const fallbackProduct = initialProduct || getProductById(id) || {
+    id: id || 'default',
+    title: 'The Lawn Mower® Ultra Gen 6',
+    subtitle: 'Groin & Body Hair Trimmer',
+    categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
+    vipPrice: '$109.99',
+    regularPrice: '$119.99',
+    href: `/products/${id || 'lawn-mower-ultra-6'}`,
+    imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
+    imageAlt: 'The Lawn Mower Ultra Gen 6 Trimmer with blade attachment',
+    thumbnails: [
+      '/assets/aistudio/30-00006-NA_f201a618.png',
+      '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
+      '/assets/aistudio/b72c1da980f6_e399d627.webp',
+      '/assets/aistudio/e25de805d015_f449fce7.webp',
+      '/assets/aistudio/e38aa911b5e9_8252c23e.webp',
+      '/assets/aistudio/fac0fd606c51_4d3a1ba2.webp',
+      '/assets/aistudio/685d42568afa_98fc3951.webp',
+      '/assets/aistudio/25106398e899_13ff16c1.webp',
+    ],
+    rating: 5.0,
+    reviewCount: '1,671 đánh giá',
+    soldCount: 'Đã bán 75.8k',
+    shortDescription: 'Máy cạo lông vùng kín chuyên dụng cao cấp, chống nước IPX7.',
+    highlights: ['Sạch chỉ 1 lần lướt', 'Không đau, không xước (SkinSafe™)', 'Da mịn, không ngứa rát'],
+    reviewSample: { author: 'Chi Hùng', rating: 5, comment: 'Sản phẩm tuyệt vời.' },
+    variants: [],
+    gifts: [],
+    cashbackText: '',
+    warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+  };
+
+  const rawThumbs = (product?.thumbnails || []).filter(
+    (t) => typeof t === 'string' && t.trim().length > 0
+  );
+  const currentThumbnails = rawThumbs.length > 0
+    ? rawThumbs
+    : (fallbackProduct.thumbnails && fallbackProduct.thumbnails.length > 0
+        ? fallbackProduct.thumbnails
+        : ['/assets/aistudio/30-00006-NA_f201a618.png']);
+
+  const DEFAULT_IMAGE = '/assets/aistudio/30-00006-NA_f201a618.png';
+  const SECONDARY_IMAGE = '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg';
+
+  const getImageSrc = (src?: string, fallbackSrc?: string) => {
+    const fallback = fallbackSrc || fallbackProduct.imageSrc || DEFAULT_IMAGE;
+    if (!src || src.trim().length === 0 || failedImages[src]) {
+      if (failedImages[fallback]) {
+        return SECONDARY_IMAGE;
+      }
+      return fallback;
+    }
+    return src;
+  };
+
+  const handleImageError = (failedSrc?: string) => {
+    if (!failedSrc) return;
+    setFailedImages((prev) => {
+      if (prev[failedSrc]) return prev;
+      return { ...prev, [failedSrc]: true };
+    });
+  };
+
+  const isUnoptimized = (src?: string) => {
+    if (!src) return false;
+    return src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://');
+  };
 
   const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {
     if (isScrollingRef.current) return;
@@ -47,9 +115,8 @@ export default function ProductDetailPage() {
     if (width > 0) {
       const newIndex = Math.round(scrollLeft / width);
       if (
-        product?.thumbnails &&
         newIndex >= 0 &&
-        newIndex < product.thumbnails.length &&
+        newIndex < currentThumbnails.length &&
         newIndex !== selectedImageIndex
       ) {
         setSelectedImageIndex(newIndex);
@@ -84,20 +151,44 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!id) return;
     let isMounted = true;
-    const unsub = subscribeProductById(id, (updatedProd) => {
-      if (isMounted) {
-        if (updatedProd) {
-          setProduct(updatedProd);
+    let unsub: (() => void) | undefined;
+
+    import('@/lib/dbService').then(({ subscribeProductById }) => {
+      if (!isMounted) return;
+      unsub = subscribeProductById(id, (updatedProd) => {
+        if (isMounted) {
+          if (updatedProd) {
+            const defaultProd = getProductById(id);
+            const rawT = (updatedProd.thumbnails || []).filter(
+              (t) => typeof t === 'string' && t.trim().length > 0
+            );
+            const safeT = rawT.length > 0
+              ? rawT
+              : (defaultProd?.thumbnails || [updatedProd.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png']);
+
+            setProduct({
+              ...defaultProd,
+              ...updatedProd,
+              imageSrc: updatedProd.imageSrc || defaultProd?.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png',
+              thumbnails: safeT,
+            });
+          }
+          setLoading(false);
         }
-        setLoading(false);
-      }
+      });
+    }).catch((err) => {
+      console.warn('Could not load dbService in useEffect:', err);
+      if (isMounted) setLoading(false);
     });
+
     return () => {
       isMounted = false;
-      try {
-        unsub();
-      } catch {
-        // ignore
+      if (unsub) {
+        try {
+          unsub();
+        } catch {
+          // ignore
+        }
       }
     };
   }, [id]);
@@ -118,6 +209,7 @@ export default function ProductDetailPage() {
     setAddedToast(true);
     // Create new order in Firestore cloud database
     try {
+      const { createOrderInDb } = await import('@/lib/dbService');
       await createOrderInDb({
         id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
         customerName: 'Khách hàng mới',
@@ -165,26 +257,31 @@ export default function ProductDetailPage() {
             
             {/* Vertical Thumbnail List on Left (Compact size & subtle custom scrollbar) */}
             <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[620px] lg:max-h-[680px] flex-shrink-0 w-full sm:w-[64px] md:w-[70px] pb-2 sm:pb-0 sm:pr-1 [scrollbar-width:thin] [scrollbar-color:#d4d4d4_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:bg-neutral-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-              {product.thumbnails.map((thumb, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative flex-shrink-0 w-13 h-13 sm:w-[56px] sm:h-[56px] md:w-[62px] md:h-[62px] rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
-                    selectedImageIndex === idx 
-                      ? 'border-neutral-900 ring-2 ring-neutral-900/10 scale-[1.03] shadow-sm' 
-                      : 'border-neutral-200/80 opacity-75 hover:opacity-100'
-                  }`}
-                >
-                  <Image
-                    src={thumb}
-                    alt={`Thumbnail ${idx}`}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </button>
-              ))}
+              {currentThumbnails.map((thumb, idx) => {
+                const resolvedThumb = getImageSrc(thumb);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`relative flex-shrink-0 w-13 h-13 sm:w-[56px] sm:h-[56px] md:w-[62px] md:h-[62px] rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
+                      selectedImageIndex === idx 
+                        ? 'border-neutral-900 ring-2 ring-neutral-900/10 scale-[1.03] shadow-sm' 
+                        : 'border-neutral-200/80 opacity-75 hover:opacity-100'
+                    }`}
+                  >
+                    <Image
+                      src={resolvedThumb}
+                      alt={`Thumbnail ${idx}`}
+                      fill
+                      sizes="64px"
+                      unoptimized={isUnoptimized(resolvedThumb)}
+                      onError={() => handleImageError(thumb)}
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </button>
+                );
+              })}
             </div>
 
             {/* Main Image Box (Enlarged with generous aspect ratio & min-height) */}
@@ -197,15 +294,23 @@ export default function ProductDetailPage() {
 
               {/* Main Image Display */}
               <div className="relative w-full h-full flex items-center justify-center">
-                <Image
-                  src={product.thumbnails[selectedImageIndex] || product.imageSrc}
-                  alt={product.imageAlt}
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 850px"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                />
+                {(() => {
+                  const targetSrc = currentThumbnails[selectedImageIndex] || product?.imageSrc || fallbackProduct.imageSrc;
+                  const resolvedMain = getImageSrc(targetSrc);
+                  return (
+                    <Image
+                      src={resolvedMain}
+                      alt={product?.imageAlt || fallbackProduct.imageAlt}
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 850px"
+                      unoptimized={isUnoptimized(resolvedMain)}
+                      onError={() => handleImageError(targetSrc)}
+                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                      referrerPolicy="no-referrer"
+                    />
+                  );
+                })()}
               </div>
 
             </div>
@@ -222,7 +327,7 @@ export default function ProductDetailPage() {
 
               {/* Top-Right Image Counter */}
               <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-xs text-white px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider pointer-events-none">
-                {selectedImageIndex + 1} / {product.thumbnails.length}
+                {selectedImageIndex + 1} / {currentThumbnails.length}
               </div>
 
               {/* Swipeable Horizontal Slider */}
@@ -231,23 +336,28 @@ export default function ProductDetailPage() {
                 onScroll={handleMobileScroll}
                 className="w-full h-full flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden touch-pan-x"
               >
-                {product.thumbnails.map((img, idx) => (
-                  <div key={idx} className="relative min-w-full w-full h-full snap-center flex-shrink-0">
-                    <Image
-                      src={img}
-                      alt={`${product.imageAlt} ${idx + 1}`}
-                      fill
-                      priority={idx === 0}
-                      sizes="100vw"
-                      className="object-cover"
-                      referrerPolicy="no-referrer"
-                    />
-                  </div>
-                ))}
+                {currentThumbnails.map((img, idx) => {
+                  const resolvedImg = getImageSrc(img);
+                  return (
+                    <div key={idx} className="relative min-w-full w-full h-full snap-center flex-shrink-0">
+                      <Image
+                        src={resolvedImg}
+                        alt={`${product?.imageAlt || fallbackProduct.imageAlt} ${idx + 1}`}
+                        fill
+                        priority={idx === 0}
+                        sizes="100vw"
+                        unoptimized={isUnoptimized(resolvedImg)}
+                        onError={() => handleImageError(img)}
+                        className="object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Left / Right Quick Navigation Buttons on Mobile */}
-              {product.thumbnails.length > 1 && (
+              {currentThumbnails.length > 1 && (
                 <>
                   {selectedImageIndex > 0 && (
                     <button
@@ -259,7 +369,7 @@ export default function ProductDetailPage() {
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                   )}
-                  {selectedImageIndex < product.thumbnails.length - 1 && (
+                  {selectedImageIndex < currentThumbnails.length - 1 && (
                     <button
                       type="button"
                       onClick={() => handleSelectImage(selectedImageIndex + 1)}
@@ -274,7 +384,7 @@ export default function ProductDetailPage() {
 
               {/* Dots indicator at the bottom */}
               <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center items-center space-x-1.5 pointer-events-none">
-                {product.thumbnails.map((_, idx) => (
+                {currentThumbnails.map((_, idx) => (
                   <span
                     key={idx}
                     className={`transition-all duration-300 rounded-full ${
@@ -292,26 +402,31 @@ export default function ProductDetailPage() {
               ref={mobileThumbnailsRef}
               className="flex space-x-2.5 overflow-x-auto w-full py-1 px-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {product.thumbnails.map((thumb, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSelectImage(idx)}
-                  className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
-                    selectedImageIndex === idx
-                      ? 'border-neutral-900 ring-2 ring-neutral-900/20 scale-[1.03] shadow-sm'
-                      : 'border-neutral-200/80 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <Image
-                    src={thumb}
-                    alt={`Thumbnail ${idx + 1}`}
-                    fill
-                    sizes="56px"
-                    className="object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </button>
-              ))}
+              {currentThumbnails.map((thumb, idx) => {
+                const resolvedThumb = getImageSrc(thumb);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleSelectImage(idx)}
+                    className={`relative flex-shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-all bg-[#f2f1ec] ${
+                      selectedImageIndex === idx
+                        ? 'border-neutral-900 ring-2 ring-neutral-900/20 scale-[1.03] shadow-sm'
+                        : 'border-neutral-200/80 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <Image
+                      src={resolvedThumb}
+                      alt={`Thumbnail ${idx + 1}`}
+                      fill
+                      sizes="56px"
+                      unoptimized={isUnoptimized(resolvedThumb)}
+                      onError={() => handleImageError(thumb)}
+                      className="object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  </button>
+                );
+              })}
             </div>
           </div>
 
