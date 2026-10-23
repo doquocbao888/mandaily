@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 
 import { CartProvider } from '@/context/CartContext';
 import CartDrawer from '@/components/cart/CartDrawer';
-import CheckoutModal from '@/components/cart/CheckoutModal';
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
@@ -93,7 +92,6 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
         <CartProvider>
           {children}
           <CartDrawer />
-          <CheckoutModal />
         </CartProvider>
       </body>
     </html>

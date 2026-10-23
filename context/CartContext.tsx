@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useSyncExternalStore } from 'react';
 
 export interface CartItem {
   id: string;
@@ -25,60 +25,70 @@ interface CartContextType {
   setIsCartOpen: (open: boolean) => void;
   isCheckoutOpen: boolean;
   setIsCheckoutOpen: (open: boolean) => void;
-  orderId: string;
   openCheckout: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('manscaped_cart_v1');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // ignore
-    }
-    return [];
-  });
+const subscribe = (callback: () => void) => {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener('storage', callback);
+  window.addEventListener('local-storage-updated', callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener('local-storage-updated', callback);
+  };
+};
 
+const getCartSnapshot = () => {
+  try {
+    return localStorage.getItem('manscaped_cart_v1') || '[]';
+  } catch {
+    return '[]';
+  }
+};
+
+const getServerCartSnapshot = () => '[]';
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [orderId, setOrderId] = useState('');
 
-  useEffect(() => {
+  const cartJson = useSyncExternalStore(subscribe, getCartSnapshot, getServerCartSnapshot);
+  const cart: CartItem[] = JSON.parse(cartJson);
+
+  const saveCartToStorage = (updated: CartItem[]) => {
     try {
-      localStorage.setItem('manscaped_cart_v1', JSON.stringify(cart));
+      localStorage.setItem('manscaped_cart_v1', JSON.stringify(updated));
+      window.dispatchEvent(new Event('local-storage-updated'));
     } catch {
       // ignore
     }
-  }, [cart]);
+  };
 
   const openCheckout = () => {
-    setOrderId(`ORD-${Math.floor(100000 + Math.random() * 900000)}`);
     setIsCheckoutOpen(true);
   };
 
   const addToCart = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
-    setCart((prev) => {
-      const qtyToAdd = newItem.quantity || 1;
-      const existingIndex = prev.findIndex(
-        (item) => item.id === newItem.id && item.variantName === newItem.variantName
-      );
-      if (existingIndex > -1) {
-        const updated = [...prev];
-        updated[existingIndex].quantity += qtyToAdd;
-        return updated;
-      }
-      return [...prev, { ...newItem, quantity: qtyToAdd }];
-    });
+    const qtyToAdd = newItem.quantity || 1;
+    const existingIndex = cart.findIndex(
+      (item) => item.id === newItem.id && item.variantName === newItem.variantName
+    );
+    let updated: CartItem[];
+    if (existingIndex > -1) {
+      updated = [...cart];
+      updated[existingIndex].quantity += qtyToAdd;
+    } else {
+      updated = [...cart, { ...newItem, quantity: qtyToAdd }];
+    }
+    saveCartToStorage(updated);
     setIsCartOpen(true);
   };
 
   const removeFromCart = (id: string, variantName?: string) => {
-    setCart((prev) => prev.filter((item) => !(item.id === id && item.variantName === variantName)));
+    const updated = cart.filter((item) => !(item.id === id && item.variantName === variantName));
+    saveCartToStorage(updated);
   };
 
   const updateQuantity = (id: string, quantity: number, variantName?: string) => {
@@ -86,15 +96,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       removeFromCart(id, variantName);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) =>
-        item.id === id && item.variantName === variantName ? { ...item, quantity } : item
-      )
+    const updated = cart.map((item) =>
+      item.id === id && item.variantName === variantName ? { ...item, quantity } : item
     );
+    saveCartToStorage(updated);
   };
 
   const clearCart = () => {
-    setCart([]);
+    saveCartToStorage([]);
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -114,7 +123,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen,
         isCheckoutOpen,
         setIsCheckoutOpen,
-        orderId,
         openCheckout,
       }}
     >
