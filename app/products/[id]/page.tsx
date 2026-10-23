@@ -5,6 +5,7 @@ import { useParams, notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProductById, type ProductItem } from '@/config/products';
+import { useCart } from '@/context/CartContext';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import VideoReviewsSection from '@/components/products/VideoReviewsSection';
@@ -36,6 +37,7 @@ export default function ProductDetailPage() {
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+  const { addToCart } = useCart();
 
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const mobileThumbnailsRef = useRef<HTMLDivElement>(null);
@@ -209,25 +211,23 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = async () => {
+    const priceStr = selectedVariant === 'vip' ? product.vipPrice : product.regularPrice;
+    const numericPrice = parseFloat(priceStr.replace('$', '')) || 109.99;
+    const variantLabel = selectedVariant === 'vip' ? 'VIP Member Price' : 'Regular Price';
+    const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
+
+    addToCart({
+      id: product.id,
+      title: product.title,
+      subtitle: product.subtitle,
+      price: priceStr,
+      numericPrice,
+      quantity,
+      imageSrc: mainImg,
+      variantName: variantLabel,
+    });
+
     setAddedToast(true);
-    // Create new order in Firestore cloud database
-    try {
-      const { createOrderInDb } = await import('@/lib/dbService');
-      await createOrderInDb({
-        id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-        customerName: 'Khách hàng mới',
-        phone: '0909' + Math.floor(100000 + Math.random() * 900000),
-        address: 'Hồ Chí Minh, Việt Nam',
-        productName: product.title,
-        variant: selectedVariant === 'vip' ? 'VIP Member Price' : 'Regular Price',
-        quantity: quantity,
-        totalPrice: selectedVariant === 'vip' ? product.vipPrice : product.regularPrice,
-        status: 'Đang xử lý',
-        createdAt: new Date().toLocaleString('vi-VN'),
-      });
-    } catch (e) {
-      console.error('Failed to create order:', e);
-    }
     setTimeout(() => setAddedToast(false), 3500);
   };
 

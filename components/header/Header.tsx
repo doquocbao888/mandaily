@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Search, User, ShoppingBag, Globe, Menu, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useCart } from '@/context/CartContext';
 
 const categories = [
   { label: 'Deals & Kits', href: '#', hasDropdown: true },
@@ -14,7 +15,7 @@ const categories = [
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [cartCount] = useState(0);
+  const { totalItems, setIsCartOpen } = useCart();
 
   return (
     <header className="w-full sticky top-0 z-50 font-sans">
@@ -85,16 +86,17 @@ export default function Header() {
           >
             <User className="w-5 h-5 stroke-[1.8]" />
           </button>
-          <Link 
-            href="#" 
+          <button 
+            type="button"
+            onClick={() => setIsCartOpen(true)}
             className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center p-2 hover:bg-neutral-100 rounded-full transition-colors relative cursor-pointer" 
             aria-label="Cart"
           >
             <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
             <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-              {cartCount}
+              {totalItems}
             </span>
-          </Link>
+          </button>
         </div>
       </div>
 
