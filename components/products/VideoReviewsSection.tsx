@@ -43,7 +43,12 @@ export interface VideoReviewsSectionProps {
   subtitle?: string;
 }
 
-export function getYouTubeEmbedUrl(url: string, isPlaying: boolean, isMuted: boolean, showControls = false): string {
+export function getYouTubeEmbedUrl(
+  url: string, 
+  isPlaying = true, 
+  isMuted = true, 
+  showControls = false
+): string {
   if (!url) return '';
   let videoId = '';
   if (url.includes('youtube.com/shorts/')) {
@@ -68,9 +73,13 @@ export function getYouTubeEmbedUrl(url: string, isPlaying: boolean, isMuted: boo
 
   if (!videoId) return url;
 
+  // IMPORTANT:
+  // To prevent mobile browsers from pausing or reloading when unmuting,
+  // we initialize the iframe with autoplay=1&mute=1&enablejsapi=1.
+  // Mute/unmute, play/pause, and seeking are controlled dynamically via postMessage.
   const params = new URLSearchParams({
-    autoplay: isPlaying ? '1' : '0',
-    mute: isMuted ? '1' : '0',
+    autoplay: '1',
+    mute: '1',
     loop: '1',
     playlist: videoId,
     controls: showControls ? '1' : '0',
@@ -92,11 +101,39 @@ export default function VideoReviewsSection({
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [showSoundToast, setShowSoundToast] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration] = useState(15);
   const [videoModalReview, setVideoModalReview] = useState<VideoReview | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const desktopIframeRef = useRef<HTMLIFrameElement>(null);
+  const mobileIframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Send commands to YouTube iframes via postMessage (no iframe reload)
+  const sendPlayerCommand = (func: string, args: any = '') => {
+    const message = JSON.stringify({
+      event: 'command',
+      func,
+      args
+    });
+
+    if (desktopIframeRef.current?.contentWindow) {
+      try {
+        desktopIframeRef.current.contentWindow.postMessage(message, '*');
+      } catch {
+        // ignore
+      }
+    }
+
+    if (mobileIframeRef.current?.contentWindow) {
+      try {
+        mobileIframeRef.current.contentWindow.postMessage(message, '*');
+      } catch {
+        // ignore
+      }
+    }
+  };
 
   useEffect(() => {
     let interval: any;
@@ -108,6 +145,24 @@ export default function VideoReviewsSection({
     return () => clearInterval(interval);
   }, [isPlaying, duration]);
 
+  // Synchronize unmuted state when switching videos
+  useEffect(() => {
+    if (!isMuted) {
+      const t1 = setTimeout(() => {
+        sendPlayerCommand('unMute');
+        if (isPlaying) sendPlayerCommand('playVideo');
+      }, 500);
+      const t2 = setTimeout(() => {
+        sendPlayerCommand('unMute');
+        if (isPlaying) sendPlayerCommand('playVideo');
+      }, 1200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }
+  }, [activeIndex, isMuted, isPlaying]);
+
   const selectVideo = (idx: number) => {
     setActiveIndex(idx);
     setCurrentTime(0);
@@ -116,19 +171,70 @@ export default function VideoReviewsSection({
 
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      sendPlayerCommand('pauseVideo');
+      setIsPlaying(false);
+    } else {
+      sendPlayerCommand('playVideo');
+      setIsPlaying(true);
+    }
   };
 
   const toggleMute = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    setIsMuted(!isMuted);
+    if (isMuted) {
+      sendPlayerCommand('unMute');
+      sendPlayerCommand('playVideo');
+      setIsMuted(false);
+      setIsPlaying(true);
+      setShowSoundToast(true);
+      setTimeout(() => setShowSoundToast(false), 2000);
+    } else {
+      sendPlayerCommand('mute');
+      setIsMuted(true);
+    }
+  };
+
+  // Direct touch or click on the mobile video card automatically un-mutes and plays seamlessly
+  const handleMobileCardTap = () => {
+    if (isMuted) {
+      sendPlayerCommand('unMute');
+      sendPlayerCommand('playVideo');
+      setIsMuted(false);
+      setIsPlaying(true);
+      setShowSoundToast(true);
+      setTimeout(() => setShowSoundToast(false), 2000);
+    } else {
+      togglePlay();
+    }
+  };
+
+  const handleDesktopCardClick = (idx: number, isActive: boolean) => {
+    if (!isActive) {
+      selectVideo(idx);
+    } else {
+      if (isMuted) {
+        sendPlayerCommand('unMute');
+        sendPlayerCommand('playVideo');
+        setIsMuted(false);
+        setIsPlaying(true);
+        setShowSoundToast(true);
+        setTimeout(() => setShowSoundToast(false), 2000);
+      } else {
+        togglePlay();
+      }
+    }
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    setCurrentTime(pos * duration);
+    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const targetTime = pos * duration;
+    setCurrentTime(targetTime);
+    sendPlayerCommand('seekTo', [targetTime, true]);
+    sendPlayerCommand('playVideo');
+    setIsPlaying(true);
   };
 
   const formatTime = (secs: number) => {
@@ -168,13 +274,7 @@ export default function VideoReviewsSection({
               >
                 {/* Video Card Container */}
                 <div
-                  onClick={() => {
-                    if (!isActive) {
-                      selectVideo(idx);
-                    } else {
-                      togglePlay();
-                    }
-                  }}
+                  onClick={() => handleDesktopCardClick(idx, isActive)}
                   className={`group relative rounded-2xl overflow-hidden bg-neutral-900 border transition-all duration-500 ease-in-out cursor-pointer select-none ${
                     isActive
                       ? 'w-[280px] sm:w-[330px] lg:w-[370px] h-[490px] sm:h-[570px] lg:h-[630px] shadow-2xl border-neutral-300 ring-2 ring-black/5 z-10'
@@ -210,10 +310,21 @@ export default function VideoReviewsSection({
                         <span>Shorts</span>
                       </div>
 
+                      {/* Toast Notification when Sound is Unmuted */}
+                      {showSoundToast && (
+                        <div className="absolute top-16 inset-x-0 flex justify-center pointer-events-none z-30 transition-all duration-300">
+                          <div className="bg-amber-500 text-neutral-950 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5 animate-bounce">
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>Đã bật âm thanh</span>
+                          </div>
+                        </div>
+                      )}
+
                       {/* YouTube Iframe Embed */}
                       <div className="w-full h-full relative pointer-events-none">
                         <iframe
-                          src={getYouTubeEmbedUrl(review.videoUrl, isPlaying, isMuted, false)}
+                          ref={desktopIframeRef}
+                          src={getYouTubeEmbedUrl(review.videoUrl, true, false, false)}
                           title={review.name}
                           className="w-full h-full object-cover border-0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -318,13 +429,17 @@ export default function VideoReviewsSection({
 
         {/* Mobile View: Single Large Active Video on Top + Thumbnails Row underneath */}
         <div className="sm:hidden flex flex-col items-center w-full max-w-[340px] mx-auto">
-          {/* Large Active Video Card */}
-          <div className="relative w-full h-[520px] rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-300 shadow-xl select-none">
+          {/* Large Active Video Card (Tapping anywhere un-mutes and plays with sound seamlessly) */}
+          <div 
+            onClick={handleMobileCardTap}
+            className="relative w-full h-[520px] rounded-2xl overflow-hidden bg-neutral-900 border border-neutral-300 shadow-xl select-none cursor-pointer group"
+          >
             {/* Top-Right Unmute/Mute Pill Button */}
             <button
               type="button"
               onClick={toggleMute}
               className="absolute top-4 right-4 z-30 bg-black/90 hover:bg-black text-white px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 shadow-md active:scale-95 transition-all"
+              aria-label={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
             >
               {isMuted ? (
                 <>
@@ -345,10 +460,31 @@ export default function VideoReviewsSection({
               <span>Shorts</span>
             </div>
 
+            {/* Center Hint Badge when Muted on Mobile */}
+            {isMuted && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 px-4">
+                <div className="bg-black/80 backdrop-blur-md text-white text-xs font-semibold px-4 py-2.5 rounded-full border border-white/20 shadow-2xl flex items-center space-x-2 animate-pulse">
+                  <VolumeX className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Chạm vào video để bật tiếng &amp; phát</span>
+                </div>
+              </div>
+            )}
+
+            {/* Toast Notification when Sound is Unmuted */}
+            {showSoundToast && (
+              <div className="absolute top-16 inset-x-0 flex justify-center pointer-events-none z-30 transition-all duration-300">
+                <div className="bg-amber-500 text-neutral-950 text-xs font-bold px-3.5 py-1.5 rounded-full shadow-lg flex items-center space-x-1.5 animate-bounce">
+                  <Volume2 className="w-4 h-4" />
+                  <span>Đã bật âm thanh</span>
+                </div>
+              </div>
+            )}
+
             {/* YouTube Iframe Embed */}
             <div className="w-full h-full relative pointer-events-none">
               <iframe
-                src={getYouTubeEmbedUrl(displayReviews[activeIndex].videoUrl, isPlaying, isMuted, false)}
+                ref={mobileIframeRef}
+                src={getYouTubeEmbedUrl(displayReviews[activeIndex].videoUrl, true, false, false)}
                 title={displayReviews[activeIndex].name}
                 className="w-full h-full object-cover border-0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -385,6 +521,7 @@ export default function VideoReviewsSection({
                   type="button"
                   onClick={toggleMute}
                   className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
+                  title={isMuted ? 'Bật tiếng' : 'Tắt tiếng'}
                 >
                   {isMuted ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3 text-amber-400" />}
                 </button>
@@ -395,6 +532,7 @@ export default function VideoReviewsSection({
                     setVideoModalReview(displayReviews[activeIndex]);
                   }}
                   className="text-white/80 bg-black/50 hover:bg-black/70 p-1 rounded-md transition flex-shrink-0"
+                  title="Xem lớn"
                 >
                   <Maximize2 className="w-3 h-3" />
                 </button>
