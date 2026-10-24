@@ -20,7 +20,7 @@ export default function FeaturedProductsSection({
       if (!isMounted) return;
       seedInitialProductsIfNeeded().catch(() => {});
       unsubscribe = subscribeProducts((updatedProducts) => {
-        if (isMounted && updatedProducts && updatedProducts.length > 0) {
+        if (isMounted && updatedProducts) {
           setProducts(updatedProducts);
         }
       });

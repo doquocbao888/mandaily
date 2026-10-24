@@ -22,6 +22,8 @@ export interface OrderItem {
   totalPrice: string;
   status: 'Đang xử lý' | 'Đang giao' | 'Đã giao' | 'Đã hủy';
   createdAt: string;
+  paymentMethod?: string;
+  notes?: string;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -38,8 +40,11 @@ export async function seedInitialProductsIfNeeded() {
   if (hasSeededProducts || isSeedingProducts) return;
   isSeedingProducts = true;
   try {
+    const isBrowser = typeof window !== 'undefined';
+    const alreadySeeded = isBrowser && localStorage.getItem('manscaped_products_seeded') === 'true';
+
     const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (snap.empty) {
+    if (snap.empty && !alreadySeeded) {
       for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
         const prod = {
           ...featuredProductsConfig2.products[i],
@@ -47,18 +52,7 @@ export async function seedInitialProductsIfNeeded() {
         };
         await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
       }
-    } else {
-      // Ensure any newly added catalog items exist in Firestore if not already present
-      const existingIds = new Set(snap.docs.map(d => d.id));
-      for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
-        const prod = featuredProductsConfig2.products[i];
-        if (!existingIds.has(prod.id)) {
-          await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), {
-            ...prod,
-            orderIndex: prod.orderIndex ?? i,
-          });
-        }
-      }
+      if (isBrowser) localStorage.setItem('manscaped_products_seeded', 'true');
     }
     hasSeededProducts = true;
   } catch (err: any) {
@@ -94,8 +88,11 @@ export async function seedInitialOrdersIfNeeded() {
   if (hasSeededOrders || isSeedingOrders) return;
   isSeedingOrders = true;
   try {
+    const isBrowser = typeof window !== 'undefined';
+    const alreadySeeded = isBrowser && localStorage.getItem('manscaped_orders_seeded') === 'true';
+
     const snap = await getDocs(collection(db, ORDERS_COLLECTION));
-    if (snap.empty) {
+    if (snap.empty && !alreadySeeded) {
       const initialOrders: OrderItem[] = [
         {
           id: 'ORD-9821',
@@ -125,6 +122,7 @@ export async function seedInitialOrdersIfNeeded() {
       for (const ord of initialOrders) {
         await setDoc(doc(db, ORDERS_COLLECTION, ord.id), ord);
       }
+      if (isBrowser) localStorage.setItem('manscaped_orders_seeded', 'true');
     }
     hasSeededOrders = true;
   } catch (err: any) {
@@ -152,18 +150,13 @@ export function subscribeProducts(
       snapshot.forEach((d) => {
         items.push(d.data() as ProductItem);
       });
-      if (items.length > 0) {
-        items.sort((a, b) => {
-          const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
-          const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
-          if (orderA !== orderB) return orderA - orderB;
-          return a.id.localeCompare(b.id);
-        });
-        onData(items);
-      } else {
-        // Fallback to initial config while loading or empty
-        onData(featuredProductsConfig2.products);
-      }
+      items.sort((a, b) => {
+        const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
+        const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.id.localeCompare(b.id);
+      });
+      onData(items);
     },
     (error) => {
       const msg = String((error as any)?.message || error).toLowerCase();
@@ -267,6 +260,7 @@ export function subscribeOrders(
       snapshot.forEach((d) => {
         items.push(d.data() as OrderItem);
       });
+      items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       onData(items);
     },
     (error) => {
@@ -303,6 +297,19 @@ export async function createOrderInDb(order: OrderItem) {
     await setDoc(doc(db, ORDERS_COLLECTION, order.id), order);
   } catch (error) {
     handleFirestoreError(error, OperationType.CREATE, `${ORDERS_COLLECTION}/${order.id}`);
+  }
+}
+
+/**
+ * Delete order from Firestore
+ */
+export async function deleteOrderFromDb(orderId: string) {
+  try {
+    await deleteDoc(doc(db, ORDERS_COLLECTION, orderId));
+    return { success: true };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${ORDERS_COLLECTION}/${orderId}`);
+    throw error;
   }
 }
 

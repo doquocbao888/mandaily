@@ -177,6 +177,8 @@ export default function ProductDetailPage() {
               imageSrc: updatedProd.imageSrc || defaultProd?.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png',
               thumbnails: safeT,
             });
+          } else {
+            setProduct(null);
           }
           setLoading(false);
         }

@@ -39,6 +39,7 @@ import {
   saveProductToDb, 
   deleteProductFromDb, 
   updateOrderStatusInDb, 
+  deleteOrderFromDb,
   updateProductOrderInDb,
   seedInitialProductsIfNeeded, 
   seedInitialOrdersIfNeeded,
@@ -145,6 +146,8 @@ export default function AdminPage() {
   // Delete & Confirmation States
   const [productToDelete, setProductToDelete] = useState<ProductItem | null>(null);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<OrderItem | null>(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false);
   const [isRestoringDefaults, setIsRestoringDefaults] = useState(false);
   const [toastMessage, setToastMessage] = useState<{ text: string; isError?: boolean } | null>(null);
 
@@ -169,8 +172,8 @@ export default function AdminPage() {
 
     // Subscribe to real-time orders
     const unsubOrders = subscribeOrders((items) => {
-      if (isMounted && items && items.length > 0) {
-        setOrders(items);
+      if (isMounted) {
+        setOrders(items || []);
       }
     });
 
@@ -419,6 +422,23 @@ export default function AdminPage() {
     } catch (err: any) {
       console.error('Lỗi khi cập nhật trạng thái đơn hàng:', err);
       showToast(err?.message || 'Lỗi cập nhật trạng thái.', true);
+    }
+  };
+
+  const executeDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    const target = orderToDelete;
+    setIsDeletingOrder(true);
+    try {
+      setOrders((prev) => prev.filter((o) => o.id !== target.id));
+      await deleteOrderFromDb(target.id);
+      showToast(`Đã xóa vĩnh viễn đơn hàng "${target.id}" thành công!`);
+      setOrderToDelete(null);
+    } catch (err: any) {
+      console.error('Lỗi khi xóa đơn hàng:', err);
+      showToast(err?.message || 'Không thể xóa đơn hàng khỏi cơ sở dữ liệu.', true);
+    } finally {
+      setIsDeletingOrder(false);
     }
   };
 
@@ -674,26 +694,46 @@ export default function AdminPage() {
                         <th className="pb-3 font-semibold">Sản phẩm</th>
                         <th className="pb-3 font-semibold">Tổng tiền</th>
                         <th className="pb-3 font-semibold">Trạng thái</th>
+                        <th className="pb-3 font-semibold text-right">Thao tác</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
-                      {orders.slice(0, 5).map((order) => (
-                        <tr key={order.id} className="hover:bg-neutral-50">
-                          <td className="py-3 font-bold text-neutral-900">{order.id}</td>
-                          <td className="py-3 text-neutral-700">{order.customerName}</td>
-                          <td className="py-3 text-neutral-600">{order.productName}</td>
-                          <td className="py-3 font-semibold text-amber-700">{order.totalPrice}</td>
-                          <td className="py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
-                              order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              order.status === 'Đang giao' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                              'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
-                              {order.status}
-                            </span>
+                      {orders.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-6 text-center text-xs text-neutral-400">
+                            Chưa có đơn hàng nào
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        orders.slice(0, 5).map((order) => (
+                          <tr key={order.id} className="hover:bg-neutral-50">
+                            <td className="py-3 font-bold text-neutral-900">{order.id}</td>
+                            <td className="py-3 text-neutral-700">{order.customerName}</td>
+                            <td className="py-3 text-neutral-600">{order.productName}</td>
+                            <td className="py-3 font-semibold text-amber-700">{order.totalPrice}</td>
+                            <td className="py-3">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                                order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                order.status === 'Đang giao' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                order.status === 'Đã hủy' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setOrderToDelete(order)}
+                                className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer inline-flex items-center"
+                                title="Xóa vĩnh viễn đơn hàng này"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -870,48 +910,67 @@ export default function AdminPage() {
                       <th className="p-4 font-semibold">Sản phẩm đặt</th>
                       <th className="p-4 font-semibold">Tổng tiền</th>
                       <th className="p-4 font-semibold">Trạng thái</th>
-                      <th className="p-4 font-semibold text-right">Cập nhật trạng thái</th>
+                      <th className="p-4 font-semibold text-right">Thao tác &amp; Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
-                    {orders
-                      .filter(o => o.customerName.toLowerCase().includes(searchOrder.toLowerCase()) || o.id.toLowerCase().includes(searchOrder.toLowerCase()))
-                      .map((order) => (
-                        <tr key={order.id} className="hover:bg-neutral-50/80">
-                          <td className="p-4 font-bold text-neutral-900">{order.id}</td>
-                          <td className="p-4">
-                            <span className="font-semibold text-neutral-900 block">{order.customerName}</span>
-                            <span className="text-xs text-neutral-500">{order.phone} • {order.address}</span>
-                          </td>
-                          <td className="p-4">
-                            <span className="font-medium text-neutral-800 block">{order.productName}</span>
-                            <span className="text-xs text-neutral-500">{order.variant} (SL: {order.quantity})</span>
-                          </td>
-                          <td className="p-4 font-bold text-amber-700">{order.totalPrice}</td>
-                          <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-block ${
-                              order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              order.status === 'Đang giao' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                              order.status === 'Đã hủy' ? 'bg-red-50 text-red-700 border border-red-200' :
-                              'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td className="p-4 text-right">
-                            <select
-                              value={order.status}
-                              onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as OrderItem['status'])}
-                              className="bg-neutral-100 border border-neutral-300 rounded-lg px-3 py-1.5 text-xs font-semibold text-neutral-800 focus:outline-none focus:border-amber-600"
-                            >
-                              <option value="Đang xử lý">Đang xử lý</option>
-                              <option value="Đang giao">Đang giao</option>
-                              <option value="Đã giao">Đã giao</option>
-                              <option value="Đã hủy">Đã hủy</option>
-                            </select>
-                          </td>
-                        </tr>
-                    ))}
+                    {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-10 text-center text-neutral-400 text-sm">
+                          Chưa có đơn hàng nào trong cơ sở dữ liệu.
+                        </td>
+                      </tr>
+                    ) : (
+                      orders
+                        .filter(o => o.customerName.toLowerCase().includes(searchOrder.toLowerCase()) || o.id.toLowerCase().includes(searchOrder.toLowerCase()))
+                        .map((order) => (
+                          <tr key={order.id} className="hover:bg-neutral-50/80 transition-colors">
+                            <td className="p-4 font-bold text-neutral-900">{order.id}</td>
+                            <td className="p-4">
+                              <span className="font-semibold text-neutral-900 block">{order.customerName}</span>
+                              <span className="text-xs text-neutral-500">{order.phone} • {order.address}</span>
+                            </td>
+                            <td className="p-4">
+                              <span className="font-medium text-neutral-800 block">{order.productName}</span>
+                              <span className="text-xs text-neutral-500">{order.variant} (SL: {order.quantity})</span>
+                            </td>
+                            <td className="p-4 font-bold text-amber-700">{order.totalPrice}</td>
+                            <td className="p-4">
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-block ${
+                                order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                order.status === 'Đang giao' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                order.status === 'Đã hủy' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end space-x-2">
+                                <select
+                                  value={order.status}
+                                  onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as OrderItem['status'])}
+                                  className="bg-neutral-100 border border-neutral-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-neutral-800 focus:outline-none focus:border-amber-600 cursor-pointer"
+                                  title="Cập nhật trạng thái giao hàng"
+                                >
+                                  <option value="Đang xử lý">Đang xử lý</option>
+                                  <option value="Đang giao">Đang giao</option>
+                                  <option value="Đã giao">Đã giao</option>
+                                  <option value="Đã hủy">Đã hủy</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => setOrderToDelete(order)}
+                                  className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg transition-colors cursor-pointer"
+                                  title="Xóa vĩnh viễn đơn hàng này"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1464,6 +1523,86 @@ export default function AdminPage() {
                   <>
                     <Trash2 className="w-4 h-4" />
                     <span>Xác nhận xóa</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Order Delete Confirmation Modal */}
+      {orderToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-fadeIn border border-neutral-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0 border border-red-200">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-neutral-900">Xác nhận xóa đơn hàng</h3>
+                <p className="text-xs text-neutral-500">Đơn #{orderToDelete.id}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-600 mb-4">
+              Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này khỏi cơ sở dữ liệu Firestore? Hành động này được đồng bộ tức thì lên đám mây và không thể hoàn tác.
+            </p>
+
+            {/* Order Snapshot */}
+            <div className="bg-[#f9f9f8] p-4 rounded-xl border border-neutral-200 space-y-2 mb-6 text-xs">
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Khách hàng:</span>
+                <span className="font-bold text-neutral-900">{orderToDelete.customerName}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Số điện thoại:</span>
+                <span className="font-mono font-semibold text-neutral-800">{orderToDelete.phone}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Địa chỉ giao:</span>
+                <span className="text-neutral-700 max-w-[260px] text-right truncate" title={orderToDelete.address}>{orderToDelete.address}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Sản phẩm:</span>
+                <span className="font-semibold text-neutral-900 max-w-[260px] text-right truncate">
+                  {orderToDelete.productName} ({orderToDelete.variant} x{orderToDelete.quantity})
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Phương thức:</span>
+                <span className="font-semibold text-neutral-700">{orderToDelete.paymentMethod || 'COD'}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-neutral-500 font-bold">Tổng thanh toán:</span>
+                <span className="font-extrabold text-sm text-amber-700">{orderToDelete.totalPrice}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2 border-t border-neutral-100">
+              <button
+                type="button"
+                disabled={isDeletingOrder}
+                onClick={() => setOrderToDelete(null)}
+                className="px-5 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 text-sm font-semibold hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingOrder}
+                onClick={executeDeleteOrder}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm flex items-center space-x-2 transition-colors cursor-pointer shadow-md disabled:opacity-50"
+              >
+                {isDeletingOrder ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Đang xóa Firestore...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Xác nhận xóa vĩnh viễn</span>
                   </>
                 )}
               </button>
