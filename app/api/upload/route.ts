@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 export const maxDuration = 60;
 
@@ -23,9 +25,25 @@ export async function POST(req: NextRequest) {
     const mediaType = isVideo ? 'video' : 'image';
     const mimeType = file.type || (isVideo ? 'video/mp4' : 'image/jpeg');
 
-    // Convert directly to Data URL (Base64) to bypass server filesystem limits and 413 Payload Too Large errors
-    const base64 = buffer.toString('base64');
-    const publicUrl = `data:${mimeType};base64,${base64}`;
+    // Clean filename
+    const safeName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const filename = `${timestamp}_${safeName}`;
+
+    let publicUrl = '';
+
+    try {
+      const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const filePath = path.join(uploadsDir, filename);
+      fs.writeFileSync(filePath, buffer);
+      publicUrl = `/uploads/${filename}`;
+    } catch (fsErr) {
+      console.warn('Could not write file to public/uploads, falling back to data URL:', fsErr);
+      const base64 = buffer.toString('base64');
+      publicUrl = `data:${mimeType};base64,${base64}`;
+    }
 
     return NextResponse.json({
       success: true,
@@ -46,3 +64,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
   }
 }
+

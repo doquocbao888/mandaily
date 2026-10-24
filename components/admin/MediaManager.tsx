@@ -88,6 +88,20 @@ export default function MediaManager({
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const formatDisplayUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('data:')) {
+      const mime = url.split(';')[0]?.replace('data:', '') || 'image';
+      const sizeKb = Math.round((url.length * 0.75) / 1024);
+      return `data:${mime};base64,... (${sizeKb} KB)`;
+    }
+    if (url.length > 50) {
+      return url.substring(0, 47) + '...';
+    }
+    return url;
+  };
+
+
   const handleCopy = async (url: string) => {
     let copied = false;
 
@@ -239,14 +253,14 @@ export default function MediaManager({
         {/* Upload Success Alert with Instant Copy URL */}
         {lastUploadedUrl && (
           <div className="mt-4 p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
-            <div className="flex items-center space-x-2.5">
+            <div className="flex items-center space-x-2.5 min-w-0">
               <FileCheck className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-              <div>
+              <div className="min-w-0">
                 <span className="text-xs font-bold text-emerald-900 block">
                   Tải lên thành công! Đường dẫn sử dụng:
                 </span>
-                <code className="text-xs font-mono text-emerald-800 break-all select-all font-semibold">
-                  {lastUploadedUrl}
+                <code className="text-xs font-mono text-emerald-800 truncate block max-w-xs sm:max-w-md select-all font-semibold" title={lastUploadedUrl}>
+                  {formatDisplayUrl(lastUploadedUrl)}
                 </code>
               </div>
             </div>
@@ -370,14 +384,14 @@ export default function MediaManager({
               </div>
 
               {/* URL Display with 1-click Copy */}
-              <div className="flex items-center bg-neutral-100 rounded-lg p-1.5 border border-neutral-200/80">
-                <span className="text-[10px] font-mono text-neutral-600 truncate flex-1 pl-1">
-                  {item.url}
+              <div className="flex items-center bg-neutral-100 rounded-lg p-1.5 border border-neutral-200/80 min-w-0">
+                <span className="text-[10px] font-mono text-neutral-600 truncate flex-1 pl-1 min-w-0" title={item.url}>
+                  {formatDisplayUrl(item.url)}
                 </span>
                 <button
                   onClick={() => handleCopy(item.url)}
                   title="Sao chép đường dẫn"
-                  className="p-1 hover:bg-white text-neutral-700 rounded transition-colors"
+                  className="p-1 hover:bg-white text-neutral-700 rounded transition-colors flex-shrink-0"
                 >
                   {copiedUrl === item.url ? (
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -435,11 +449,13 @@ export default function MediaManager({
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative">
             <div className="flex items-center justify-between mb-4 border-b pb-3">
-              <div>
-                <h3 className="font-bold text-base text-neutral-900">{previewItem.name}</h3>
-                <span className="text-xs text-neutral-500 font-mono">{previewItem.url}</span>
+              <div className="min-w-0 flex-1 pr-4">
+                <h3 className="font-bold text-base text-neutral-900 truncate">{previewItem.name}</h3>
+                <span className="text-xs text-neutral-500 font-mono block truncate" title={previewItem.url}>
+                  {formatDisplayUrl(previewItem.url)}
+                </span>
               </div>
-              <button onClick={() => setPreviewItem(null)} className="text-neutral-400 hover:text-neutral-700">
+              <button onClick={() => setPreviewItem(null)} className="text-neutral-400 hover:text-neutral-700 flex-shrink-0">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -557,23 +573,53 @@ export default function MediaManager({
 
       {/* Media Delete Confirmation Modal */}
       {mediaToDelete && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative my-auto max-h-[90vh] overflow-y-auto">
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5" />
               </div>
               <div>
                 <h3 className="font-bold text-base text-neutral-900">Xác nhận xóa tệp media</h3>
-                <p className="text-xs text-neutral-500">Thao tác này sẽ xóa tệp vĩnh viễn</p>
+                <p className="text-xs text-neutral-500">Thao tác này không thể hoàn tác</p>
               </div>
             </div>
 
-            <p className="text-xs text-neutral-700 mb-2">
-              Bạn có chắc chắn muốn xóa tệp: <strong className="text-neutral-900">{mediaToDelete.name}</strong>?
+            <p className="text-xs text-neutral-700 mb-3">
+              Bạn có chắc chắn muốn xóa tệp này khỏi thư viện media?
             </p>
-            <div className="bg-neutral-100 p-2.5 rounded-xl text-[11px] font-mono text-neutral-600 break-all mb-5 border border-neutral-200">
-              {mediaToDelete.url}
+
+            {/* Media Item Snapshot Preview */}
+            <div className="flex items-center space-x-3 p-3 bg-neutral-50 rounded-xl border border-neutral-200 mb-5">
+              <div className="relative w-16 h-16 rounded-lg bg-neutral-100 border border-neutral-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                {mediaToDelete.mediaType === 'video' ? (
+                  <Film className="w-6 h-6 text-neutral-400" />
+                ) : (
+                  <Image
+                    src={mediaToDelete.url}
+                    alt={mediaToDelete.name}
+                    fill
+                    sizes="64px"
+                    unoptimized={mediaToDelete.url.startsWith('data:') || mediaToDelete.url.startsWith('http')}
+                    className="object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-xs text-neutral-900 truncate" title={mediaToDelete.name}>
+                  {mediaToDelete.name}
+                </p>
+                <p className="text-[11px] text-neutral-500 mt-0.5">
+                  {formatFileSize(mediaToDelete.size)} • {mediaToDelete.mediaType === 'video' ? 'Video' : 'Hình ảnh'}
+                </p>
+                <div 
+                  className="mt-1.5 px-2 py-1 bg-white rounded border border-neutral-200 text-[10px] font-mono text-neutral-500 truncate"
+                  title={mediaToDelete.url.startsWith('data:') ? 'Dữ liệu Base64' : mediaToDelete.url}
+                >
+                  {formatDisplayUrl(mediaToDelete.url)}
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-end space-x-2.5">
@@ -589,7 +635,7 @@ export default function MediaManager({
                 type="button"
                 disabled={isDeletingMedia}
                 onClick={executeDeleteMedia}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl text-xs flex items-center space-x-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-sm"
               >
                 {isDeletingMedia ? (
                   <>

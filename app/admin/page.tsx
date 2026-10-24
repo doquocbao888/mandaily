@@ -1482,6 +1482,7 @@ export default function AdminPage() {
                   alt={productToDelete.imageAlt || productToDelete.title}
                   fill
                   sizes="64px"
+                  unoptimized={productToDelete.imageSrc?.startsWith('data:') || productToDelete.imageSrc?.startsWith('http')}
                   className="object-contain"
                   referrerPolicy="no-referrer"
                 />
