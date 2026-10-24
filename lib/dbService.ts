@@ -24,6 +24,8 @@ export interface OrderItem {
   createdAt: string;
   paymentMethod?: string;
   notes?: string;
+  discountCode?: string;
+  discountAmount?: string;
 }
 
 const PRODUCTS_COLLECTION = 'products';
@@ -310,6 +312,65 @@ export async function deleteOrderFromDb(orderId: string) {
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `${ORDERS_COLLECTION}/${orderId}`);
     throw error;
+  }
+}
+
+/**
+ * Search orders by ID or customer phone number (case-insensitive substring match)
+ */
+export async function trackOrdersByQuery(queryStr: string): Promise<OrderItem[]> {
+  try {
+    const trimmed = queryStr.trim().toLowerCase();
+    if (!trimmed) return [];
+    
+    // Seed initial orders if empty so first-time visitors can track demo orders
+    await seedInitialOrdersIfNeeded();
+
+    const snap = await getDocs(collection(db, ORDERS_COLLECTION));
+    const results: OrderItem[] = [];
+    snap.forEach((docSnap) => {
+      const order = docSnap.data() as OrderItem;
+      const orderId = (order.id || '').toLowerCase();
+      const phone = (order.phone || '').replace(/\s+/g, '');
+      const cleanQuery = trimmed.replace(/\s+/g, '');
+
+      if (
+        orderId.includes(trimmed) ||
+        phone.includes(cleanQuery) ||
+        (order.customerName && order.customerName.toLowerCase().includes(trimmed))
+      ) {
+        results.push(order);
+      }
+    });
+
+    return results.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
+    return [];
+  }
+}
+
+/**
+ * Fetch all products once from Firestore (with automatic fallback seed if empty)
+ */
+export async function fetchProductsOnce(): Promise<ProductItem[]> {
+  try {
+    await seedInitialProductsIfNeeded();
+    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
+    const items: ProductItem[] = [];
+    snap.forEach((d) => {
+      items.push(d.data() as ProductItem);
+    });
+    items.sort((a, b) => {
+      const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
+      const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.id.localeCompare(b.id);
+    });
+    return items;
+  } catch (error) {
+    handleFirestoreError(error, OperationType.LIST, PRODUCTS_COLLECTION);
+    return [];
   }
 }
 

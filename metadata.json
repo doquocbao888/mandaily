@@ -1,6 +1,6 @@
 {
-  "name": "Pixel-Perfect UI Builder",
-  "description": "Tái tạo giao diện website chính xác từ screenshot và thiết kế tham chiếu bằng Next.js và Tailwind CSS.",
+  "name": "MANSCAPED™ Vietnam",
+  "description": "Thương hiệu chăm sóc nam giới số 1 thế giới. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

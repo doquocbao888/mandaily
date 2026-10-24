@@ -141,43 +141,23 @@ export default function Footer() {
             </h3>
             <ul className="space-y-3.5 text-[14px] text-white">
               <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Manage Orders
+                <Link href="/tracking" className="hover:text-[#c59b63] transition-colors font-medium">
+                  Tra Cứu Đơn Hàng (Live Tracking)
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Military
+                <Link href="/products" className="hover:text-[#c59b63] transition-colors">
+                  Bộ Sưu Tập Sản Phẩm
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  First Responders
+                <Link href="/tracking" className="hover:text-[#c59b63] transition-colors">
+                  Warranty & 30-Day Return
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Healthcare Workers
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Warranty & Return
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Waterproof Disclaimer
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Accessibility
-                </Link>
-              </li>
-              <li>
-                <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Contact Us
+                <Link href="tel:19008888" className="hover:text-[#c59b63] transition-colors font-semibold">
+                  Hotline Hỗ Trợ: 1900 8888
                 </Link>
               </li>
             </ul>

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle2, ShieldCheck, Copy, Check, ArrowRight, CreditCard, Truck, Lock } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, Copy, Check, ArrowRight, CreditCard, Truck, Lock, Tag, X, Package } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createOrderInDb } from '@/lib/dbService';
 
@@ -27,11 +27,34 @@ export default function CheckoutPage() {
     method: string;
   } | null>(null);
 
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const [orderId] = useState(() => `ORD-${Math.floor(100000 + Math.random() * 900000)}`);
-  const shippingFee = totalPrice >= 49 ? 0 : 5.0;
-  const grandTotal = totalPrice + shippingFee;
+
+  const handleApplyPromo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoError(null);
+    const code = promoInput.trim().toUpperCase();
+    if (code === 'MANSCAPED10' || code === 'VIP15' || code === 'FREESHIP') {
+      setAppliedPromo(code);
+      setPromoInput('');
+    } else {
+      setPromoError('Mã không hợp lệ. Thử MANSCAPED10 hoặc FREESHIP');
+    }
+  };
+
+  const discountAmount = appliedPromo === 'MANSCAPED10'
+    ? totalPrice * 0.1
+    : appliedPromo === 'VIP15'
+    ? totalPrice * 0.15
+    : 0;
+
+  const shippingFee = (totalPrice >= 49 || appliedPromo === 'FREESHIP') ? 0 : 5.0;
+  const grandTotal = Math.max(0, totalPrice - discountAmount + shippingFee);
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -61,6 +84,8 @@ export default function CheckoutPage() {
         totalPrice: `$${grandTotal.toFixed(2)}`,
         status: 'Đang xử lý',
         createdAt: new Date().toLocaleString('vi-VN'),
+        discountCode: appliedPromo || undefined,
+        discountAmount: discountAmount > 0 ? `-$${discountAmount.toFixed(2)}` : undefined,
       });
 
       setSuccessOrder({
@@ -145,12 +170,23 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            <button
-              onClick={() => router.push('/')}
-              className="w-full bg-[#9e6f1c] hover:bg-[#8b5f16] text-white font-bold py-3.5 px-6 rounded-xl transition-all uppercase tracking-wider shadow-md text-sm"
-            >
-              Quay về trang chủ
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => router.push(`/tracking`)}
+                className="flex-1 bg-neutral-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl transition-all uppercase tracking-wider text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md"
+              >
+                <Package className="w-4 h-4 text-[#c59b63]" />
+                <span>Tra cứu tiến độ giao hàng</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/')}
+                className="flex-1 bg-[#9e6f1c] hover:bg-[#8b5f16] text-white font-bold py-3.5 px-6 rounded-xl transition-all uppercase tracking-wider shadow-md text-xs cursor-pointer"
+              >
+                Quay về trang chủ
+              </button>
+            </div>
           </div>
         ) : (
           /* 2-Column Checkout Layout */
@@ -392,12 +428,60 @@ export default function CheckoutPage() {
                 <span className="font-medium">You’re earning Loyalty Points with this purchase.</span>
               </div>
 
+              {/* Promo Code Voucher Form */}
+              <div className="pt-1">
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2.5 rounded-xl text-xs text-emerald-800">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="font-bold">{appliedPromo}</span>
+                      <span className="text-[11px] text-emerald-700">
+                        {appliedPromo === 'FREESHIP' ? '(Miễn phí ship)' : appliedPromo === 'VIP15' ? '(-15%)' : '(-10%)'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setAppliedPromo(null); setPromoError(null); }}
+                      className="text-neutral-400 hover:text-red-500 p-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => setPromoInput(e.target.value)}
+                        placeholder="Mã giảm giá (MANSCAPED10)"
+                        className="flex-1 bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2 text-xs uppercase font-medium outline-none focus:border-[#9e6f1c]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyPromo}
+                        className="px-4 py-2 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl uppercase tracking-wider transition cursor-pointer"
+                      >
+                        Áp dụng
+                      </button>
+                    </div>
+                    {promoError && <p className="text-[11px] text-red-600">{promoError}</p>}
+                  </div>
+                )}
+              </div>
+
               {/* Financial Subtotals */}
               <div className="space-y-2.5 text-sm pt-2 border-t border-neutral-200">
                 <div className="flex justify-between text-neutral-600">
                   <span>Subtotal · {cart.reduce((s, c) => s + c.quantity, 0)} items</span>
                   <span className="font-semibold text-neutral-900">${totalPrice.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>Discount ({appliedPromo})</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-neutral-600">
                   <span>Shipping</span>
                   <span className="font-semibold text-neutral-900">

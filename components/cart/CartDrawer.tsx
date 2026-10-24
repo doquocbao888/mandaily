@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck, RefreshCw, Award } from 'lucide-react';
+import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck, RefreshCw, Award, Tag, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
 import { featuredProductsConfig2 } from '@/config/products';
@@ -21,9 +21,39 @@ export default function CartDrawer() {
     totalPrice,
   } = useCart();
 
+  const [promoInput, setPromoInput] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+
+  const handleApplyPromo = (e: React.FormEvent) => {
+    e.preventDefault();
+    setPromoError(null);
+    const code = promoInput.trim().toUpperCase();
+    if (code === 'MANSCAPED10' || code === 'VIP15' || code === 'FREESHIP') {
+      setAppliedPromo(code);
+      setPromoInput('');
+    } else {
+      setPromoError('Mã không hợp lệ. Thử MANSCAPED10 hoặc FREESHIP');
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoError(null);
+  };
+
+  const discountAmount = appliedPromo === 'MANSCAPED10'
+    ? totalPrice * 0.1
+    : appliedPromo === 'VIP15'
+    ? totalPrice * 0.15
+    : 0;
+
   const freeShippingThreshold = 49.0;
+  const isFreeShipping = totalPrice >= freeShippingThreshold || appliedPromo === 'FREESHIP';
   const progress = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
   const remainingForFree = Math.max(0, freeShippingThreshold - totalPrice);
+  const shippingCost = isFreeShipping ? 0 : 5.0;
+  const finalTotal = Math.max(0, totalPrice - discountAmount + shippingCost);
 
   // Recommended add-on items for Bundle and Save
   const bundleProducts = featuredProductsConfig2.products.slice(4, 7);
@@ -255,6 +285,56 @@ export default function CartDrawer() {
                 </div>
               </div>
 
+              {/* Voucher / Coupon Code Form */}
+              <div className="bg-white rounded-2xl p-4 border border-neutral-200 space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-800">
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#9e6f1c]" /> Mã giảm giá
+                  </span>
+                  <span className="text-[10px] text-neutral-400 font-normal">Ví dụ: MANSCAPED10</span>
+                </div>
+
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-xs text-emerald-800">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="font-bold">{appliedPromo}</span>
+                      <span className="text-[11px] text-emerald-700">
+                        {appliedPromo === 'FREESHIP' ? '(Miễn phí ship)' : appliedPromo === 'VIP15' ? '(-15%)' : '(-10%)'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemovePromo}
+                      className="text-neutral-400 hover:text-red-500 p-1"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApplyPromo} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Nhập mã ưu đãi..."
+                      className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs uppercase font-medium outline-none focus:border-[#9e6f1c]"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!promoInput.trim()}
+                      className="px-4 py-2 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl uppercase tracking-wider transition disabled:opacity-40 cursor-pointer"
+                    >
+                      Áp dụng
+                    </button>
+                  </form>
+                )}
+
+                {promoError && (
+                  <p className="text-[11px] text-red-600">{promoError}</p>
+                )}
+              </div>
+
               {/* Summary Breakdown */}
               <div className="bg-white rounded-2xl p-4 border border-neutral-200 space-y-2 text-xs">
                 <h4 className="font-bold text-neutral-900 text-sm mb-2">Summary</h4>
@@ -266,10 +346,16 @@ export default function CartDrawer() {
                   <span>Subtotal</span>
                   <span className="font-semibold text-neutral-900">${totalPrice.toFixed(2)}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>Discount ({appliedPromo})</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-neutral-600">
                   <span>Shipping</span>
                   <span className="font-semibold text-neutral-900">
-                    {remainingForFree === 0 ? 'Free' : '$5.00'}
+                    {shippingCost === 0 ? 'Free' : '$5.00'}
                   </span>
                 </div>
                 <div className="flex justify-between text-neutral-600">
@@ -278,7 +364,7 @@ export default function CartDrawer() {
                 </div>
                 <div className="flex justify-between font-serif font-bold text-base pt-2 border-t border-neutral-200 text-neutral-900">
                   <span>Estimated Total</span>
-                  <span className="text-[#9e6f1c]">${(totalPrice + (remainingForFree === 0 ? 0 : 5.0)).toFixed(2)}</span>
+                  <span className="text-[#9e6f1c]">${finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 

@@ -308,7 +308,7 @@ export default function AdminPage() {
       imageSrc: newImageSrc || parsedThumbnails[0] || '/assets/aistudio/30-00006-NA_f201a618.png',
       imageAlt: newTitle,
       thumbnails: parsedThumbnails.length > 0 ? parsedThumbnails : [newImageSrc],
-      badge: 'QUÀ TẶNG ĐỘC QUYỀN TRÊN WEBSITE',
+      badge: '',
       rating: 5.0,
       reviewCount: '1,671 đánh giá',
       soldCount: 'Đã bán 75.8k',

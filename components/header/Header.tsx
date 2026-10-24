@@ -5,16 +5,18 @@ import Link from 'next/link';
 import { Search, User, ShoppingBag, Globe, Menu, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
+import QuickSearchModal from '@/components/search/QuickSearchModal';
 
 const categories = [
-  { label: 'Deals & Kits', href: '#', hasDropdown: true },
-  { label: 'Groin', href: '#', hasDropdown: true },
-  { label: 'Beard & Face', href: '#', hasDropdown: true },
-  { label: 'Head & Body', href: '#', hasDropdown: true },
+  { label: 'Deals & Kits', href: '/products?category=deals', hasDropdown: true },
+  { label: 'Groin', href: '/products?category=groin', hasDropdown: true },
+  { label: 'Beard & Face', href: '/products?category=beard', hasDropdown: true },
+  { label: 'Head & Body', href: '/products?category=body', hasDropdown: true },
 ];
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
 
   return (
@@ -23,23 +25,21 @@ export default function Header() {
       <div className="bg-black text-white text-[11px] sm:text-[12px] h-[36px] flex items-center justify-between px-3 sm:px-8">
         {/* Mobile: compact promo message */}
         <div className="block sm:hidden w-full text-center truncate tracking-wide text-neutral-200">
-          <span>Free Shipping on Orders Over $50 | </span>
-          <Link href="#" className="underline font-medium text-white">Shop Sale</Link>
+          <span>Free Shipping on Orders Over $49 | </span>
+          <Link href="/products" className="underline font-medium text-[#c59b63]">Shop Collection</Link>
         </div>
 
         {/* Desktop: Full utility links */}
         <div className="hidden sm:flex items-center space-x-6">
-          <Link href="#" className="hover:underline transition-all">Support</Link>
-          <Link href="#" className="hover:underline transition-all">Track Order</Link>
-          <Link href="#" className="hover:underline transition-all">Subscriptions</Link>
+          <Link href="tel:19008888" className="hover:underline transition-all">Support: 1900 8888</Link>
+          <Link href="/tracking" className="hover:underline text-[#c59b63] font-semibold transition-all">Track Order</Link>
+          <Link href="/products" className="hover:underline transition-all">All Products</Link>
         </div>
         <div className="hidden sm:flex items-center space-x-6">
-          <Link href="#" className="hover:underline transition-all">Unlock Rewards</Link>
-          <Link href="#" className="hover:underline transition-all">Our Cause</Link>
-          <Link href="#" className="hover:underline font-semibold text-white">Sale</Link>
+          <Link href="/products?category=deals" className="hover:underline font-semibold text-[#c59b63]">Sale (Up to 30%)</Link>
           <div className="flex items-center space-x-1 cursor-pointer hover:opacity-80 transition-opacity">
             <Globe className="w-3.5 h-3.5" />
-            <span>EN</span>
+            <span>VN / EN</span>
           </div>
         </div>
       </div>
@@ -75,16 +75,12 @@ export default function Header() {
         {/* Right: Icons */}
         <div className="flex items-center space-x-2 sm:space-x-5 text-neutral-900">
           <button 
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
             className="min-w-[40px] min-h-[40px] sm:min-w-[44px] sm:min-h-[44px] flex items-center justify-center p-2 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer" 
             aria-label="Search"
           >
             <Search className="w-5 h-5 stroke-[1.8]" />
-          </button>
-          <button 
-            className="hidden sm:flex min-w-[44px] min-h-[44px] items-center justify-center p-2 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer" 
-            aria-label="Account"
-          >
-            <User className="w-5 h-5 stroke-[1.8]" />
           </button>
           <button 
             type="button"
@@ -136,7 +132,7 @@ export default function Header() {
               {/* Drawer Links */}
               <div className="flex-1 py-4 px-2 space-y-1">
                 <div className="px-3 pb-2 text-[11px] font-bold tracking-widest text-neutral-400 uppercase">
-                  Shop Categories
+                  Danh mục sản phẩm
                 </div>
                 {categories.map((cat) => (
                   <Link
@@ -150,16 +146,22 @@ export default function Header() {
                   </Link>
                 ))}
 
+                <Link
+                  href="/products"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-between px-3 py-3 rounded-lg text-[15px] font-semibold text-[#c59b63] hover:bg-amber-50/50 transition-colors"
+                >
+                  <span>Xem tất cả bộ sưu tập</span>
+                  <ChevronRight className="w-4 h-4 text-[#c59b63] stroke-[2]" />
+                </Link>
+
                 <div className="pt-6 pb-2 px-3 text-[11px] font-bold tracking-widest text-neutral-400 uppercase">
-                  Customer Care & Info
+                  Dịch vụ & Tra cứu
                 </div>
                 {[
-                  { label: 'Support', href: '#' },
-                  { label: 'Track Order', href: '#' },
-                  { label: 'Subscriptions', href: '#' },
-                  { label: 'Unlock Rewards', href: '#' },
-                  { label: 'Our Cause', href: '#' },
-                  { label: 'Sale (Up to 30% Off)', href: '#' },
+                  { label: 'Tra cứu đơn hàng (Live Tracking)', href: '/tracking' },
+                  { label: 'Hotline CSKH: 1900 8888', href: 'tel:19008888' },
+                  { label: 'Ưu đãi & Khuyến mãi', href: '/products?category=deals' },
                 ].map((item) => (
                   <Link
                     key={item.label}
@@ -174,23 +176,21 @@ export default function Header() {
 
               {/* Drawer Footer */}
               <div className="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-between">
-                <Link
-                  href="#"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-2 text-[14px] font-semibold text-neutral-900"
-                >
-                  <User className="w-4 h-4 stroke-[2]" />
-                  <span>Account Login</span>
-                </Link>
+                <span className="text-[13px] font-medium text-neutral-500">
+                  © MANSCAPED Vietnam
+                </span>
                 <div className="flex items-center gap-1 text-[13px] font-medium text-neutral-600">
                   <Globe className="w-4 h-4" />
-                  <span>EN</span>
+                  <span>VN</span>
                 </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      {/* Quick Search Modal */}
+      <QuickSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   );
 }
