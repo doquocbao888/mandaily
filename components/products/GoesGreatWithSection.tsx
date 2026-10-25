@@ -242,27 +242,11 @@ export default function GoesGreatWithSection({
                       {product.subtitle}
                     </p>
 
-                    {/* Dual Pricing: VIP Member Price vs Regular Price */}
-                    <div className="flex items-center pt-2.5 text-xs sm:text-sm">
-                      <div className="flex flex-col">
-                        <span className="text-[#965c26] font-bold">
-                          {product.vipPrice}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 font-medium">
-                          VIP Member Price
-                        </span>
-                      </div>
-
-                      <div className="h-6 w-[1px] bg-neutral-300 mx-3.5" />
-
-                      <div className="flex flex-col">
-                        <span className="text-neutral-900 font-bold">
-                          {product.regularPrice}
-                        </span>
-                        <span className="text-[10px] text-neutral-500 font-medium">
-                          Regular Price
-                        </span>
-                      </div>
+                    {/* Clean Pricing */}
+                    <div className="flex items-baseline gap-2 pt-2.5 text-xs sm:text-sm">
+                      <span className="text-neutral-900 font-bold text-sm sm:text-base">
+                        {product.regularPrice || product.vipPrice}
+                      </span>
                     </div>
 
                     {/* Discount Notice (if Sale) */}

@@ -1,9 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck, RefreshCw, Award, Tag, Check } from 'lucide-react';
+import {
+  X,
+  Trash2,
+  Plus,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
 import { featuredProductsConfig2 } from '@/config/products';
@@ -21,382 +32,436 @@ export default function CartDrawer() {
     totalPrice,
   } = useCart();
 
-  const [promoInput, setPromoInput] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-  const [promoError, setPromoError] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleApplyPromo = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPromoError(null);
-    const code = promoInput.trim().toUpperCase();
-    if (code === 'MANSCAPED10' || code === 'VIP15' || code === 'FREESHIP') {
-      setAppliedPromo(code);
-      setPromoInput('');
-    } else {
-      setPromoError('Mã không hợp lệ. Thử MANSCAPED10 hoặc FREESHIP');
+  const freeShippingThreshold = 49.0;
+  const isFreeShipping = totalPrice >= freeShippingThreshold;
+  const progress = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
+  const remainingForFree = Math.max(0, freeShippingThreshold - totalPrice);
+
+  // Suggested add-on items for Bundle and Save (Weed Whacker, Shears, Shed)
+  const bundleItems = [
+    featuredProductsConfig2.products.find((p) => p.id === 'weed-whacker-3') || featuredProductsConfig2.products[3],
+    featuredProductsConfig2.products.find((p) => p.id === 'the-shears-3') || featuredProductsConfig2.products[8],
+    featuredProductsConfig2.products.find((p) => p.id === 'the-shed-2') || featuredProductsConfig2.products[6],
+    featuredProductsConfig2.products.find((p) => p.id === 'ball-scrub') || featuredProductsConfig2.products[5],
+  ].filter(Boolean);
+
+  const handleScrollCarousel = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const offset = direction === 'left' ? -220 : 220;
+      scrollContainerRef.current.scrollBy({ left: offset, behavior: 'smooth' });
     }
   };
 
-  const handleRemovePromo = () => {
-    setAppliedPromo(null);
-    setPromoError(null);
-  };
-
-  const discountAmount = appliedPromo === 'MANSCAPED10'
-    ? totalPrice * 0.1
-    : appliedPromo === 'VIP15'
-    ? totalPrice * 0.15
-    : 0;
-
-  const freeShippingThreshold = 49.0;
-  const isFreeShipping = totalPrice >= freeShippingThreshold || appliedPromo === 'FREESHIP';
-  const progress = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
-  const remainingForFree = Math.max(0, freeShippingThreshold - totalPrice);
-  const shippingCost = isFreeShipping ? 0 : 5.0;
-  const finalTotal = Math.max(0, totalPrice - discountAmount + shippingCost);
-
-  // Recommended add-on items for Bundle and Save
-  const bundleProducts = featuredProductsConfig2.products.slice(4, 7);
+  // Estimate total product original value (MSRP before saving)
+  const totalOriginalValue = cart.reduce((sum, item) => {
+    const origPrice = (item.numericPrice * 1.091);
+    return sum + origPrice * item.quantity;
+  }, 0);
 
   if (!isCartOpen) return null;
 
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 overflow-hidden">
-        {/* Backdrop */}
+        {/* Dark Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setIsCartOpen(false)}
-          className="absolute inset-0 bg-black/70 backdrop-blur-xs"
+          className="absolute inset-0 bg-black/70 backdrop-blur-[2px]"
         />
 
-        {/* Slide-out Panel */}
-        <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
+        {/* Slide-out Drawer Panel */}
+        <div className="absolute inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="w-screen max-w-[420px] bg-[#f9f8f4] shadow-2xl flex flex-col font-sans"
+            className="w-screen max-w-[440px] bg-white shadow-2xl flex flex-col font-sans select-none text-neutral-900"
           >
-            {/* Header with Manscaped Bronze/Gold Background */}
-            <div className="flex items-center justify-between px-6 py-4 bg-[#9e6f1c] text-white">
-              <div className="w-9" /> {/* Spacer */}
-              <h2 className="text-base font-bold tracking-widest uppercase text-center flex-1">
+            {/* 1. Header with Manscaped Brand Brown Background */}
+            <div className="flex items-center justify-between px-6 py-4 bg-[#9c631b] text-white relative">
+              <div className="w-6" /> {/* Spacer for optical center */}
+              <h2 className="text-base font-bold tracking-wide text-center flex-1 font-serif">
                 Cart
               </h2>
               <button
                 onClick={() => setIsCartOpen(false)}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-black/15 transition-colors cursor-pointer"
-                aria-label="Đóng giỏ hàng"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-black/15 transition-colors cursor-pointer"
+                aria-label="Close cart"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Scrollable Content Body */}
-            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+            {/* 2. Scrollable Body Content */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
               
               {/* Free Shipping Banner Card */}
-              <div className="bg-white rounded-xl p-4 border border-neutral-200/80 shadow-xs">
-                <div className="flex items-center space-x-2 text-xs font-semibold text-neutral-800 mb-2">
-                  <Truck className="w-4 h-4 text-[#9e6f1c] flex-shrink-0" />
-                  {remainingForFree > 0 ? (
-                    <span>
-                      Add <strong className="text-[#9e6f1c]">${remainingForFree.toFixed(2)}</strong> more for Free Shipping!
+              <div className="p-4 sm:p-5 pb-2">
+                <div className="bg-[#f7f5ef] rounded-xl p-4 border border-[#ede9df]">
+                  <div className="flex items-center space-x-2.5 text-xs text-neutral-800 mb-2.5">
+                    {/* Delivery Stork / Delivery Illustration */}
+                    <div className="w-7 h-7 flex-shrink-0 flex items-center justify-center text-[#9c631b]">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6">
+                        <path d="M2 17h2.5c.3 0 .6-.1.8-.3L8 14h5l1.5 2H22" strokeLinecap="round" />
+                        <path d="M14 6l3 4h3l2 4v3h-2" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="6.5" cy="18.5" r="2.5" />
+                        <circle cx="17.5" cy="18.5" r="2.5" />
+                        <path d="M9 10l-3-4H2v3h2l2 2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div>
+                      {remainingForFree > 0 ? (
+                        <span>
+                          Add <strong className="text-[#9c631b] font-bold">${remainingForFree.toFixed(2)}</strong> more for <strong>Free Shipping!</strong>
+                        </span>
+                      ) : (
+                        <span>You qualify for <strong>Free Shipping!</strong></span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Progress Bar with "Free" end pill */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-2 bg-[#e8e4d8] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#b27627] transition-all duration-500 rounded-full"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className="bg-[#774712] text-white text-[10px] font-bold px-2 py-0.5 rounded leading-none">
+                      Free
                     </span>
-                  ) : (
-                    <span className="text-emerald-700 font-bold">You qualify for Free Shipping!</span>
-                  )}
-                </div>
-                <div className="relative w-full h-2.5 bg-neutral-100 rounded-full overflow-hidden flex items-center">
-                  <div
-                    className="h-full bg-[#9e6f1c] transition-all duration-500 rounded-full"
-                    style={{ width: `${progress}%` }}
-                  />
-                  <div className="absolute right-1 text-[9px] font-bold text-neutral-600 bg-white/80 px-1 rounded">
-                    Free
                   </div>
                 </div>
               </div>
 
-              {/* Cart Items Title & VIP Banner Callout */}
-              <div>
-                <h3 className="text-xl font-serif font-bold text-neutral-900 mb-1">
-                  {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
-                </h3>
-                {cart.length > 0 && (
-                  <div className="mt-2.5 p-4 bg-white rounded-xl border border-neutral-200/80 text-xs text-neutral-600 leading-relaxed space-y-1.5">
-                    <p className="font-bold text-neutral-900">Saving money looks handsome on you.</p>
-                    <p>
-                      Your <span className="underline font-medium">VIP Membership</span> enrolls you in a VIP Package subscription that includes <strong className="text-neutral-900">both a fresh trimmer blade and foil blade refill</strong>, billed <strong className="text-neutral-900">every 3 months at $25.00 + tax</strong>. Customize or cancel anytime.
+              {/* Cart Items or Empty State */}
+              {cart.length === 0 ? (
+                <div className="text-center py-16 px-6">
+                  <div className="w-16 h-16 bg-[#f7f5ef] text-[#9c631b] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <ShoppingBag className="w-8 h-8" />
+                  </div>
+                  <h3 className="font-serif font-bold text-lg text-neutral-900 mb-1">
+                    Your cart is empty
+                  </h3>
+                  <p className="text-xs text-neutral-500 mb-6 max-w-xs mx-auto">
+                    Take it up a crotch. Discover our award-winning groin and body grooming tools.
+                  </p>
+                  <button
+                    onClick={() => setIsCartOpen(false)}
+                    className="bg-[#9c631b] hover:bg-[#865314] text-white font-bold text-xs uppercase tracking-wider py-3 px-6 rounded-full transition shadow-sm cursor-pointer"
+                  >
+                    Start Shopping
+                  </button>
+                </div>
+              ) : (
+                <div className="px-4 sm:px-5 space-y-4">
+                  {/* Cart Title & VIP Announcement */}
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#9c631b]">
+                      {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
+                    </h3>
+                    <p className="text-sm font-bold text-neutral-900 mt-2">
+                      Saving money looks handsome on you.
+                    </p>
+                    <p className="text-[11px] sm:text-xs text-neutral-600 leading-relaxed mt-1">
+                      Your <span className="underline cursor-pointer font-semibold text-neutral-900">VIP Membership</span> enrolls you in a VIP Package subscription that includes <strong>both a fresh trimmer blade and foil blade refill</strong>, billed <strong>every 3 months at $25.00 + tax</strong>. Customize or cancel anytime.
                     </p>
                   </div>
-                )}
-              </div>
 
-              {/* Cart Items List */}
-              <div className="space-y-4">
-                {cart.length === 0 ? (
-                  <div className="text-center py-10 bg-white rounded-2xl border border-neutral-200 p-6">
-                    <div className="w-14 h-14 bg-neutral-100 text-neutral-400 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <ShoppingBag className="w-7 h-7" />
-                    </div>
-                    <p className="font-bold text-neutral-900 mb-1">Your cart is empty</p>
-                    <p className="text-xs text-neutral-500 mb-4">Discover our high-end grooming essentials.</p>
-                    <button
-                      onClick={() => setIsCartOpen(false)}
-                      className="bg-neutral-900 text-white font-bold text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl shadow"
-                    >
-                      Shop now
-                    </button>
+                  {/* Cart Items List */}
+                  <div className="space-y-4 pt-1">
+                    {cart.map((item) => {
+                      const itemRegularPrice = item.numericPrice * 1.091;
+                      const savingAmount = itemRegularPrice - item.numericPrice;
+
+                      return (
+                        <div
+                          key={`${item.id}-${item.variantName || 'default'}`}
+                          className="flex gap-4 py-2"
+                        >
+                          {/* Image Box */}
+                          <div className="relative w-28 h-28 sm:w-32 sm:h-32 bg-[#f4f4f2] rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-2 border border-neutral-100">
+                            <Image
+                              src={item.imageSrc}
+                              alt={item.title}
+                              fill
+                              sizes="128px"
+                              className="object-contain p-2"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+
+                          {/* Details */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wide block">
+                                VIP Member Price Applied
+                              </span>
+                              
+                              {/* Product Title with Manscaped Brand Styling */}
+                              <h4 className="font-extrabold text-sm sm:text-base uppercase leading-snug tracking-tight text-neutral-900 mt-0.5">
+                                {item.title.toLowerCase().includes('lawn mower') ? (
+                                  <span>
+                                    THE LAWN MOWER<sup>®</sup>{' '}
+                                    <span className="text-[#a0681c]">ULTRA GEN 6</span> GUNMETAL GRAY
+                                  </span>
+                                ) : (
+                                  item.title
+                                )}
+                              </h4>
+
+                              {/* Price Display */}
+                              <div className="mt-1 flex items-baseline">
+                                <span className="text-base font-bold text-[#a0681c]">
+                                  ${item.numericPrice.toFixed(2)}
+                                </span>
+                                <span className="text-xs text-neutral-400 line-through ml-2">
+                                  ${itemRegularPrice.toFixed(2)}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-neutral-500 mt-0.5">
+                                You Saved 8% (-${savingAmount.toFixed(2)})
+                              </p>
+                            </div>
+
+                            {/* Quantity Pill Controller with Trash Icon */}
+                            <div className="mt-2.5">
+                              <div className="inline-flex items-center border border-neutral-300 rounded-full px-3 py-1 bg-white shadow-xs space-x-3">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (item.quantity <= 1) {
+                                      removeFromCart(item.id, item.variantName);
+                                    } else {
+                                      updateQuantity(item.id, item.quantity - 1, item.variantName);
+                                    }
+                                  }}
+                                  className="text-neutral-700 hover:text-red-600 transition cursor-pointer p-0.5"
+                                  title="Giảm / Xóa"
+                                >
+                                  {item.quantity <= 1 ? (
+                                    <Trash2 className="w-4 h-4 text-neutral-800" />
+                                  ) : (
+                                    <span className="font-bold text-sm leading-none">–</span>
+                                  )}
+                                </button>
+                                <span className="text-xs font-bold text-neutral-900 select-none min-w-[12px] text-center">
+                                  {item.quantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantName)}
+                                  className="text-neutral-700 hover:text-black transition cursor-pointer p-0.5"
+                                  title="Tăng"
+                                >
+                                  <Plus className="w-3.5 h-3.5 text-neutral-800" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ) : (
-                  cart.map((item) => (
-                    <div
-                      key={`${item.id}-${item.variantName || 'default'}`}
-                      className="bg-white rounded-2xl p-4 border border-neutral-200 shadow-xs flex gap-4 relative"
-                    >
-                      {/* Product Image */}
-                      <div className="relative w-24 h-24 bg-[#f5f5f5] rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center border border-neutral-100">
-                        <Image
-                          src={item.imageSrc}
-                          alt={item.title}
-                          fill
-                          sizes="96px"
-                          className="object-contain p-2"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
+                </div>
+              )}
 
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div>
-                          <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wide block">
-                            {item.variantName || 'VIP Member Price Applied'}
-                          </span>
-                          <h4 className="font-serif font-bold text-sm text-neutral-900 uppercase leading-tight mt-0.5 line-clamp-2">
-                            {item.title}
-                          </h4>
-
-                          <div className="flex items-center space-x-2 mt-1.5">
-                            <span className="font-bold text-neutral-900 text-sm">
-                              ${(item.numericPrice * item.quantity).toFixed(2)}
-                            </span>
-                            {item.variantName?.includes('VIP') && (
-                              <>
-                                <span className="text-neutral-400 line-through text-xs">
-                                  ${(item.numericPrice * 1.1 * item.quantity).toFixed(2)}
-                                </span>
-                                <span className="text-xs text-emerald-700 font-semibold">
-                                  You Saved 8% (-${(item.numericPrice * 0.1 * item.quantity).toFixed(2)})
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Quantity & Delete Controls */}
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-100">
-                          <div className="flex items-center border border-neutral-300 rounded-full bg-white overflow-hidden h-8 px-1">
-                            <button
-                              onClick={() => {
-                                if (item.quantity === 1) {
-                                  removeFromCart(item.id, item.variantName);
-                                } else {
-                                  updateQuantity(item.id, item.quantity - 1, item.variantName);
-                                }
-                              }}
-                              className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 rounded-full transition"
-                              title="Giảm"
-                            >
-                              {item.quantity === 1 ? <Trash2 className="w-3.5 h-3.5 text-red-600" /> : '–'}
-                            </button>
-                            <span className="w-8 text-center font-bold text-xs text-neutral-900">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1, item.variantName)}
-                              className="w-7 h-7 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 rounded-full transition font-bold"
-                              title="Tăng"
-                            >
-                              +
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              {/* Bundle and Save Carousel Section */}
-              <div className="bg-[#f0eee6] rounded-2xl p-4 border border-neutral-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-serif font-bold text-sm text-neutral-900 uppercase">
+              {/* 3. Bundle and Save Carousel Section */}
+              <div className="mt-6 bg-[#f5f4ef] py-5 px-4 sm:px-5 border-t border-[#ede9df]">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-serif font-bold text-base sm:text-lg text-neutral-900">
                     Bundle and Save
                   </h4>
-                  <div className="flex space-x-1.5">
-                    <button className="w-6 h-6 rounded-full bg-white/80 border border-neutral-300 flex items-center justify-center text-neutral-600 text-xs">
-                      ‹
-                    </button>
-                    <button className="w-6 h-6 rounded-full bg-[#9e6f1c] text-white flex items-center justify-center text-xs">
-                      ›
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {bundleProducts.map((prod) => (
-                    <div key={prod.id} className="bg-white rounded-xl p-3 border border-neutral-200 flex flex-col justify-between">
-                      <div className="relative w-full h-24 bg-neutral-50 rounded-lg mb-2 flex items-center justify-center">
-                        <Image
-                          src={prod.imageSrc}
-                          alt={prod.title}
-                          fill
-                          sizes="130px"
-                          className="object-contain p-2"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <div>
-                        <h5 className="font-bold text-xs text-neutral-900 line-clamp-1">{prod.title}</h5>
-                        <p className="text-xs font-extrabold text-[#9e6f1c] mt-0.5">{prod.vipPrice}</p>
-                      </div>
-                      <button
-                        onClick={() => addToCart({
-                          id: prod.id,
-                          title: prod.title,
-                          subtitle: prod.subtitle,
-                          price: prod.vipPrice,
-                          numericPrice: parseFloat(prod.vipPrice.replace('$', '')) || 15.99,
-                          quantity: 1,
-                          imageSrc: prod.imageSrc,
-                          variantName: 'Add-on'
-                        })}
-                        className="mt-2 w-full bg-black hover:bg-neutral-800 text-white font-bold text-[11px] py-1.5 rounded-lg uppercase tracking-wider transition"
-                      >
-                        Add To Cart
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Voucher / Coupon Code Form */}
-              <div className="bg-white rounded-2xl p-4 border border-neutral-200 space-y-2.5">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-800">
-                  <span className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-[#9e6f1c]" /> Mã giảm giá
-                  </span>
-                  <span className="text-[10px] text-neutral-400 font-normal">Ví dụ: MANSCAPED10</span>
-                </div>
-
-                {appliedPromo ? (
-                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-xl text-xs text-emerald-800">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span className="font-bold">{appliedPromo}</span>
-                      <span className="text-[11px] text-emerald-700">
-                        {appliedPromo === 'FREESHIP' ? '(Miễn phí ship)' : appliedPromo === 'VIP15' ? '(-15%)' : '(-10%)'}
-                      </span>
-                    </div>
+                  <div className="flex items-center space-x-2">
                     <button
                       type="button"
-                      onClick={handleRemovePromo}
-                      className="text-neutral-400 hover:text-red-500 p-1"
+                      onClick={() => handleScrollCarousel('left')}
+                      className="w-7 h-7 rounded-full bg-[#e5e4de] hover:bg-[#d8d7d0] text-neutral-700 flex items-center justify-center transition cursor-pointer"
+                      title="Previous"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleScrollCarousel('right')}
+                      className="w-7 h-7 rounded-full bg-[#b37728] hover:bg-[#9c631b] text-white flex items-center justify-center transition cursor-pointer shadow-xs"
+                      title="Next"
+                    >
+                      <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
-                ) : (
-                  <form onSubmit={handleApplyPromo} className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="Nhập mã ưu đãi..."
-                      className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-2 text-xs uppercase font-medium outline-none focus:border-[#9e6f1c]"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!promoInput.trim()}
-                      className="px-4 py-2 bg-neutral-900 hover:bg-black text-white text-xs font-bold rounded-xl uppercase tracking-wider transition disabled:opacity-40 cursor-pointer"
-                    >
-                      Áp dụng
-                    </button>
-                  </form>
-                )}
+                </div>
 
-                {promoError && (
-                  <p className="text-[11px] text-red-600">{promoError}</p>
-                )}
+                {/* Horizontal Scrolling Card Track */}
+                <div
+                  ref={scrollContainerRef}
+                  className="flex space-x-3 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
+                >
+                  {bundleItems.map((prod) => {
+                    const priceNum = parseFloat((prod.regularPrice || prod.vipPrice).replace('$', '')) || 34.99;
+                    const origNum = priceNum + 5.0;
+
+                    return (
+                      <div
+                        key={prod.id}
+                        className="w-[200px] sm:w-[215px] flex-shrink-0 bg-white rounded-xl p-3.5 border border-neutral-200/80 shadow-xs flex flex-col justify-between"
+                      >
+                        <div>
+                          {/* Centered Image */}
+                          <div className="relative w-full h-32 bg-white rounded-lg mb-2 flex items-center justify-center overflow-hidden">
+                            <Image
+                              src={prod.imageSrc}
+                              alt={prod.title}
+                              fill
+                              sizes="180px"
+                              className="object-contain p-1"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+
+                          <h5 className="font-extrabold text-xs uppercase tracking-tight text-neutral-900 line-clamp-1 text-center">
+                            {prod.title.toUpperCase()}
+                          </h5>
+                          <p className="text-[11px] text-neutral-500 line-clamp-2 text-center mt-0.5 leading-tight min-h-[28px]">
+                            {prod.subtitle}
+                          </p>
+
+                          {/* Pricing */}
+                          <div className="flex items-baseline justify-center space-x-1.5 mt-2">
+                            <span className="text-sm font-bold text-[#a0681c]">
+                              ${priceNum.toFixed(2)}
+                            </span>
+                            <span className="text-xs text-neutral-400 line-through">
+                              ${origNum.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Round Add To Cart Pill Button */}
+                        <button
+                          type="button"
+                          onClick={() => addToCart({
+                            id: prod.id,
+                            title: prod.title,
+                            subtitle: prod.subtitle,
+                            price: prod.regularPrice || prod.vipPrice,
+                            numericPrice: priceNum,
+                            quantity: 1,
+                            imageSrc: prod.imageSrc,
+                            variantName: 'Add-on Kit'
+                          })}
+                          className="mt-3 w-full bg-black hover:bg-neutral-800 text-white font-bold text-xs py-2.5 px-4 rounded-full uppercase tracking-wider transition active:scale-[0.98] cursor-pointer"
+                        >
+                          Add To Cart
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Summary Breakdown */}
-              <div className="bg-white rounded-2xl p-4 border border-neutral-200 space-y-2 text-xs">
-                <h4 className="font-bold text-neutral-900 text-sm mb-2">Summary</h4>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Total Product Value</span>
-                  <span className="font-semibold text-neutral-900">${(totalPrice * 1.1).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-neutral-900">${totalPrice.toFixed(2)}</span>
-                </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-emerald-700 font-semibold">
-                    <span>Discount ({appliedPromo})</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+              {/* 4. Summary Breakdown Section */}
+              <div className="p-4 sm:p-5 space-y-3.5">
+                <h4 className="font-bold text-sm text-neutral-900">Summary</h4>
+
+                {/* Member Rewards Note */}
+                <div className="flex items-start space-x-3 bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/60">
+                  <div className="w-8 h-8 rounded-full border border-amber-300 bg-amber-100/70 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Award className="w-4 h-4" />
                   </div>
-                )}
-                <div className="flex justify-between text-neutral-600">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-neutral-900">
-                    {shippingCost === 0 ? 'Free' : '$5.00'}
-                  </span>
+                  <p className="text-[11px] text-neutral-700 leading-tight">
+                    Earn 550+ points on this order. Learn more about our{' '}
+                    <span className="underline cursor-pointer font-semibold text-neutral-900">
+                      Members Only Rewards Program
+                    </span>{' '}
+                    or{' '}
+                    <span className="underline cursor-pointer font-semibold text-neutral-900">
+                      Log in
+                    </span>.
+                  </p>
                 </div>
-                <div className="flex justify-between text-neutral-600">
-                  <span>Estimated Tax</span>
-                  <span className="font-medium text-neutral-500">Calculated at checkout</span>
-                </div>
-                <div className="flex justify-between font-serif font-bold text-base pt-2 border-t border-neutral-200 text-neutral-900">
-                  <span>Estimated Total</span>
-                  <span className="text-[#9e6f1c]">${finalTotal.toFixed(2)}</span>
+
+                {/* Financial Totals Table */}
+                <div className="space-y-2 text-xs pt-1">
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Total Product Value</span>
+                    <span className="text-neutral-900 font-medium">
+                      ${(totalOriginalValue > 0 ? totalOriginalValue : totalPrice * 1.091).toFixed(2)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Subtotal</span>
+                    <span className="text-neutral-900 font-medium">${totalPrice.toFixed(2)}</span>
+                  </div>
+
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Shipping</span>
+                    <span className="text-neutral-900 font-medium">
+                      {isFreeShipping ? 'Free' : '--'}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-neutral-600">
+                    <span>Estimated Tax</span>
+                    <span className="text-neutral-500">Calculated at checkout</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm font-bold text-neutral-900 pt-2 border-t border-neutral-200">
+                    <span>Estimated Total</span>
+                    <span>${totalPrice.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 
             </div>
 
-            {/* Footer Trust Badges & Checkout Button */}
-            <div className="p-4 bg-white border-t border-neutral-200 space-y-3">
-              {/* Trust Guarantees */}
-              <div className="grid grid-cols-3 gap-2 text-center text-[10px] text-neutral-600 font-medium py-1">
-                <div className="flex flex-col items-center">
-                  <ShieldCheck className="w-5 h-5 text-[#9e6f1c] mb-1" />
-                  <span>MONEY-BACK GUARANTEE</span>
+            {/* 5. Sticky Footer: Trust Badges & Full-width Pill Checkout Button */}
+            <div className="p-4 sm:p-5 bg-white border-t border-neutral-200 shadow-md">
+              {/* 3 Trust Badges Exactly Like Screenshot */}
+              <div className="grid grid-cols-3 gap-1 text-center py-1 mb-2">
+                {/* 1. Money-Back Guarantee */}
+                <div className="flex items-center justify-center space-x-1.5 px-1">
+                  <RotateCcw className="w-5 h-5 text-neutral-700 flex-shrink-0" />
+                  <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
+                    MONEY-<br />BACK<br />GUARANTEE
+                  </span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <Truck className="w-5 h-5 text-[#9e6f1c] mb-1" />
-                  <span>FREE SHIPPING OVER $49</span>
+
+                {/* 2. Free Shipping Over $49 */}
+                <div className="flex items-center justify-center space-x-1.5 px-1 border-x border-neutral-200">
+                  <Truck className="w-5 h-5 text-neutral-700 flex-shrink-0" />
+                  <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
+                    FREE<br />SHIPPING<br />OVER $49
+                  </span>
                 </div>
-                <div className="flex flex-col items-center">
-                  <Award className="w-5 h-5 text-[#9e6f1c] mb-1" />
-                  <span>2-YEAR WARRANTY</span>
+
+                {/* 3. 2-Year Warranty */}
+                <div className="flex items-center justify-center space-x-1.5 px-1">
+                  <ShieldCheck className="w-5 h-5 text-neutral-700 flex-shrink-0" />
+                  <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
+                    2-YEAR<br />WARRANTY
+                  </span>
                 </div>
               </div>
 
-              {/* Checkout Button */}
+              {/* Checkout Pill Button */}
               <button
+                type="button"
                 onClick={() => {
                   setIsCartOpen(false);
                   router.push('/checkout');
                 }}
-                className="w-full bg-[#9e6f1c] hover:bg-[#8b5f16] text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-all flex items-center justify-center space-x-2 text-sm uppercase tracking-widest cursor-pointer"
+                className="w-full bg-[#b77a2f] hover:bg-[#a26822] text-white font-bold py-3.5 px-6 rounded-full shadow-md transition-all active:scale-[0.99] flex items-center justify-center text-sm sm:text-base uppercase tracking-wider cursor-pointer mt-2"
               >
-                <span>Checkout</span>
+                Checkout
               </button>
             </div>
           </motion.div>

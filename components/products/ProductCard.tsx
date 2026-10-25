@@ -54,26 +54,10 @@ export default function ProductCard({ product }: ProductCardProps) {
         </p>
 
         {/* Pricing */}
-        <div className="flex items-center pt-2 text-sm sm:text-base">
-          <div className="flex flex-col">
-            <span className="text-[#985a12] font-bold text-sm sm:text-base">
-              {product.vipPrice}
-            </span>
-            <span className="text-[11px] sm:text-xs text-neutral-500 font-medium">
-              VIP Member Price
-            </span>
-          </div>
-
-          <div className="h-7 w-[1px] bg-neutral-300 mx-5" />
-
-          <div className="flex flex-col">
-            <span className="text-neutral-900 font-bold text-sm sm:text-base">
-              {product.regularPrice}
-            </span>
-            <span className="text-[11px] sm:text-xs text-neutral-500 font-medium">
-              Regular Price
-            </span>
-          </div>
+        <div className="flex items-baseline gap-2 pt-2 text-sm sm:text-base">
+          <span className="text-neutral-900 font-bold text-base sm:text-lg">
+            {product.regularPrice || product.vipPrice}
+          </span>
         </div>
       </div>
     </div>

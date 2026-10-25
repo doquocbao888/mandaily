@@ -84,54 +84,13 @@ let isSeedingOrders = false;
 let hasSeededOrders = false;
 
 /**
- * Seed initial orders if collection is empty (guarded to run once)
+ * Seed initial orders if collection is empty (No-op: real orders only)
  */
 export async function seedInitialOrdersIfNeeded() {
   if (hasSeededOrders || isSeedingOrders) return;
   isSeedingOrders = true;
   try {
-    const isBrowser = typeof window !== 'undefined';
-    const alreadySeeded = isBrowser && localStorage.getItem('manscaped_orders_seeded') === 'true';
-
-    const snap = await getDocs(collection(db, ORDERS_COLLECTION));
-    if (snap.empty && !alreadySeeded) {
-      const initialOrders: OrderItem[] = [
-        {
-          id: 'ORD-9821',
-          customerName: 'Đỗ Quốc Bảo',
-          phone: '0901234567',
-          address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
-          productName: 'The Lawn Mower® Ultra Gen 6',
-          variant: 'VIP Member Price',
-          quantity: 1,
-          totalPrice: '$109.99',
-          status: 'Đang xử lý',
-          createdAt: '2026-10-21 14:30',
-        },
-        {
-          id: 'ORD-9820',
-          customerName: 'Nguyễn Văn Minh',
-          phone: '0988888888',
-          address: '45 Lê Duẩn, Ba Đình, Hà Nội',
-          productName: 'The Performance Package Ultra Gen 6',
-          variant: 'Standard Kit',
-          quantity: 1,
-          totalPrice: '$159.99',
-          status: 'Đã giao',
-          createdAt: '2026-10-20 10:15',
-        },
-      ];
-      for (const ord of initialOrders) {
-        await setDoc(doc(db, ORDERS_COLLECTION, ord.id), ord);
-      }
-      if (isBrowser) localStorage.setItem('manscaped_orders_seeded', 'true');
-    }
     hasSeededOrders = true;
-  } catch (err: any) {
-    if (err?.name === 'AbortError' || String(err?.message || '').toLowerCase().includes('aborted')) {
-      return;
-    }
-    console.warn('Initial orders seed note:', err?.message || err);
   } finally {
     isSeedingOrders = false;
   }
@@ -247,8 +206,18 @@ export async function deleteProductFromDb(id: string) {
   }
 }
 
+function sanitizeFirestorePayload<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 /**
- * Real-time listener for orders collection
+ * Real-time listener for orders collection (merged with local storage fallback)
  */
 export function subscribeOrders(
   onData: (orders: OrderItem[]) => void,
@@ -258,10 +227,28 @@ export function subscribeOrders(
   return onSnapshot(
     colRef,
     (snapshot) => {
-      const items: OrderItem[] = [];
+      const itemsMap = new Map<string, OrderItem>();
       snapshot.forEach((d) => {
-        items.push(d.data() as OrderItem);
+        const ord = d.data() as OrderItem;
+        if (ord.id) itemsMap.set(ord.id, ord);
       });
+
+      // Merge local orders that were placed in browser
+      if (typeof window !== 'undefined') {
+        try {
+          const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+          for (const localOrd of localOrders) {
+            if (localOrd?.id && !itemsMap.has(localOrd.id)) {
+              itemsMap.set(localOrd.id, localOrd);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      const DUMMY_ORDER_IDS = new Set(['ORD-9821', 'ORD-9820', 'ORD-9819']);
+      const items = Array.from(itemsMap.values()).filter((o) => !DUMMY_ORDER_IDS.has(o.id));
       items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       onData(items);
     },
@@ -284,6 +271,17 @@ export function subscribeOrders(
  * Update order status
  */
 export async function updateOrderStatusInDb(orderId: string, status: OrderItem['status']) {
+  // Update local storage if present
+  if (typeof window !== 'undefined') {
+    try {
+      const stored: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+      const updated = stored.map((o) => (o.id === orderId ? { ...o, status } : o));
+      localStorage.setItem('manscaped_local_orders', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  }
+
   try {
     await updateDoc(doc(db, ORDERS_COLLECTION, orderId), { status });
   } catch (error) {
@@ -292,20 +290,69 @@ export async function updateOrderStatusInDb(orderId: string, status: OrderItem['
 }
 
 /**
- * Create new order
+ * Create new order with sanitized payload & instant local backup
  */
 export async function createOrderInDb(order: OrderItem) {
+  const cleanOrder: OrderItem = {
+    id: order.id,
+    customerName: order.customerName || '',
+    phone: order.phone || '',
+    address: order.address || '',
+    productName: order.productName || 'The Lawn Mower® Ultra Gen 6',
+    variant: order.variant || 'Standard',
+    quantity: typeof order.quantity === 'number' ? order.quantity : 1,
+    totalPrice: order.totalPrice || '$0.00',
+    status: order.status || 'Đang xử lý',
+    createdAt: order.createdAt || new Date().toLocaleString('vi-VN'),
+    paymentMethod: order.paymentMethod || 'COD',
+    notes: order.notes || '',
+    discountCode: order.discountCode || '',
+    discountAmount: order.discountAmount || '',
+  };
+
+  const payload = sanitizeFirestorePayload(cleanOrder);
+
+  // 1. Immediately store in localStorage so it's guaranteed to be available locally
+  if (typeof window !== 'undefined') {
+    try {
+      const stored: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+      const filtered = stored.filter((o) => o.id !== cleanOrder.id);
+      localStorage.setItem('manscaped_local_orders', JSON.stringify([cleanOrder, ...filtered]));
+      window.dispatchEvent(new CustomEvent('manscaped_order_created', { detail: cleanOrder }));
+    } catch (e) {
+      console.warn('Local order storage note:', e);
+    }
+  }
+
+  // 2. Persist to Firestore database
   try {
-    await setDoc(doc(db, ORDERS_COLLECTION, order.id), order);
+    await setDoc(doc(db, ORDERS_COLLECTION, cleanOrder.id), payload);
+    return cleanOrder;
   } catch (error) {
-    handleFirestoreError(error, OperationType.CREATE, `${ORDERS_COLLECTION}/${order.id}`);
+    console.error('Firestore createOrderInDb error:', error);
+    try {
+      handleFirestoreError(error, OperationType.CREATE, `${ORDERS_COLLECTION}/${cleanOrder.id}`);
+    } catch {
+      // Handled
+    }
+    return cleanOrder;
   }
 }
 
 /**
- * Delete order from Firestore
+ * Delete order from Firestore and local cache
  */
 export async function deleteOrderFromDb(orderId: string) {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+      const updated = stored.filter((o) => o.id !== orderId);
+      localStorage.setItem('manscaped_local_orders', JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  }
+
   try {
     await deleteDoc(doc(db, ORDERS_COLLECTION, orderId));
     return { success: true };
@@ -320,28 +367,100 @@ export async function deleteOrderFromDb(orderId: string) {
  */
 export async function trackOrdersByQuery(queryStr: string): Promise<OrderItem[]> {
   try {
-    const trimmed = queryStr.trim().toLowerCase();
-    if (!trimmed) return [];
-    
+    const rawTrimmed = (queryStr || '').trim();
+    if (!rawTrimmed) return [];
+
+    const lowerQuery = rawTrimmed.toLowerCase();
+
+    // Prevent short, trivial, or generic queries from matching anything
+    // (e.g. "1", "12", "ord", "#", "don", etc.)
+    if (lowerQuery.length < 3) {
+      return [];
+    }
+
+    const genericStopWords = ['ord', 'ord-', '#', 'order', 'don', 'donhang'];
+    if (genericStopWords.includes(lowerQuery)) {
+      return [];
+    }
+
     // Seed initial orders if empty so first-time visitors can track demo orders
     await seedInitialOrdersIfNeeded();
 
-    const snap = await getDocs(collection(db, ORDERS_COLLECTION));
-    const results: OrderItem[] = [];
-    snap.forEach((docSnap) => {
-      const order = docSnap.data() as OrderItem;
-      const orderId = (order.id || '').toLowerCase();
-      const phone = (order.phone || '').replace(/\s+/g, '');
-      const cleanQuery = trimmed.replace(/\s+/g, '');
+    const allOrdersMap = new Map<string, OrderItem>();
 
+    try {
+      const snap = await getDocs(collection(db, ORDERS_COLLECTION));
+      snap.forEach((docSnap) => {
+        const order = docSnap.data() as OrderItem;
+        if (order?.id) allOrdersMap.set(order.id, order);
+      });
+    } catch (readErr) {
+      console.warn('Firestore read orders note:', readErr);
+    }
+
+    // Merge with any local orders
+    if (typeof window !== 'undefined') {
+      try {
+        const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+        for (const localOrd of localOrders) {
+          if (localOrd?.id && !allOrdersMap.has(localOrd.id)) {
+            allOrdersMap.set(localOrd.id, localOrd);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Clean candidates
+    // Normalized Order ID: e.g. "ORD-811308" -> "ord-811308"
+    const cleanIdCandidate = lowerQuery.replace(/^[#\s]+/, '').replace(/\s+/g, '');
+
+    // Pure digits from query
+    const queryDigits = lowerQuery.replace(/\D/g, '');
+
+    // Is it a phone search? In Vietnam, valid phone numbers have 9-11 digits (e.g. 0901234567).
+    // A search is ONLY treated as phone search if the user entered at least 9 numeric digits!
+    const isPhoneQuery = queryDigits.length >= 9;
+
+    const results: OrderItem[] = [];
+
+    for (const order of allOrdersMap.values()) {
+      const orderIdLower = (order.id || '').trim().toLowerCase();
+      const orderIdDigits = orderIdLower.replace(/\D/g, '');
+
+      // Check 1: Exact Order ID match (e.g. user typed "ORD-811308" or "ord-811308" or "#ORD-811308")
+      if (orderIdLower === cleanIdCandidate) {
+        results.push(order);
+        continue;
+      }
+
+      // Check 2: Order ID without "ORD-" prefix
+      // If user typed just the numeric part of the order (e.g. "811308" or "9821"),
+      // ONLY if user provided at least 4 digits (so "1", "12", "8" won't match!)
       if (
-        orderId.includes(trimmed) ||
-        phone.includes(cleanQuery) ||
-        (order.customerName && order.customerName.toLowerCase().includes(trimmed))
+        queryDigits.length >= 4 &&
+        (orderIdLower === `ord-${queryDigits}` || orderIdDigits === queryDigits)
       ) {
         results.push(order);
+        continue;
       }
-    });
+
+      // Check 3: Full Phone Number Match
+      // ONLY active if query has >= 9 digits
+      if (isPhoneQuery) {
+        const orderPhoneDigits = (order.phone || '').replace(/\D/g, '');
+        if (
+          orderPhoneDigits &&
+          (orderPhoneDigits === queryDigits ||
+            orderPhoneDigits.endsWith(queryDigits) ||
+            queryDigits.endsWith(orderPhoneDigits))
+        ) {
+          results.push(order);
+          continue;
+        }
+      }
+    }
 
     return results.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
   } catch (error) {

@@ -45,6 +45,7 @@ export interface ProductItem {
   gifts: string[];
   cashbackText: string;
   warrantyText: string;
+  detailedDescription?: string;
   videoReviews?: VideoReviewItem[];
 }
 
@@ -116,7 +117,8 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml', 'Tặng kèm Túi Đựng Chống Nước Du Lịch'],
       cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1',
+      detailedDescription: `Everything you need to take care of your hairs so you can feel clean-cut and confident.\n\n<strong>PACKAGE INCLUDES</strong>\n• <strong>The Lawn Mower® Ultra Gen 6</strong> Groin & Body Hair Trimmer\n• <strong>Weed Whacker® 3.0 Pro</strong> Electric Nose, Ear & Eyebrow Hair Trimmer\n• <strong>Ball Scrub</strong> Gentle Groin Cleanser & Exfoliator\n• <strong>Ball Shave Gel</strong> Non-Foaming Groin Shaving Gel\n• <strong>Ball Deo</strong> Deodorant to Fight Ingrowns, Chafe, and Odor in Warm Amber Night Scent\n\n<strong>FREE GIFTS</strong>\n• <strong>Magic Mat®</strong> Disposable Shaving Mats\n• <strong>Boxers 2.0</strong> Midnight Bravo ($34.99 value)\n• <strong>The Shed 2.0 Toiletry Bag</strong> ($39.99 value)`
     },
     {
       id: 'the-platinum-package-ultra-gen-6',

@@ -76,7 +76,7 @@ const DEFAULT_FAQS: FaqItem[] = [
     id: 'faq-10',
     question: 'How often should the blade be replaced?',
     answer:
-      'We recommend replacing your SkinSafe™ Trimmer Blade and Foil Blade every 3 months for optimal hygiene, sharpness, and peak performance. Over time, dull blades can cause irritation or pulling. With a VIP subscription, fresh replacement blades are delivered conveniently to your door right when you need them.',
+      'We recommend replacing your SkinSafe™ Trimmer Blade and Foil Blade every 3 months for optimal hygiene, sharpness, and peak performance. Over time, dull blades can cause irritation or pulling. Fresh replacement blades can be purchased directly on our store whenever you need them.',
   },
   {
     id: 'faq-11',

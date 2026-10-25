@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams, notFound } from 'next/navigation';
+import { useParams, notFound, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getProductById, type ProductItem } from '@/config/products';
@@ -21,10 +21,13 @@ import {
   ShieldCheck, 
   Sparkles,
   ShoppingBag,
-  HelpCircle
+  HelpCircle,
+  Truck,
+  RotateCcw
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
+  const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
   const initialProduct = getProductById(id);
@@ -32,9 +35,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<ProductItem | null>(initialProduct || null);
   const [loading, setLoading] = useState(!initialProduct);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedVariant, setSelectedVariant] = useState<'vip' | 'regular'>('vip');
   const [quantity, setQuantity] = useState(1);
-  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [addedToast, setAddedToast] = useState(false);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const { addToCart } = useCart();
@@ -213,9 +214,9 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = async () => {
-    const priceStr = selectedVariant === 'vip' ? product.vipPrice : product.regularPrice;
+    const priceStr = product.regularPrice || product.vipPrice || '$109.99';
     const numericPrice = parseFloat(priceStr.replace('$', '')) || 109.99;
-    const variantLabel = selectedVariant === 'vip' ? 'VIP Member Price' : 'Regular Price';
+    const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
 
     addToCart({
@@ -233,6 +234,25 @@ export default function ProductDetailPage() {
     setTimeout(() => setAddedToast(false), 3500);
   };
 
+  const handleBuyNow = () => {
+    const priceStr = product.regularPrice || product.vipPrice || '$109.99';
+    const numericPrice = parseFloat(priceStr.replace('$', '')) || 109.99;
+    const variantLabel = 'Bản chính hãng';
+    const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
+
+    addToCart({
+      id: product.id,
+      title: product.title,
+      subtitle: product.subtitle,
+      price: priceStr,
+      numericPrice,
+      quantity,
+      imageSrc: mainImg,
+      variantName: variantLabel,
+    });
+
+    router.push('/checkout');
+  };
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-[#1a1a1a] flex flex-col font-sans select-none">
@@ -247,7 +267,7 @@ export default function ProductDetailPage() {
           </div>
           <div>
             <p className="font-bold text-sm">Đã thêm vào giỏ hàng thành công!</p>
-            <p className="text-xs text-neutral-300">{product.title} ({selectedVariant === 'vip' ? 'VIP Member' : 'Regular Price'})</p>
+            <p className="text-xs text-neutral-300">{product.title}</p>
           </div>
         </div>
       )}
@@ -447,11 +467,9 @@ export default function ProductDetailPage() {
                 <p className="text-neutral-600 text-sm font-medium mt-1">
                   {product.subtitle}
                 </p>
-                <div className="flex items-center space-x-3 mt-2">
-                  <span className="text-xl font-extrabold text-neutral-900">$109.99</span>
-                  <span className="text-neutral-400 line-through text-sm">$119.99</span>
-                  <span className="bg-[#b78103] text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase">
-                    VIPs SAVE 8%
+                <div className="flex items-center space-x-3 mt-3">
+                  <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
+                    {product.regularPrice || product.vipPrice}
                   </span>
                 </div>
               </div>
@@ -467,143 +485,75 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
+            {/* Detailed Description Block */}
+            {product.detailedDescription && (
+              <div className="mt-4 mb-4 text-xs sm:text-sm text-neutral-700 leading-relaxed whitespace-pre-line bg-white/60 p-4 rounded-xl border border-neutral-200/60">
+                <div dangerouslySetInnerHTML={{ __html: product.detailedDescription }} />
+              </div>
+            )}
+
             {/* View FAQs */}
-            <div className="mt-3 mb-5">
+            <div className="mt-2 mb-5">
               <a href="#faqs" className="text-xs sm:text-sm font-semibold text-neutral-800 underline underline-offset-4 hover:text-amber-700">
-                View FAQs
+                Xem câu hỏi thường gặp (FAQs)
               </a>
             </div>
 
-            {/* Variant Option 1: VIP Member Price (Selected Card) */}
-            <div 
-              onClick={() => setSelectedVariant('vip')}
-              className={`border-2 rounded-2xl p-5 mb-4 cursor-pointer transition-all bg-white ${
-                selectedVariant === 'vip' 
-                  ? 'border-amber-600 shadow-md ring-1 ring-amber-600/20' 
-                  : 'border-neutral-200 hover:border-neutral-300'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3">
-                  <input 
-                    type="radio" 
-                    name="pricing-option" 
-                    checked={selectedVariant === 'vip'} 
-                    onChange={() => setSelectedVariant('vip')}
-                    className="mt-1 accent-amber-600 w-4 h-4 cursor-pointer" 
-                  />
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-sm sm:text-base text-neutral-900">THE LAWN MOWER® ULTRA GEN 6</span>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <span className="text-xs font-bold text-neutral-800">VIP Member Price</span>
-                      <span className="bg-[#b78103] text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                        VIPs SAVE 8%
-                      </span>
-                    </div>
-                  </div>
+            {/* Product Purchase Box */}
+            <div className="border border-neutral-200 rounded-2xl p-5 mb-4 bg-white shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                    Còn hàng · Sẵn sàng giao ngay
+                  </span>
                 </div>
-
-                <div className="text-right">
-                  <div className="text-lg sm:text-xl font-extrabold text-neutral-900">$109.99</div>
-                  <div className="text-xs text-neutral-400 line-through">$119.99</div>
-                </div>
+                <span className="text-xs text-neutral-500 font-medium">
+                  Miễn phí giao hàng toàn quốc
+                </span>
               </div>
 
-              {/* Expanded details when VIP is selected */}
-              {selectedVariant === 'vip' && (
-                <div className="mt-4 pt-4 border-t border-neutral-100 animate-fadeIn">
-                  <div className="flex items-center space-x-1.5 text-xs text-neutral-700 font-medium mb-4">
-                    <ShieldCheck className="w-4 h-4 text-amber-700" />
-                    <span>30-Day Money Back Guarantee</span>
-                  </div>
-
-                  {/* Quantity & Add to Cart */}
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="flex items-center border border-neutral-300 rounded-xl bg-neutral-50 overflow-hidden h-12">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setQuantity(Math.max(1, quantity - 1)); }}
-                        className="px-3 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors"
-                      >
-                        -
-                      </button>
-                      <span className="w-8 text-center font-bold text-neutral-900 text-sm">{quantity}</span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setQuantity(quantity + 1); }}
-                        className="px-3 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
-                      className="flex-1 bg-[#b78103] hover:bg-[#a17102] text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm sm:text-base uppercase tracking-wider"
-                    >
-                      <ShoppingBag className="w-5 h-5" />
-                      <span>Add to cart</span>
-                    </button>
-                  </div>
-
-                  {/* Subscription explanation text */}
-                  <p className="text-[11px] sm:text-xs text-neutral-500 leading-relaxed mb-3">
-                    The VIP Member Price option enrolls you in a VIP Package subscription, which includes both a fresh trimmer blade and foil blade refill, billed at $25.00 + tax every 3 months. Customize or cancel anytime.
-                  </p>
-
-                  {/* Already a member toggle */}
-                  <div className="pt-2 border-t border-neutral-100">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setShowMemberDropdown(!showMemberDropdown); }}
-                      className="flex items-center justify-between w-full text-xs font-bold text-neutral-800 hover:text-amber-700 py-1"
-                    >
-                      <span>Already a member?</span>
-                      {showMemberDropdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </button>
-
-                    {showMemberDropdown && (
-                      <div className="mt-2 text-xs text-neutral-600 bg-neutral-50 p-3 rounded-lg border border-neutral-200">
-                        Please log in to your account to apply your existing VIP membership pricing and benefits automatically.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Variant Option 2: Regular Price Card */}
-            <div 
-              onClick={() => setSelectedVariant('regular')}
-              className={`border-2 rounded-2xl p-4 cursor-pointer transition-all bg-white ${
-                selectedVariant === 'regular' 
-                  ? 'border-neutral-900 shadow-sm' 
-                  : 'border-neutral-200 hover:border-neutral-300'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <input 
-                    type="radio" 
-                    name="pricing-option" 
-                    checked={selectedVariant === 'regular'} 
-                    onChange={() => setSelectedVariant('regular')}
-                    className="accent-neutral-900 w-4 h-4 cursor-pointer" 
-                  />
-                  <span className="font-bold text-sm sm:text-base text-neutral-900">Regular Price</span>
-                </div>
-                <div className="text-base sm:text-lg font-bold text-neutral-900">$119.99</div>
-              </div>
-
-              {selectedVariant === 'regular' && (
-                <div className="mt-3 pt-3 border-t border-neutral-100">
+              {/* Quantity & Buy CTA */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex items-center border border-neutral-300 rounded-xl bg-neutral-50 overflow-hidden h-12 w-fit">
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}
-                    className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center space-x-2 text-sm uppercase tracking-wider"
+                    type="button"
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="px-3.5 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors cursor-pointer"
                   >
-                    <span>Add to cart (Regular Price)</span>
+                    -
+                  </button>
+                  <span className="w-10 text-center font-bold text-neutral-900 text-sm select-none">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="px-3.5 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors cursor-pointer"
+                  >
+                    +
                   </button>
                 </div>
-              )}
+
+                <button
+                  type="button"
+                  onClick={handleBuyNow}
+                  className="flex-1 bg-[#b78103] hover:bg-[#a17102] text-white font-extrabold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm sm:text-base uppercase tracking-wider cursor-pointer"
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Mua ngay · {product.regularPrice || product.vipPrice}</span>
+                </button>
+              </div>
+
+              {/* Trust Badges */}
+              <div className="pt-3 border-t border-neutral-100 grid grid-cols-2 gap-2 text-xs text-neutral-600">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                  <span>Bảo hành chính hãng 1 đổi 1</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span>Kiểm tra hàng trước khi nhận</span>
+                </div>
+              </div>
             </div>
 
           </div>

@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Search,
   Package,
@@ -24,21 +25,24 @@ import SuperBanner from '@/components/header/SuperBanner';
 import Footer from '@/components/header/Footer';
 import { trackOrdersByQuery, type OrderItem } from '@/lib/dbService';
 
-export default function OrderTrackingPage() {
-  const [query, setQuery] = useState('');
+function OrderTrackingContent() {
+  const searchParams = useSearchParams();
+  const urlParam = searchParams.get('id') || searchParams.get('orderId') || searchParams.get('phone') || '';
+
+  const [query, setQuery] = useState(urlParam);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [orders, setOrders] = useState<OrderItem[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<OrderItem | null>(null);
 
-  const handleSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!query.trim()) return;
+  const executeSearch = async (searchQuery: string) => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
 
     setIsSearching(true);
     setHasSearched(true);
     try {
-      const results = await trackOrdersByQuery(query);
+      const results = await trackOrdersByQuery(trimmed);
       setOrders(results);
       if (results.length > 0) {
         setSelectedOrder(results[0]);
@@ -52,6 +56,32 @@ export default function OrderTrackingPage() {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Auto-search if parameter is in URL
+  useEffect(() => {
+    let isMounted = true;
+    if (urlParam) {
+      trackOrdersByQuery(urlParam.trim()).then((results) => {
+        if (isMounted) {
+          setOrders(results);
+          setHasSearched(true);
+          if (results.length > 0) {
+            setSelectedOrder(results[0]);
+          } else {
+            setSelectedOrder(null);
+          }
+        }
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [urlParam]);
+
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    executeSearch(query);
   };
 
   const getStatusStep = (status: OrderItem['status']) => {
@@ -110,7 +140,7 @@ export default function OrderTrackingPage() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Nhập mã đơn ORD-XXXXXX hoặc Số điện thoại..."
+              placeholder="Nhập chính xác Mã đơn (ví dụ: ORD-811308) hoặc SĐT 10 số..."
               className="w-full bg-transparent text-neutral-900 placeholder:text-neutral-500 text-sm sm:text-base outline-none py-2 font-medium"
             />
           </div>
@@ -138,17 +168,14 @@ export default function OrderTrackingPage() {
                 <AlertCircle className="w-12 h-12 text-amber-600 mx-auto" />
                 <h3 className="text-lg font-bold text-neutral-900">Không tìm thấy đơn hàng phù hợp</h3>
                 <p className="text-sm text-neutral-600 max-w-md mx-auto">
-                  Vui lòng kiểm tra lại chính xác Mã đơn hàng (bắt đầu bằng ORD-) hoặc Số điện thoại người nhận.
+                  Vui lòng nhập chính xác <span className="font-semibold text-neutral-900">Mã đơn hàng</span> (ví dụ: <span className="font-mono text-[#9e6f1c]">ORD-811308</span>) hoặc <span className="font-semibold text-neutral-900">Số điện thoại đầy đủ (10 số)</span> đã đặt hàng để bảo mật thông tin.
                 </p>
                 <div className="pt-3">
                   <button
                     type="button"
                     onClick={() => {
-                      setQuery('0901234567');
-                      trackOrdersByQuery('0901234567').then((res) => {
-                        setOrders(res);
-                        if (res.length > 0) setSelectedOrder(res[0]);
-                      });
+                      setQuery('ORD-9821');
+                      executeSearch('ORD-9821');
                     }}
                     className="text-xs font-bold text-[#9e6f1c] hover:underline cursor-pointer"
                   >
@@ -166,7 +193,7 @@ export default function OrderTrackingPage() {
                         key={ord.id}
                         type="button"
                         onClick={() => setSelectedOrder(ord)}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition border cursor-pointer ${
                           selectedOrder?.id === ord.id
                             ? 'bg-black text-white border-black'
                             : 'bg-white text-neutral-700 border-[#e5e2d8] hover:text-black'
@@ -398,5 +425,19 @@ export default function OrderTrackingPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function OrderTrackingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F4F3ED] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#9e6f1c] border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <OrderTrackingContent />
+    </Suspense>
   );
 }

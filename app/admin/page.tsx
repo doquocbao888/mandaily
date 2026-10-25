@@ -48,44 +48,6 @@ import {
   type OrderItem,
   type MediaItem
 } from '@/lib/dbService';
-const initialOrders: OrderItem[] = [
-  {
-    id: 'ORD-9821',
-    customerName: 'Đỗ Quốc Bảo',
-    phone: '0901234567',
-    address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
-    productName: 'The Lawn Mower® Ultra Gen 6',
-    variant: 'VIP Member Price',
-    quantity: 1,
-    totalPrice: '$109.99',
-    status: 'Đang xử lý',
-    createdAt: '2026-10-21 14:30',
-  },
-  {
-    id: 'ORD-9820',
-    customerName: 'Nguyễn Văn Minh',
-    phone: '0988888888',
-    address: '45 Lê Duẩn, Ba Đình, Hà Nội',
-    productName: 'The Performance Package Ultra Gen 6',
-    variant: 'Standard Kit',
-    quantity: 1,
-    totalPrice: '$159.99',
-    status: 'Đã giao',
-    createdAt: '2026-10-20 10:15',
-  },
-  {
-    id: 'ORD-9819',
-    customerName: 'Trần Hoàng Long',
-    phone: '0912345678',
-    address: '78 Hai Bà Trưng, Đà Nẵng',
-    productName: 'The Lawn Mower® Ultra Gen 6',
-    variant: 'Regular Price',
-    quantity: 2,
-    totalPrice: '$239.98',
-    status: 'Đang giao',
-    createdAt: '2026-10-19 18:45',
-  },
-];
 
 export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
@@ -116,13 +78,14 @@ export default function AdminPage() {
   const [loginError, setLoginError] = useState('');
 
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'media'>('overview');
+  const [timeFilter, setTimeFilter] = useState<'day' | 'week' | 'month' | 'quarter' | 'year'>('month');
   
   // Products state
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [searchProduct, setSearchProduct] = useState('');
   
   // Orders state
-  const [orders, setOrders] = useState<OrderItem[]>(initialOrders);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
   const [searchOrder, setSearchOrder] = useState('');
 
   // Media state
@@ -135,6 +98,7 @@ export default function AdminPage() {
   const [newSubtitle, setNewSubtitle] = useState('');
   const [newVipPrice, setNewVipPrice] = useState('$109.99');
   const [newRegularPrice, setNewRegularPrice] = useState('$119.99');
+  const [newDetailedDescription, setNewDetailedDescription] = useState('');
   const [newImageSrc, setNewImageSrc] = useState('/assets/aistudio/30-00006-NA_f201a618.png');
   const [newThumbnailsText, setNewThumbnailsText] = useState('/assets/aistudio/30-00006-NA_f201a618.png\n/assets/aistudio/25aaeee852d4_1a4c043f.webp\n/assets/aistudio/b72c1da980f6_e399d627.webp');
 
@@ -182,8 +146,20 @@ export default function AdminPage() {
       if (isMounted) setMediaList(items);
     });
 
+    const handleOrderCreated = (e: any) => {
+      const newOrd = e?.detail;
+      if (newOrd && isMounted) {
+        setOrders((prev) => {
+          if (prev.some((o) => o.id === newOrd.id)) return prev;
+          return [newOrd, ...prev];
+        });
+      }
+    };
+    window.addEventListener('manscaped_order_created', handleOrderCreated);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('manscaped_order_created', handleOrderCreated);
       try {
         unsubProducts();
       } catch {
@@ -321,7 +297,8 @@ export default function AdminPage() {
       ],
       gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml'],
       cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1',
+      detailedDescription: newDetailedDescription
     };
 
     try {
@@ -329,6 +306,7 @@ export default function AdminPage() {
       setShowAddProductModal(false);
       setNewTitle('');
       setNewSubtitle('');
+      setNewDetailedDescription('');
       showToast(`Đã thêm mới sản phẩm "${newProd.title}" thành công!`);
     } catch (err: any) {
       console.error('Lỗi khi thêm sản phẩm:', err);
@@ -629,52 +607,230 @@ export default function AdminPage() {
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="space-y-8">
-              {/* Stat Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Tổng doanh thu</p>
-                    <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">$12,480.00</h3>
-                    <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">+14.2% tháng này</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                    <DollarSign className="w-6 h-6" />
-                  </div>
+              {/* Time Filter Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+                <div>
+                  <h3 className="font-bold text-base text-neutral-900">Báo cáo tổng quan hoạt động</h3>
+                  <p className="text-xs text-neutral-500">Số liệu được cập nhật tự động từ cơ sở dữ liệu thực tế.</p>
                 </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Tổng đơn hàng</p>
-                    <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">{orders.length + 142}</h3>
-                    <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">+8 đơn mới hôm nay</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                    <ShoppingCart className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Sản phẩm đang bán</p>
-                    <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">{products.length}</h3>
-                    <span className="text-xs text-neutral-500 font-semibold mt-1 inline-block">Đã cập nhật đầy đủ</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                    <Package className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Khách hàng VIP</p>
-                    <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">1,284</h3>
-                    <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">Tỷ lệ giữ chân 94%</span>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
-                    <User className="w-6 h-6" />
-                  </div>
+                <div className="flex items-center bg-neutral-100 p-1 rounded-xl border border-neutral-200">
+                  {[
+                    { id: 'day', label: 'Hôm nay' },
+                    { id: 'week', label: 'Tuần này' },
+                    { id: 'month', label: 'Tháng này' },
+                    { id: 'quarter', label: 'Quý này' },
+                    { id: 'year', label: 'Năm nay' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setTimeFilter(tab.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        timeFilter === tab.id
+                          ? 'bg-white text-neutral-900 shadow-sm'
+                          : 'text-neutral-600 hover:text-neutral-900'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Stat Cards with 100% Real Synchronized Data */}
+              {(() => {
+                const now = new Date();
+
+                // Helper to parse dates from various formats
+                const parseOrderDate = (order: OrderItem): Date | null => {
+                  const dateStr = order.createdAt;
+                  if (!dateStr || typeof dateStr !== 'string') return null;
+
+                  // 1. Direct standard Date string / ISO
+                  const direct = new Date(dateStr);
+                  if (!isNaN(direct.getTime())) return direct;
+
+                  // 2. Format DD/MM/YYYY or DD-MM-YYYY (Vietnamese standard)
+                  const dmy = dateStr.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+                  if (dmy) {
+                    const day = parseInt(dmy[1], 10);
+                    const month = parseInt(dmy[2], 10) - 1;
+                    const year = parseInt(dmy[3], 10);
+                    const timeMatch = dateStr.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+                    const h = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+                    const m = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+                    const s = timeMatch && timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+                    return new Date(year, month, day, h, m, s);
+                  }
+
+                  // 3. Format YYYY-MM-DD or YYYY/MM/DD
+                  const ymd = dateStr.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+                  if (ymd) {
+                    const year = parseInt(ymd[1], 10);
+                    const month = parseInt(ymd[2], 10) - 1;
+                    const day = parseInt(ymd[3], 10);
+                    const timeMatch = dateStr.match(/(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+                    const h = timeMatch ? parseInt(timeMatch[1], 10) : 0;
+                    const m = timeMatch ? parseInt(timeMatch[2], 10) : 0;
+                    const s = timeMatch && timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+                    return new Date(year, month, day, h, m, s);
+                  }
+
+                  return null;
+                };
+
+                // Filter real orders based on selected time frame
+                const filteredOrders = orders.filter((order) => {
+                  const d = parseOrderDate(order);
+                  // If order has no valid date, include it so real orders are never lost
+                  if (!d) return true;
+
+                  if (timeFilter === 'day') {
+                    return (
+                      d.getFullYear() === now.getFullYear() &&
+                      d.getMonth() === now.getMonth() &&
+                      d.getDate() === now.getDate()
+                    );
+                  }
+
+                  if (timeFilter === 'week') {
+                    const startOfWeek = new Date(now);
+                    const dayOfWeek = startOfWeek.getDay();
+                    const distanceToMonday = (dayOfWeek + 6) % 7;
+                    startOfWeek.setDate(startOfWeek.getDate() - distanceToMonday);
+                    startOfWeek.setHours(0, 0, 0, 0);
+
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+                    return d >= startOfWeek && d < endOfWeek;
+                  }
+
+                  if (timeFilter === 'month') {
+                    return (
+                      d.getFullYear() === now.getFullYear() &&
+                      d.getMonth() === now.getMonth()
+                    );
+                  }
+
+                  if (timeFilter === 'quarter') {
+                    const currentQuarter = Math.floor(now.getMonth() / 3);
+                    const orderQuarter = Math.floor(d.getMonth() / 3);
+                    return d.getFullYear() === now.getFullYear() && orderQuarter === currentQuarter;
+                  }
+
+                  if (timeFilter === 'year') {
+                    return d.getFullYear() === now.getFullYear();
+                  }
+
+                  return true;
+                });
+
+                // Calculate real revenue from valid (non-cancelled) filtered orders
+                const validRevenueOrders = filteredOrders.filter((o) => o.status !== 'Đã hủy');
+                const totalRevenue = validRevenueOrders.reduce((sum, o) => {
+                  const rawNum = parseFloat(String(o.totalPrice || '').replace(/[^0-9.]/g, '')) || 0;
+                  return sum + rawNum;
+                }, 0);
+
+                // Calculate real order counts
+                const totalOrdersCount = filteredOrders.length;
+                const pendingOrdersCount = filteredOrders.filter((o) => o.status === 'Đang xử lý').length;
+                const deliveredOrdersCount = filteredOrders.filter((o) => o.status === 'Đã giao').length;
+
+                // Calculate real unique customers from actual orders
+                const uniqueCustomerKeys = new Set(
+                  filteredOrders
+                    .map((o) => (o.phone || o.customerName || '').trim())
+                    .filter(Boolean)
+                );
+                const customersCount = uniqueCustomerKeys.size;
+
+                const timeLabels: Record<typeof timeFilter, string> = {
+                  day: 'hôm nay',
+                  week: 'tuần này',
+                  month: 'tháng này',
+                  quarter: 'quý này',
+                  year: 'năm nay',
+                };
+                const currentPeriodLabel = timeLabels[timeFilter];
+
+                return (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Tổng doanh thu</p>
+                        <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">
+                          ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </h3>
+                        {totalRevenue > 0 ? (
+                          <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">
+                            Từ {validRevenueOrders.length} đơn hàng {currentPeriodLabel}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-neutral-400 font-medium mt-1 inline-block">
+                            Chưa có doanh thu ({currentPeriodLabel})
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <DollarSign className="w-6 h-6" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Tổng đơn hàng</p>
+                        <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">{totalOrdersCount}</h3>
+                        {totalOrdersCount > 0 ? (
+                          <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">
+                            {pendingOrdersCount} chờ xử lý · {deliveredOrdersCount} đã giao
+                          </span>
+                        ) : (
+                          <span className="text-xs text-neutral-400 font-medium mt-1 inline-block">
+                            0 đơn phát sinh ({currentPeriodLabel})
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                        <ShoppingCart className="w-6 h-6" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Sản phẩm đang bán</p>
+                        <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">{products.length}</h3>
+                        <span className="text-xs text-neutral-500 font-semibold mt-1 inline-block">
+                          Đã đồng bộ realtime ({products.length} SP)
+                        </span>
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                        <Package className="w-6 h-6" />
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-200 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Khách hàng đã mua</p>
+                        <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">{customersCount}</h3>
+                        {customersCount > 0 ? (
+                          <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">
+                            {customersCount} khách hàng riêng biệt
+                          </span>
+                        ) : (
+                          <span className="text-xs text-neutral-400 font-medium mt-1 inline-block">
+                            Chưa có khách đặt hàng ({currentPeriodLabel})
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+                        <User className="w-6 h-6" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Recent Orders Preview */}
               <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
@@ -758,18 +914,8 @@ export default function AdminPage() {
 
                 <div className="flex items-center space-x-2.5 w-full sm:w-auto">
                   <button
-                    onClick={handleRestoreDefaultProducts}
-                    disabled={isRestoringDefaults}
-                    className="flex-1 sm:flex-initial bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-semibold px-4 py-2.5 rounded-xl border border-neutral-300 transition-all flex items-center justify-center space-x-1.5 text-xs sm:text-sm cursor-pointer disabled:opacity-50"
-                    title="Khôi phục lại 5 sản phẩm mặc định của hệ thống"
-                  >
-                    <RotateCcw className={`w-4 h-4 text-neutral-600 ${isRestoringDefaults ? 'animate-spin' : ''}`} />
-                    <span>{isRestoringDefaults ? 'Đang khôi phục...' : 'Khôi phục 5 SP gốc'}</span>
-                  </button>
-
-                  <button
                     onClick={() => setShowAddProductModal(true)}
-                    className="flex-1 sm:flex-initial bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm cursor-pointer"
+                    className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-xs sm:text-sm cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>Thêm sản phẩm mới</span>
@@ -801,8 +947,8 @@ export default function AdminPage() {
                       <th className="p-4 font-semibold">Ảnh chính & phụ</th>
                       <th className="p-4 font-semibold">Tên sản phẩm</th>
                       <th className="p-4 font-semibold">Mô tả / Subtitle</th>
-                      <th className="p-4 font-semibold">Giá VIP</th>
-                      <th className="p-4 font-semibold">Giá Thường</th>
+                      <th className="p-4 font-semibold">Giá bán</th>
+                      <th className="p-4 font-semibold">Giá niêm yết (Gốc)</th>
                       <th className="p-4 font-semibold text-right">Thao tác</th>
                     </tr>
                   </thead>
@@ -857,8 +1003,8 @@ export default function AdminPage() {
                             </td>
                             <td className="p-4 font-bold text-neutral-900">{p.title}</td>
                             <td className="p-4 text-neutral-600 text-xs max-w-xs truncate">{p.subtitle}</td>
-                            <td className="p-4 font-semibold text-amber-700">{p.vipPrice}</td>
-                            <td className="p-4 text-neutral-700">{p.regularPrice}</td>
+                            <td className="p-4 font-bold text-neutral-900">{p.regularPrice || p.vipPrice}</td>
+                            <td className="p-4 text-neutral-500">{p.vipPrice || p.regularPrice}</td>
                             <td className="p-4 text-right space-x-2">
                               <button
                                 onClick={() => handleOpenEditModal(p)}
@@ -1022,25 +1168,38 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá VIP</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá bán chính thức</label>
                   <input
                     type="text"
                     value={newVipPrice}
                     onChange={(e) => setNewVipPrice(e.target.value)}
                     required
+                    placeholder="Ví dụ: $109.99"
                     className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá Thường</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá niêm yết (Gốc)</label>
                   <input
                     type="text"
                     value={newRegularPrice}
                     onChange={(e) => setNewRegularPrice(e.target.value)}
                     required
+                    placeholder="Ví dụ: $119.99"
                     className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-600"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Đoạn mô tả chi tiết (Hiển thị giữa giá và FAQs)</label>
+                <textarea
+                  value={newDetailedDescription}
+                  onChange={(e) => setNewDetailedDescription(e.target.value)}
+                  rows={5}
+                  placeholder="Nhập nội dung mô tả, gói bao gồm (PACKAGE INCLUDES), quà tặng..."
+                  className="w-full border border-neutral-300 rounded-xl p-3 text-xs focus:outline-none focus:border-amber-600"
+                />
               </div>
 
               <div>
@@ -1146,7 +1305,7 @@ export default function AdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá VIP</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá bán chính thức</label>
                   <input
                     type="text"
                     value={editingProduct.vipPrice}
@@ -1156,7 +1315,7 @@ export default function AdminPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá Thường</label>
+                  <label className="block text-xs font-bold text-neutral-700 mb-1">Giá niêm yết (Gốc)</label>
                   <input
                     type="text"
                     value={editingProduct.regularPrice}
@@ -1189,6 +1348,17 @@ export default function AdminPage() {
                     Vị trí #1 sẽ hiển thị đầu tiên trên Trang chủ và danh mục sản phẩm.
                   </span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1">Đoạn mô tả chi tiết (Hiển thị giữa giá và FAQs)</label>
+                <textarea
+                  value={editingProduct.detailedDescription || ''}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, detailedDescription: e.target.value })}
+                  rows={5}
+                  placeholder="Nhập nội dung mô tả, gói bao gồm (PACKAGE INCLUDES), quà tặng..."
+                  className="w-full border border-neutral-300 rounded-xl p-3 text-xs focus:outline-none focus:border-amber-600"
+                />
               </div>
 
               <div>
@@ -1491,8 +1661,7 @@ export default function AdminPage() {
                 <h4 className="font-bold text-sm text-neutral-900 truncate">{productToDelete.title}</h4>
                 <p className="text-xs text-neutral-500 truncate mt-0.5">{productToDelete.subtitle}</p>
                 <div className="flex items-center space-x-2 mt-1">
-                  <span className="text-xs font-bold text-amber-700">{productToDelete.vipPrice}</span>
-                  <span className="text-[11px] text-neutral-400">/ {productToDelete.regularPrice}</span>
+                  <span className="text-xs font-bold text-neutral-900">{productToDelete.regularPrice || productToDelete.vipPrice}</span>
                   <span className="text-[11px] bg-neutral-200 text-neutral-700 px-1.5 py-0.5 rounded">
                     {productToDelete.thumbnails?.length || 1} ảnh
                   </span>

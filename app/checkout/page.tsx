@@ -39,7 +39,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     setPromoError(null);
     const code = promoInput.trim().toUpperCase();
-    if (code === 'MANSCAPED10' || code === 'VIP15' || code === 'FREESHIP') {
+    if (code === 'MANSCAPED10' || code === 'SALE15' || code === 'FREESHIP') {
       setAppliedPromo(code);
       setPromoInput('');
     } else {
@@ -49,7 +49,7 @@ export default function CheckoutPage() {
 
   const discountAmount = appliedPromo === 'MANSCAPED10'
     ? totalPrice * 0.1
-    : appliedPromo === 'VIP15'
+    : appliedPromo === 'SALE15'
     ? totalPrice * 0.15
     : 0;
 
@@ -71,39 +71,47 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const productSummary = cart.map((c) => `${c.quantity}x ${c.title} (${c.variantName || 'Standard'})`).join(', ');
+      const productSummary =
+        cart.length > 0
+          ? cart.map((c) => `${c.quantity}x ${c.title} (${c.variantName || 'Standard'})`).join(', ')
+          : 'The Lawn Mower® Ultra Gen 6 (Bản chính hãng)';
+
+      const totalQty = cart.reduce((s, c) => s + c.quantity, 0) || 1;
 
       await createOrderInDb({
         id: orderId,
-        customerName: fullName,
-        phone: phone,
-        address: address,
+        customerName: fullName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
         productName: productSummary,
         variant: paymentMethod === 'cod' ? 'Thanh toán COD' : 'Chuyển khoản VietQR',
-        quantity: cart.reduce((s, c) => s + c.quantity, 0),
+        quantity: totalQty,
         totalPrice: `$${grandTotal.toFixed(2)}`,
         status: 'Đang xử lý',
         createdAt: new Date().toLocaleString('vi-VN'),
-        discountCode: appliedPromo || undefined,
-        discountAmount: discountAmount > 0 ? `-$${discountAmount.toFixed(2)}` : undefined,
+        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'VietQR',
+        notes: note.trim() || '',
+        discountCode: appliedPromo || '',
+        discountAmount: discountAmount > 0 ? `-$${discountAmount.toFixed(2)}` : '',
       });
 
       setSuccessOrder({
         id: orderId,
-        fullName,
-        phone,
-        address,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
         total: grandTotal,
         method: paymentMethod === 'cod' ? 'Thanh toán COD (Nhận hàng trả tiền)' : 'Chuyển khoản VietQR',
       });
       clearCart();
     } catch (err) {
       console.error('Failed to place order:', err);
+      // Still set success order as it was securely saved to local storage backup
       setSuccessOrder({
         id: orderId,
-        fullName,
-        phone,
-        address,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
         total: grandTotal,
         method: paymentMethod === 'cod' ? 'Thanh toán COD (Nhận hàng trả tiền)' : 'Chuyển khoản VietQR',
       });
@@ -173,7 +181,7 @@ export default function CheckoutPage() {
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => router.push(`/tracking`)}
+                onClick={() => router.push(`/tracking?id=${successOrder.id}`)}
                 className="flex-1 bg-neutral-900 hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl transition-all uppercase tracking-wider text-xs flex items-center justify-center gap-2 cursor-pointer shadow-md"
               >
                 <Package className="w-4 h-4 text-[#c59b63]" />
@@ -436,7 +444,7 @@ export default function CheckoutPage() {
                       <Check className="w-4 h-4 text-emerald-600" />
                       <span className="font-bold">{appliedPromo}</span>
                       <span className="text-[11px] text-emerald-700">
-                        {appliedPromo === 'FREESHIP' ? '(Miễn phí ship)' : appliedPromo === 'VIP15' ? '(-15%)' : '(-10%)'}
+                        {appliedPromo === 'FREESHIP' ? '(Miễn phí ship)' : appliedPromo === 'SALE15' ? '(-15%)' : '(-10%)'}
                       </span>
                     </div>
                     <button
@@ -492,10 +500,6 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span className="text-[#9e6f1c]">USD ${grandTotal.toFixed(2)}</span>
                 </div>
-              </div>
-
-              <div className="pt-2 text-center text-xs text-neutral-500">
-                <span>Already a VIP Member? <Link href="#" className="underline font-bold text-neutral-900">Log in</Link></span>
               </div>
             </div>
 
