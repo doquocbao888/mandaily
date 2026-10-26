@@ -31,6 +31,12 @@ export interface MediaItem {
 
 let isSyncingProducts = false;
 
+const noCacheHeaders = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 /**
  * Seed initial products to Hostinger MySQL if needed
  */
@@ -38,10 +44,17 @@ export async function seedInitialProductsIfNeeded() {
   if (isSyncingProducts) return;
   isSyncingProducts = true;
   try {
-    const res = await fetch('/api/db/status');
+    const res = await fetch(`/api/db/status?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: noCacheHeaders,
+    });
     const status = await res.json();
     if (status.connected) {
-      await fetch('/api/db/sync', { method: 'POST' });
+      await fetch('/api/db/sync', {
+        method: 'POST',
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
     }
   } catch (err) {
     console.warn('MySQL seed note:', err);
@@ -55,7 +68,11 @@ export async function seedInitialProductsIfNeeded() {
  */
 export async function restoreDefaultProducts() {
   try {
-    const res = await fetch('/api/db/sync', { method: 'POST' });
+    const res = await fetch('/api/db/sync', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: noCacheHeaders,
+    });
     const data = await res.json();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('manscaped_products_changed'));
@@ -68,7 +85,7 @@ export async function restoreDefaultProducts() {
 }
 
 /**
- * Real-time listener for products (100% Hostinger MySQL)
+ * Real-time listener for products (100% Hostinger MySQL, cross-device sync)
  */
 export function subscribeProducts(
   onData: (products: ProductItem[]) => void,
@@ -78,16 +95,20 @@ export function subscribeProducts(
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/api/db/products');
+      const res = await fetch(`/api/db/products?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
       if (!res.ok) throw new Error('Failed to fetch products from MySQL');
       const data = await res.json();
       if (isMounted) {
-        if (data.products && data.products.length > 0) {
+        if (Array.isArray(data.products) && data.products.length > 0) {
+          onData(data.products);
+        } else if (Array.isArray(data.products) && data.configured) {
+          // If MySQL is configured and returned empty table, display empty or sync default
           onData(data.products);
         } else {
-          // Fallback to default local products if MySQL is newly created
           onData(featuredProductsConfig2.products);
-          fetch('/api/db/sync', { method: 'POST' }).catch(() => {});
         }
       }
     } catch (err) {
@@ -105,18 +126,28 @@ export function subscribeProducts(
     fetchProducts();
   };
 
+  const handleVisibility = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      fetchProducts();
+    }
+  };
+
   if (typeof window !== 'undefined') {
     window.addEventListener('manscaped_products_changed', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+    window.addEventListener('visibilitychange', handleVisibility);
   }
 
-  // Periodic polling every 10 seconds to keep clients in sync
-  const interval = setInterval(fetchProducts, 10000);
+  // Poll every 3 seconds for snappy cross-device updates
+  const interval = setInterval(fetchProducts, 3000);
 
   return () => {
     isMounted = false;
     clearInterval(interval);
     if (typeof window !== 'undefined') {
       window.removeEventListener('manscaped_products_changed', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+      window.removeEventListener('visibilitychange', handleVisibility);
     }
   };
 }
@@ -133,7 +164,10 @@ export function subscribeProductById(
 
   const fetchOne = async () => {
     try {
-      const res = await fetch('/api/db/products');
+      const res = await fetch(`/api/db/products?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       if (isMounted) {
@@ -159,12 +193,17 @@ export function subscribeProductById(
   const handleUpdate = () => fetchOne();
   if (typeof window !== 'undefined') {
     window.addEventListener('manscaped_products_changed', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
   }
+
+  const interval = setInterval(fetchOne, 4000);
 
   return () => {
     isMounted = false;
+    clearInterval(interval);
     if (typeof window !== 'undefined') {
       window.removeEventListener('manscaped_products_changed', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
     }
   };
 }
@@ -176,7 +215,11 @@ export async function saveProductToDb(product: ProductItem) {
   try {
     const res = await fetch('/api/db/products', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...noCacheHeaders,
+      },
+      cache: 'no-store',
       body: JSON.stringify(product),
     });
 
@@ -201,7 +244,10 @@ export async function saveProductToDb(product: ProductItem) {
 export async function updateProductOrderInDb(productOrders: { id: string; orderIndex: number }[]) {
   try {
     for (const item of productOrders) {
-      const pRes = await fetch('/api/db/products');
+      const pRes = await fetch(`/api/db/products?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
       const pData = await pRes.json();
       const current = (pData.products || []).find((p: ProductItem) => p.id === item.id);
       if (current) {
@@ -222,8 +268,10 @@ export async function updateProductOrderInDb(productOrders: { id: string; orderI
  */
 export async function deleteProductFromDb(id: string) {
   try {
-    const res = await fetch(`/api/db/products?id=${id}`, {
+    const res = await fetch(`/api/db/products?id=${id}&t=${Date.now()}`, {
       method: 'DELETE',
+      cache: 'no-store',
+      headers: noCacheHeaders,
     });
 
     if (!res.ok) {
@@ -249,7 +297,7 @@ export async function seedInitialOrdersIfNeeded() {
 }
 
 /**
- * Real-time listener for orders (100% Hostinger MySQL)
+ * Real-time listener for orders (100% Hostinger MySQL, cross-device sync)
  */
 export function subscribeOrders(
   onData: (orders: OrderItem[]) => void,
@@ -259,33 +307,18 @@ export function subscribeOrders(
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/db/orders');
+      const res = await fetch(`/api/db/orders?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
       if (!res.ok) throw new Error('Failed to fetch orders from Hostinger MySQL');
       const data = await res.json();
       
       const mysqlOrders: OrderItem[] = data.orders || [];
       const DUMMY_ORDER_IDS = new Set(['ORD-9821', 'ORD-9820', 'ORD-9819']);
 
-      // Merge with any instant local orders placed in current session
-      const itemsMap = new Map<string, OrderItem>();
-      mysqlOrders.forEach((o) => {
-        if (o.id && !DUMMY_ORDER_IDS.has(o.id)) itemsMap.set(o.id, o);
-      });
-
-      if (typeof window !== 'undefined') {
-        try {
-          const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
-          for (const localOrd of localOrders) {
-            if (localOrd?.id && !DUMMY_ORDER_IDS.has(localOrd.id) && !itemsMap.has(localOrd.id)) {
-              itemsMap.set(localOrd.id, localOrd);
-            }
-          }
-        } catch {
-          // ignore
-        }
-      }
-
-      const items = Array.from(itemsMap.values());
+      // MySQL is authoritative: filter out dummy seeds and present true DB orders
+      const items = mysqlOrders.filter((o) => o.id && !DUMMY_ORDER_IDS.has(o.id));
       items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
       if (isMounted) {
@@ -293,7 +326,6 @@ export function subscribeOrders(
       }
     } catch (err) {
       if (isMounted) {
-        // Fallback to local cache
         if (typeof window !== 'undefined') {
           try {
             const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
@@ -313,13 +345,21 @@ export function subscribeOrders(
     fetchOrders();
   };
 
+  const handleVisibility = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      fetchOrders();
+    }
+  };
+
   if (typeof window !== 'undefined') {
     window.addEventListener('manscaped_orders_changed', handleUpdate);
     window.addEventListener('manscaped_order_created', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+    window.addEventListener('visibilitychange', handleVisibility);
   }
 
-  // Poll orders every 4 seconds for real-time order updates
-  const interval = setInterval(fetchOrders, 4000);
+  // Poll orders every 3 seconds for real-time cross-device sync
+  const interval = setInterval(fetchOrders, 3000);
 
   return () => {
     isMounted = false;
@@ -327,6 +367,8 @@ export function subscribeOrders(
     if (typeof window !== 'undefined') {
       window.removeEventListener('manscaped_orders_changed', handleUpdate);
       window.removeEventListener('manscaped_order_created', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+      window.removeEventListener('visibilitychange', handleVisibility);
     }
   };
 }
@@ -346,22 +388,32 @@ export async function updateOrderStatusInDb(orderId: string, status: OrderItem['
   }
 
   try {
-    await fetch('/api/db/orders', {
+    const res = await fetch('/api/db/orders', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...noCacheHeaders,
+      },
+      cache: 'no-store',
       body: JSON.stringify({ id: orderId, status }),
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to update order status');
+    }
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('manscaped_orders_changed'));
     }
   } catch (error) {
     console.error('updateOrderStatusInDb error:', error);
+    throw error;
   }
 }
 
 /**
- * Create new order with sanitized payload & instant local backup into Hostinger MySQL
+ * Create new order with sanitized payload into Hostinger MySQL
  */
 export async function createOrderInDb(order: OrderItem) {
   const cleanOrder: OrderItem = {
@@ -395,11 +447,20 @@ export async function createOrderInDb(order: OrderItem) {
 
   // 2. Persist to Hostinger MySQL
   try {
-    await fetch('/api/db/orders', {
+    const res = await fetch('/api/db/orders', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...noCacheHeaders,
+      },
+      cache: 'no-store',
       body: JSON.stringify(cleanOrder),
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      console.error('Failed to save order to MySQL:', err);
+    }
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('manscaped_orders_changed'));
@@ -426,9 +487,16 @@ export async function deleteOrderFromDb(orderId: string) {
   }
 
   try {
-    await fetch(`/api/db/orders?id=${orderId}`, {
+    const res = await fetch(`/api/db/orders?id=${orderId}&t=${Date.now()}`, {
       method: 'DELETE',
+      cache: 'no-store',
+      headers: noCacheHeaders,
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to delete order from MySQL');
+    }
 
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('manscaped_orders_changed'));
@@ -451,7 +519,10 @@ export async function trackOrdersByQuery(queryStr: string): Promise<OrderItem[]>
     const lowerQuery = rawTrimmed.toLowerCase();
     if (lowerQuery.length < 3) return [];
 
-    const res = await fetch('/api/db/orders');
+    const res = await fetch(`/api/db/orders?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: noCacheHeaders,
+    });
     if (!res.ok) return [];
     const data = await res.json();
     const allOrders: OrderItem[] = data.orders || [];
@@ -490,7 +561,7 @@ export async function seedInitialMediaIfNeeded() {
 }
 
 /**
- * Subscribe media (100% Hostinger MySQL)
+ * Subscribe media (100% Hostinger MySQL, cross-device sync)
  */
 export function subscribeMedia(
   onData: (media: MediaItem[]) => void,
@@ -500,7 +571,10 @@ export function subscribeMedia(
 
   const fetchMedia = async () => {
     try {
-      const res = await fetch('/api/db/media');
+      const res = await fetch(`/api/db/media?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: noCacheHeaders,
+      });
       if (!res.ok) throw new Error('Failed to fetch media');
       const data = await res.json();
       if (isMounted) {
@@ -517,14 +591,28 @@ export function subscribeMedia(
   fetchMedia();
 
   const handleUpdate = () => fetchMedia();
+  const handleVisibility = () => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+      fetchMedia();
+    }
+  };
+
   if (typeof window !== 'undefined') {
     window.addEventListener('manscaped_media_changed', handleUpdate);
+    window.addEventListener('focus', handleUpdate);
+    window.addEventListener('visibilitychange', handleVisibility);
   }
+
+  // Poll media every 3 seconds for real-time cross-device sync
+  const interval = setInterval(fetchMedia, 3000);
 
   return () => {
     isMounted = false;
+    clearInterval(interval);
     if (typeof window !== 'undefined') {
       window.removeEventListener('manscaped_media_changed', handleUpdate);
+      window.removeEventListener('focus', handleUpdate);
+      window.removeEventListener('visibilitychange', handleVisibility);
     }
   };
 }
@@ -536,7 +624,11 @@ export async function saveMediaToDb(media: MediaItem) {
   try {
     const res = await fetch('/api/db/media', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...noCacheHeaders,
+      },
+      cache: 'no-store',
       body: JSON.stringify(media),
     });
 
@@ -559,8 +651,10 @@ export async function saveMediaToDb(media: MediaItem) {
  */
 export async function deleteMediaFromDb(id: string) {
   try {
-    const res = await fetch(`/api/db/media?id=${id}`, {
+    const res = await fetch(`/api/db/media?id=${id}&t=${Date.now()}`, {
       method: 'DELETE',
+      cache: 'no-store',
+      headers: noCacheHeaders,
     });
 
     if (!res.ok) {

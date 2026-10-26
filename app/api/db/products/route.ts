@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getMySQLPool, initMySQLTables, isMySQLConfigured } from '@/lib/mysql';
 import { type ProductItem } from '@/config/products';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   if (!isMySQLConfigured()) {
     return NextResponse.json({ configured: false, products: [] });
