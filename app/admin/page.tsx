@@ -589,7 +589,7 @@ export default function AdminPage() {
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Đã đồng bộ Firestore Cloud DB</span>
+              <span>Đã kết nối Hostinger MySQL (u762924426_manfresh_db)</span>
             </div>
             <div className="w-9 h-9 rounded-full bg-amber-600 text-white font-bold flex items-center justify-center text-sm shadow">
               A

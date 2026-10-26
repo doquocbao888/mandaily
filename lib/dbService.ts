@@ -1,15 +1,4 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  writeBatch
-} from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
-import { featuredProductsConfig, featuredProductsConfig2, type ProductItem } from '@/config/products';
+import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 
 export interface OrderItem {
   id: string;
@@ -22,157 +11,187 @@ export interface OrderItem {
   totalPrice: string;
   status: 'Đang xử lý' | 'Đang giao' | 'Đã giao' | 'Đã hủy';
   createdAt: string;
+  createdAtISO?: string;
+  timestamp?: number;
   paymentMethod?: string;
   notes?: string;
   discountCode?: string;
   discountAmount?: string;
 }
 
-const PRODUCTS_COLLECTION = 'products';
-const ORDERS_COLLECTION = 'orders';
+export interface MediaItem {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  mediaType?: 'image' | 'video';
+  size?: number;
+  createdAt: string;
+}
 
-let isSeedingProducts = false;
-let hasSeededProducts = false;
+let isSyncingProducts = false;
 
 /**
- * Seed initial products if collection is completely empty (guarded to run once)
- * Does NOT resurrect products that were intentionally deleted by the user.
+ * Seed initial products to Hostinger MySQL if needed
  */
 export async function seedInitialProductsIfNeeded() {
-  if (hasSeededProducts || isSeedingProducts) return;
-  isSeedingProducts = true;
+  if (isSyncingProducts) return;
+  isSyncingProducts = true;
   try {
-    const isBrowser = typeof window !== 'undefined';
-    const alreadySeeded = isBrowser && localStorage.getItem('manscaped_products_seeded') === 'true';
-
-    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    if (snap.empty && !alreadySeeded) {
-      for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
-        const prod = {
-          ...featuredProductsConfig2.products[i],
-          orderIndex: featuredProductsConfig2.products[i].orderIndex ?? i,
-        };
-        await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
-      }
-      if (isBrowser) localStorage.setItem('manscaped_products_seeded', 'true');
+    const res = await fetch('/api/db/status');
+    const status = await res.json();
+    if (status.connected) {
+      await fetch('/api/db/sync', { method: 'POST' });
     }
-    hasSeededProducts = true;
-  } catch (err: any) {
-    if (err?.name === 'AbortError' || String(err?.message || '').toLowerCase().includes('aborted')) {
-      return;
-    }
-    console.warn('Initial products seed note:', err?.message || err);
+  } catch (err) {
+    console.warn('MySQL seed note:', err);
   } finally {
-    isSeedingProducts = false;
+    isSyncingProducts = false;
   }
 }
 
 /**
- * Manually restore the 5 default catalog products if requested by the admin
+ * Restore products
  */
 export async function restoreDefaultProducts() {
-  for (let i = 0; i < featuredProductsConfig2.products.length; i++) {
-    const prod = {
-      ...featuredProductsConfig2.products[i],
-      orderIndex: featuredProductsConfig2.products[i].orderIndex ?? i,
-    };
-    await setDoc(doc(db, PRODUCTS_COLLECTION, prod.id), prod);
-  }
-}
-
-let isSeedingOrders = false;
-let hasSeededOrders = false;
-
-/**
- * Seed initial orders if collection is empty (No-op: real orders only)
- */
-export async function seedInitialOrdersIfNeeded() {
-  if (hasSeededOrders || isSeedingOrders) return;
-  isSeedingOrders = true;
   try {
-    hasSeededOrders = true;
-  } finally {
-    isSeedingOrders = false;
+    const res = await fetch('/api/db/sync', { method: 'POST' });
+    const data = await res.json();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_products_changed'));
+    }
+    return data;
+  } catch (err) {
+    console.error('Failed to restore products:', err);
+    throw err;
   }
 }
 
 /**
- * Real-time listener for products collection
+ * Real-time listener for products (100% Hostinger MySQL)
  */
 export function subscribeProducts(
   onData: (products: ProductItem[]) => void,
   onError?: (error: unknown) => void
 ) {
-  const colRef = collection(db, PRODUCTS_COLLECTION);
-  return onSnapshot(
-    colRef,
-    (snapshot) => {
-      const items: ProductItem[] = [];
-      snapshot.forEach((d) => {
-        items.push(d.data() as ProductItem);
-      });
-      items.sort((a, b) => {
-        const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
-        const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
-        if (orderA !== orderB) return orderA - orderB;
-        return a.id.localeCompare(b.id);
-      });
-      onData(items);
-    },
-    (error) => {
-      const msg = String((error as any)?.message || error).toLowerCase();
-      if ((error as any)?.name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return;
+  let isMounted = true;
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch('/api/db/products');
+      if (!res.ok) throw new Error('Failed to fetch products from MySQL');
+      const data = await res.json();
+      if (isMounted) {
+        if (data.products && data.products.length > 0) {
+          onData(data.products);
+        } else {
+          // Fallback to default local products if MySQL is newly created
+          onData(featuredProductsConfig2.products);
+          fetch('/api/db/sync', { method: 'POST' }).catch(() => {});
+        }
       }
-      try {
-        handleFirestoreError(error, OperationType.LIST, PRODUCTS_COLLECTION);
-      } catch {
-        // Handled
+    } catch (err) {
+      if (isMounted) {
+        console.warn('Products fetch note, using local config:', err);
+        onData(featuredProductsConfig2.products);
+        if (onError) onError(err);
       }
-      if (onError) onError(error);
     }
-  );
+  };
+
+  fetchProducts();
+
+  const handleUpdate = () => {
+    fetchProducts();
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('manscaped_products_changed', handleUpdate);
+  }
+
+  // Periodic polling every 10 seconds to keep clients in sync
+  const interval = setInterval(fetchProducts, 10000);
+
+  return () => {
+    isMounted = false;
+    clearInterval(interval);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('manscaped_products_changed', handleUpdate);
+    }
+  };
 }
 
 /**
- * Real-time listener for single product by ID
+ * Subscribe product by ID
  */
 export function subscribeProductById(
   id: string,
-  onData: (product: ProductItem | null) => void
+  onData: (product: ProductItem | null) => void,
+  onError?: (error: unknown) => void
 ) {
-  const docRef = doc(db, PRODUCTS_COLLECTION, id);
-  return onSnapshot(
-    docRef,
-    (snapshot) => {
-      if (snapshot.exists()) {
-        onData(snapshot.data() as ProductItem);
-      } else {
-        onData(null);
+  let isMounted = true;
+
+  const fetchOne = async () => {
+    try {
+      const res = await fetch('/api/db/products');
+      if (!res.ok) throw new Error('Failed to fetch products');
+      const data = await res.json();
+      if (isMounted) {
+        const found = (data.products || []).find((p: ProductItem) => p.id === id);
+        if (found) {
+          onData(found);
+        } else {
+          const fallback = featuredProductsConfig2.products.find((p) => p.id === id) || null;
+          onData(fallback);
+        }
       }
-    },
-    (error) => {
-      const msg = String((error as any)?.message || error).toLowerCase();
-      if ((error as any)?.name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return;
-      }
-      try {
-        handleFirestoreError(error, OperationType.GET, `${PRODUCTS_COLLECTION}/${id}`);
-      } catch {
-        // Handled
+    } catch (err) {
+      if (isMounted) {
+        const fallback = featuredProductsConfig2.products.find((p) => p.id === id) || null;
+        onData(fallback);
+        if (onError) onError(err);
       }
     }
-  );
+  };
+
+  fetchOne();
+
+  const handleUpdate = () => fetchOne();
+  if (typeof window !== 'undefined') {
+    window.addEventListener('manscaped_products_changed', handleUpdate);
+  }
+
+  return () => {
+    isMounted = false;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('manscaped_products_changed', handleUpdate);
+    }
+  };
 }
 
 /**
- * Save / Update product
+ * Save / Update product in Hostinger MySQL
  */
 export async function saveProductToDb(product: ProductItem) {
   try {
-    await setDoc(doc(db, PRODUCTS_COLLECTION, product.id), product);
+    const res = await fetch('/api/db/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to save product to Hostinger MySQL');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_products_changed'));
+    }
+    return product;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `${PRODUCTS_COLLECTION}/${product.id}`);
+    console.error('saveProductToDb error:', error);
+    throw error;
   }
 }
 
@@ -181,64 +200,83 @@ export async function saveProductToDb(product: ProductItem) {
  */
 export async function updateProductOrderInDb(productOrders: { id: string; orderIndex: number }[]) {
   try {
-    const batch = writeBatch(db);
     for (const item of productOrders) {
-      const docRef = doc(db, PRODUCTS_COLLECTION, item.id);
-      batch.set(docRef, { orderIndex: item.orderIndex }, { merge: true });
+      const pRes = await fetch('/api/db/products');
+      const pData = await pRes.json();
+      const current = (pData.products || []).find((p: ProductItem) => p.id === item.id);
+      if (current) {
+        await saveProductToDb({ ...current, orderIndex: item.orderIndex });
+      }
     }
-    await batch.commit();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_products_changed'));
+    }
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, PRODUCTS_COLLECTION);
+    console.error('updateProductOrderInDb error:', error);
     throw error;
   }
 }
 
 /**
- * Delete product
+ * Delete product from Hostinger MySQL
  */
 export async function deleteProductFromDb(id: string) {
   try {
-    await deleteDoc(doc(db, PRODUCTS_COLLECTION, id));
+    const res = await fetch(`/api/db/products?id=${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to delete product from Hostinger MySQL');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_products_changed'));
+    }
     return { success: true };
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${PRODUCTS_COLLECTION}/${id}`);
+    console.error('deleteProductFromDb error:', error);
     throw error;
   }
 }
 
-function sanitizeFirestorePayload<T extends Record<string, any>>(obj: T): Record<string, any> {
-  const result: Record<string, any> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== undefined) {
-      result[key] = value;
-    }
-  }
-  return result;
+/**
+ * Seed initial orders if needed (No-op: real orders only)
+ */
+export async function seedInitialOrdersIfNeeded() {
+  return;
 }
 
 /**
- * Real-time listener for orders collection (merged with local storage fallback)
+ * Real-time listener for orders (100% Hostinger MySQL)
  */
 export function subscribeOrders(
   onData: (orders: OrderItem[]) => void,
   onError?: (error: unknown) => void
 ) {
-  const colRef = collection(db, ORDERS_COLLECTION);
-  return onSnapshot(
-    colRef,
-    (snapshot) => {
+  let isMounted = true;
+
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/api/db/orders');
+      if (!res.ok) throw new Error('Failed to fetch orders from Hostinger MySQL');
+      const data = await res.json();
+      
+      const mysqlOrders: OrderItem[] = data.orders || [];
+      const DUMMY_ORDER_IDS = new Set(['ORD-9821', 'ORD-9820', 'ORD-9819']);
+
+      // Merge with any instant local orders placed in current session
       const itemsMap = new Map<string, OrderItem>();
-      snapshot.forEach((d) => {
-        const ord = d.data() as OrderItem;
-        if (ord.id) itemsMap.set(ord.id, ord);
+      mysqlOrders.forEach((o) => {
+        if (o.id && !DUMMY_ORDER_IDS.has(o.id)) itemsMap.set(o.id, o);
       });
 
-      // Merge local orders that were placed in browser
       if (typeof window !== 'undefined') {
         try {
           const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
           for (const localOrd of localOrders) {
-            if (localOrd?.id && !itemsMap.has(localOrd.id)) {
+            if (localOrd?.id && !DUMMY_ORDER_IDS.has(localOrd.id) && !itemsMap.has(localOrd.id)) {
               itemsMap.set(localOrd.id, localOrd);
             }
           }
@@ -247,31 +285,56 @@ export function subscribeOrders(
         }
       }
 
-      const DUMMY_ORDER_IDS = new Set(['ORD-9821', 'ORD-9820', 'ORD-9819']);
-      const items = Array.from(itemsMap.values()).filter((o) => !DUMMY_ORDER_IDS.has(o.id));
+      const items = Array.from(itemsMap.values());
       items.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-      onData(items);
-    },
-    (error) => {
-      const msg = String((error as any)?.message || error).toLowerCase();
-      if ((error as any)?.name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return;
+
+      if (isMounted) {
+        onData(items);
       }
-      try {
-        handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
-      } catch {
-        // Handled
+    } catch (err) {
+      if (isMounted) {
+        // Fallback to local cache
+        if (typeof window !== 'undefined') {
+          try {
+            const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
+            onData(localOrders);
+          } catch {
+            onData([]);
+          }
+        }
+        if (onError) onError(err);
       }
-      if (onError) onError(error);
     }
-  );
+  };
+
+  fetchOrders();
+
+  const handleUpdate = () => {
+    fetchOrders();
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('manscaped_orders_changed', handleUpdate);
+    window.addEventListener('manscaped_order_created', handleUpdate);
+  }
+
+  // Poll orders every 4 seconds for real-time order updates
+  const interval = setInterval(fetchOrders, 4000);
+
+  return () => {
+    isMounted = false;
+    clearInterval(interval);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('manscaped_orders_changed', handleUpdate);
+      window.removeEventListener('manscaped_order_created', handleUpdate);
+    }
+  };
 }
 
 /**
- * Update order status
+ * Update order status in Hostinger MySQL
  */
 export async function updateOrderStatusInDb(orderId: string, status: OrderItem['status']) {
-  // Update local storage if present
   if (typeof window !== 'undefined') {
     try {
       const stored: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
@@ -283,14 +346,22 @@ export async function updateOrderStatusInDb(orderId: string, status: OrderItem['
   }
 
   try {
-    await updateDoc(doc(db, ORDERS_COLLECTION, orderId), { status });
+    await fetch('/api/db/orders', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: orderId, status }),
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_orders_changed'));
+    }
   } catch (error) {
-    handleFirestoreError(error, OperationType.UPDATE, `${ORDERS_COLLECTION}/${orderId}`);
+    console.error('updateOrderStatusInDb error:', error);
   }
 }
 
 /**
- * Create new order with sanitized payload & instant local backup
+ * Create new order with sanitized payload & instant local backup into Hostinger MySQL
  */
 export async function createOrderInDb(order: OrderItem) {
   const cleanOrder: OrderItem = {
@@ -310,8 +381,6 @@ export async function createOrderInDb(order: OrderItem) {
     discountAmount: order.discountAmount || '',
   };
 
-  const payload = sanitizeFirestorePayload(cleanOrder);
-
   // 1. Immediately store in localStorage so it's guaranteed to be available locally
   if (typeof window !== 'undefined') {
     try {
@@ -324,23 +393,26 @@ export async function createOrderInDb(order: OrderItem) {
     }
   }
 
-  // 2. Persist to Firestore database
+  // 2. Persist to Hostinger MySQL
   try {
-    await setDoc(doc(db, ORDERS_COLLECTION, cleanOrder.id), payload);
-    return cleanOrder;
-  } catch (error) {
-    console.error('Firestore createOrderInDb error:', error);
-    try {
-      handleFirestoreError(error, OperationType.CREATE, `${ORDERS_COLLECTION}/${cleanOrder.id}`);
-    } catch {
-      // Handled
+    await fetch('/api/db/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cleanOrder),
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_orders_changed'));
     }
-    return cleanOrder;
+  } catch (err) {
+    console.error('Error saving order to Hostinger MySQL:', err);
   }
+
+  return cleanOrder;
 }
 
 /**
- * Delete order from Firestore and local cache
+ * Delete order from Hostinger MySQL and local cache
  */
 export async function deleteOrderFromDb(orderId: string) {
   if (typeof window !== 'undefined') {
@@ -354,16 +426,22 @@ export async function deleteOrderFromDb(orderId: string) {
   }
 
   try {
-    await deleteDoc(doc(db, ORDERS_COLLECTION, orderId));
+    await fetch(`/api/db/orders?id=${orderId}`, {
+      method: 'DELETE',
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_orders_changed'));
+    }
     return { success: true };
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${ORDERS_COLLECTION}/${orderId}`);
+    console.error('deleteOrderFromDb error:', error);
     throw error;
   }
 }
 
 /**
- * Search orders by ID or customer phone number (case-insensitive substring match)
+ * Search orders by ID or customer phone number
  */
 export async function trackOrdersByQuery(queryStr: string): Promise<OrderItem[]> {
   try {
@@ -371,282 +449,131 @@ export async function trackOrdersByQuery(queryStr: string): Promise<OrderItem[]>
     if (!rawTrimmed) return [];
 
     const lowerQuery = rawTrimmed.toLowerCase();
+    if (lowerQuery.length < 3) return [];
 
-    // Prevent short, trivial, or generic queries from matching anything
-    // (e.g. "1", "12", "ord", "#", "don", etc.)
-    if (lowerQuery.length < 3) {
-      return [];
-    }
+    const res = await fetch('/api/db/orders');
+    if (!res.ok) return [];
+    const data = await res.json();
+    const allOrders: OrderItem[] = data.orders || [];
 
-    const genericStopWords = ['ord', 'ord-', '#', 'order', 'don', 'donhang'];
-    if (genericStopWords.includes(lowerQuery)) {
-      return [];
-    }
+    const cleanCandidate = lowerQuery.replace(/^#/, '');
+    const queryDigits = cleanCandidate.replace(/\D/g, '');
+    const isPhoneQuery = queryDigits.length >= 7;
 
-    // Seed initial orders if empty so first-time visitors can track demo orders
-    await seedInitialOrdersIfNeeded();
-
-    const allOrdersMap = new Map<string, OrderItem>();
-
-    try {
-      const snap = await getDocs(collection(db, ORDERS_COLLECTION));
-      snap.forEach((docSnap) => {
-        const order = docSnap.data() as OrderItem;
-        if (order?.id) allOrdersMap.set(order.id, order);
-      });
-    } catch (readErr) {
-      console.warn('Firestore read orders note:', readErr);
-    }
-
-    // Merge with any local orders
-    if (typeof window !== 'undefined') {
-      try {
-        const localOrders: OrderItem[] = JSON.parse(localStorage.getItem('manscaped_local_orders') || '[]');
-        for (const localOrd of localOrders) {
-          if (localOrd?.id && !allOrdersMap.has(localOrd.id)) {
-            allOrdersMap.set(localOrd.id, localOrd);
-          }
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    // Clean candidates
-    // Normalized Order ID: e.g. "ORD-811308" -> "ord-811308"
-    const cleanIdCandidate = lowerQuery.replace(/^[#\s]+/, '').replace(/\s+/g, '');
-
-    // Pure digits from query
-    const queryDigits = lowerQuery.replace(/\D/g, '');
-
-    // Is it a phone search? In Vietnam, valid phone numbers have 9-11 digits (e.g. 0901234567).
-    // A search is ONLY treated as phone search if the user entered at least 9 numeric digits!
-    const isPhoneQuery = queryDigits.length >= 9;
-
-    const results: OrderItem[] = [];
-
-    for (const order of allOrdersMap.values()) {
-      const orderIdLower = (order.id || '').trim().toLowerCase();
+    return allOrders.filter((order) => {
+      const orderIdLower = (order.id || '').toLowerCase();
       const orderIdDigits = orderIdLower.replace(/\D/g, '');
+      const orderPhoneDigits = (order.phone || '').replace(/\D/g, '');
 
-      // Check 1: Exact Order ID match (e.g. user typed "ORD-811308" or "ord-811308" or "#ORD-811308")
-      if (orderIdLower === cleanIdCandidate) {
-        results.push(order);
-        continue;
+      if (isPhoneQuery && orderPhoneDigits.length >= 7) {
+        return (
+          orderPhoneDigits === queryDigits ||
+          orderPhoneDigits.endsWith(queryDigits) ||
+          queryDigits.endsWith(orderPhoneDigits)
+        );
       }
 
-      // Check 2: Order ID without "ORD-" prefix
-      // If user typed just the numeric part of the order (e.g. "811308" or "9821"),
-      // ONLY if user provided at least 4 digits (so "1", "12", "8" won't match!)
-      if (
-        queryDigits.length >= 4 &&
-        (orderIdLower === `ord-${queryDigits}` || orderIdDigits === queryDigits)
-      ) {
-        results.push(order);
-        continue;
-      }
-
-      // Check 3: Full Phone Number Match
-      // ONLY active if query has >= 9 digits
-      if (isPhoneQuery) {
-        const orderPhoneDigits = (order.phone || '').replace(/\D/g, '');
-        if (
-          orderPhoneDigits &&
-          (orderPhoneDigits === queryDigits ||
-            orderPhoneDigits.endsWith(queryDigits) ||
-            queryDigits.endsWith(orderPhoneDigits))
-        ) {
-          results.push(order);
-          continue;
-        }
-      }
-    }
-
-    return results.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, ORDERS_COLLECTION);
+      return (
+        orderIdLower === cleanCandidate ||
+        orderIdLower.includes(cleanCandidate) ||
+        (queryDigits.length >= 4 && orderIdDigits.includes(queryDigits))
+      );
+    });
+  } catch (err) {
+    console.error('trackOrdersByQuery error:', err);
     return [];
   }
+}
+
+export async function seedInitialMediaIfNeeded() {
+  return;
 }
 
 /**
- * Fetch all products once from Firestore (with automatic fallback seed if empty)
+ * Subscribe media (100% Hostinger MySQL)
  */
-export async function fetchProductsOnce(): Promise<ProductItem[]> {
-  try {
-    await seedInitialProductsIfNeeded();
-    const snap = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    const items: ProductItem[] = [];
-    snap.forEach((d) => {
-      items.push(d.data() as ProductItem);
-    });
-    items.sort((a, b) => {
-      const orderA = typeof a.orderIndex === 'number' ? a.orderIndex : 9999;
-      const orderB = typeof b.orderIndex === 'number' ? b.orderIndex : 9999;
-      if (orderA !== orderB) return orderA - orderB;
-      return a.id.localeCompare(b.id);
-    });
-    return items;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, PRODUCTS_COLLECTION);
-    return [];
-  }
-}
-
-export interface MediaItem {
-  id: string;
-  name: string;
-  url: string;
-  type: string;
-  mediaType: 'image' | 'video';
-  size: number;
-  createdAt: string;
-}
-
-const MEDIA_COLLECTION = 'media';
-
-let isSeedingMedia = false;
-let hasSeededMedia = false;
-
-export async function seedInitialMediaIfNeeded() {
-  if (hasSeededMedia || isSeedingMedia) return;
-  isSeedingMedia = true;
-  try {
-    const snap = await getDocs(collection(db, MEDIA_COLLECTION));
-    if (snap.empty) {
-      const defaultMedia: MediaItem[] = [
-        {
-          id: 'media-initial-1',
-          name: 'The Lawn Mower Ultra Gen 6 - Box Setup',
-          url: '/assets/aistudio/30-00006-NA_f201a618.png',
-          type: 'image/png',
-          mediaType: 'image',
-          size: 450000,
-          createdAt: '2026-10-21 10:00',
-        },
-        {
-          id: 'media-initial-2',
-          name: 'Battery Life & Tutorials',
-          url: '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 280000,
-          createdAt: '2026-10-21 10:05',
-        },
-        {
-          id: 'media-initial-3',
-          name: 'Trimmer Overview',
-          url: '/assets/aistudio/b72c1da980f6_e399d627.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 310000,
-          createdAt: '2026-10-21 10:10',
-        },
-        {
-          id: 'media-initial-4',
-          name: '100 Minutes Runtime',
-          url: '/assets/aistudio/e25de805d015_f449fce7.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 320000,
-          createdAt: '2026-10-21 10:15',
-        },
-        {
-          id: 'media-initial-5',
-          name: 'Trim Wet or Dry',
-          url: '/assets/aistudio/e38aa911b5e9_8252c23e.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 290000,
-          createdAt: '2026-10-21 10:20',
-        },
-        {
-          id: 'media-initial-6',
-          name: 'What is in the box',
-          url: '/assets/aistudio/fac0fd606c51_4d3a1ba2.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 350000,
-          createdAt: '2026-10-21 10:25',
-        },
-        {
-          id: 'media-initial-7',
-          name: 'Dual-temp LED Spotlight',
-          url: '/assets/aistudio/685d42568afa_98fc3951.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 340000,
-          createdAt: '2026-10-21 10:30',
-        },
-        {
-          id: 'media-initial-8',
-          name: 'Skin-close Shave',
-          url: '/assets/aistudio/25106398e899_13ff16c1.webp',
-          type: 'image/webp',
-          mediaType: 'image',
-          size: 330000,
-          createdAt: '2026-10-21 10:35',
-        },
-      ];
-      for (const m of defaultMedia) {
-        await setDoc(doc(db, MEDIA_COLLECTION, m.id), m);
-      }
-    }
-    hasSeededMedia = true;
-  } catch (err: any) {
-    if (err?.name === 'AbortError' || String(err?.message || '').toLowerCase().includes('aborted')) {
-      return;
-    }
-    console.warn('Initial media seed note:', err?.message || err);
-  } finally {
-    isSeedingMedia = false;
-  }
-}
-
 export function subscribeMedia(
   onData: (media: MediaItem[]) => void,
   onError?: (error: unknown) => void
 ) {
-  const colRef = collection(db, MEDIA_COLLECTION);
-  return onSnapshot(
-    colRef,
-    (snapshot) => {
-      const items: MediaItem[] = [];
-      snapshot.forEach((d) => {
-        items.push(d.data() as MediaItem);
-      });
-      items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      onData(items);
-    },
-    (error) => {
-      const msg = String((error as any)?.message || error).toLowerCase();
-      if ((error as any)?.name === 'AbortError' || msg.includes('aborted') || msg.includes('signal is aborted')) {
-        return;
+  let isMounted = true;
+
+  const fetchMedia = async () => {
+    try {
+      const res = await fetch('/api/db/media');
+      if (!res.ok) throw new Error('Failed to fetch media');
+      const data = await res.json();
+      if (isMounted) {
+        onData(data.media || []);
       }
-      try {
-        handleFirestoreError(error, OperationType.LIST, MEDIA_COLLECTION);
-      } catch {
-        // Handled
+    } catch (err) {
+      if (isMounted) {
+        onData([]);
+        if (onError) onError(err);
       }
-      if (onError) onError(error);
     }
-  );
+  };
+
+  fetchMedia();
+
+  const handleUpdate = () => fetchMedia();
+  if (typeof window !== 'undefined') {
+    window.addEventListener('manscaped_media_changed', handleUpdate);
+  }
+
+  return () => {
+    isMounted = false;
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('manscaped_media_changed', handleUpdate);
+    }
+  };
 }
 
+/**
+ * Save media to Hostinger MySQL
+ */
 export async function saveMediaToDb(media: MediaItem) {
   try {
-    await setDoc(doc(db, MEDIA_COLLECTION, media.id), media);
+    const res = await fetch('/api/db/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(media),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to save media');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_media_changed'));
+    }
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `${MEDIA_COLLECTION}/${media.id}`);
+    console.error('saveMediaToDb error:', error);
+    throw error;
   }
 }
 
+/**
+ * Delete media from Hostinger MySQL
+ */
 export async function deleteMediaFromDb(id: string) {
   try {
-    await deleteDoc(doc(db, MEDIA_COLLECTION, id));
+    const res = await fetch(`/api/db/media?id=${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to delete media');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('manscaped_media_changed'));
+    }
     return { success: true };
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `${MEDIA_COLLECTION}/${id}`);
+    console.error('deleteMediaFromDb error:', error);
     throw error;
   }
 }
