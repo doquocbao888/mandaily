@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { featuredProductsConfig, type ProductItem, type VideoReviewItem } from '@/config/products';
 import MediaManager from '@/components/admin/MediaManager';
+import ProductImagePicker from '@/components/admin/ProductImagePicker';
 import { 
   subscribeProducts, 
   subscribeOrders, 
@@ -1205,53 +1206,14 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-neutral-700">Ảnh chính (Main Image URL / Path) *</label>
-                  <button
-                    type="button"
-                    onClick={() => setMediaPickerTarget('add-main')}
-                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Chọn từ Thư viện Media</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={newImageSrc}
-                  onChange={(e) => setNewImageSrc(e.target.value)}
-                  required
-                  placeholder="/assets/aistudio/... hoặc /uploads/..."
-                  className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-600"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-neutral-700">
-                    Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setMediaPickerTarget('add-thumb')}
-                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Thêm từ Thư viện Media</span>
-                  </button>
-                </div>
-                <textarea
-                  value={newThumbnailsText}
-                  onChange={(e) => setNewThumbnailsText(e.target.value)}
-                  rows={4}
-                  placeholder="/assets/aistudio/image_1.webp&#10;/assets/aistudio/image_2.webp"
-                  className="w-full border border-neutral-300 rounded-xl p-3 text-xs font-mono focus:outline-none focus:border-amber-600"
-                />
-                <p className="text-[11px] text-neutral-500 mt-1">
-                  Nhập các đường dẫn ảnh phụ hoặc bấm nút trên để chọn nhanh từ Thư viện Media.
-                </p>
-              </div>
+              <ProductImagePicker
+                mainImage={newImageSrc}
+                onMainImageChange={(url) => setNewImageSrc(url)}
+                thumbnailsText={newThumbnailsText}
+                onThumbnailsTextChange={(text) => setNewThumbnailsText(text)}
+                onOpenMediaPickerForMain={() => setMediaPickerTarget('add-main')}
+                onOpenMediaPickerForThumb={() => setMediaPickerTarget('add-thumb')}
+              />
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-neutral-100 sticky bottom-0 bg-white py-3">
                 <button
@@ -1364,52 +1326,14 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-neutral-700">Ảnh chính (Main Image URL / Path) *</label>
-                  <button
-                    type="button"
-                    onClick={() => setMediaPickerTarget('edit-main')}
-                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Chọn từ Thư viện Media</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={editingProduct.imageSrc}
-                  onChange={(e) => setEditingProduct({ ...editingProduct, imageSrc: e.target.value })}
-                  required
-                  className="w-full border border-neutral-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-amber-600"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-neutral-700">
-                    Ảnh phụ & Ảnh đặc tả (Thumbnails) - Mỗi đường dẫn một dòng
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setMediaPickerTarget('edit-thumb')}
-                    className="text-xs text-amber-600 font-bold hover:underline flex items-center space-x-1"
-                  >
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>Thêm từ Thư viện Media</span>
-                  </button>
-                </div>
-                <textarea
-                  value={editThumbnailsText}
-                  onChange={(e) => setEditThumbnailsText(e.target.value)}
-                  rows={4}
-                  placeholder="/assets/aistudio/image_1.webp&#10;/assets/aistudio/image_2.webp"
-                  className="w-full border border-neutral-300 rounded-xl p-3 text-xs font-mono focus:outline-none focus:border-amber-600"
-                />
-                <p className="text-[11px] text-neutral-500 mt-1">
-                  Nhập danh sách đường dẫn ảnh phụ hoặc bấm nút trên để chọn nhanh từ Thư viện Media.
-                </p>
-              </div>
+              <ProductImagePicker
+                mainImage={editingProduct.imageSrc}
+                onMainImageChange={(url) => setEditingProduct({ ...editingProduct, imageSrc: url })}
+                thumbnailsText={editThumbnailsText}
+                onThumbnailsTextChange={(text) => setEditThumbnailsText(text)}
+                onOpenMediaPickerForMain={() => setMediaPickerTarget('edit-main')}
+                onOpenMediaPickerForThumb={() => setMediaPickerTarget('edit-thumb')}
+              />
 
               {/* VIDEO REVIEWS SECTION */}
               <div className="pt-5 border-t border-neutral-200">
@@ -1709,11 +1633,18 @@ export default function AdminPage() {
             </div>
 
             <p className="text-xs text-neutral-600 mb-4">
-              Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này khỏi cơ sở dữ liệu Firestore? Hành động này được đồng bộ tức thì lên đám mây và không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa vĩnh viễn đơn hàng này khỏi cơ sở dữ liệu Hostinger MySQL? Hành động này được đồng bộ tức thì và không thể hoàn tác.
             </p>
 
             {/* Order Snapshot */}
             <div className="bg-[#f9f9f8] p-4 rounded-xl border border-neutral-200 space-y-2 mb-6 text-xs">
+              <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
+                <span className="text-neutral-500">Thời gian đặt:</span>
+                <span className="font-semibold text-neutral-900 flex items-center space-x-1">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>{orderToDelete.createdAt || 'N/A'}</span>
+                </span>
+              </div>
               <div className="flex items-center justify-between border-b border-neutral-200 pb-2">
                 <span className="text-neutral-500">Khách hàng:</span>
                 <span className="font-bold text-neutral-900">{orderToDelete.customerName}</span>
