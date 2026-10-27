@@ -34,7 +34,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             alt={product.imageAlt}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            unoptimized={product.imageSrc?.startsWith('data:') || product.imageSrc?.startsWith('http')}
+            unoptimized={true}
             className="object-contain w-full h-full transition-transform duration-500 ease-out group-hover:scale-[1.05]"
             referrerPolicy="no-referrer"
           />

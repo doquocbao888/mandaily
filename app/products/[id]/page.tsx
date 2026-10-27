@@ -109,7 +109,7 @@ export default function ProductDetailPage() {
 
   const isUnoptimized = (src?: string) => {
     if (!src) return false;
-    return src.startsWith('data:') || src.startsWith('http://') || src.startsWith('https://');
+    return true;
   };
 
   const handleMobileScroll = (e: React.UIEvent<HTMLDivElement>) => {

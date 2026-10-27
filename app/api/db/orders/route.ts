@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMySQLPool, initMySQLTables, isMySQLConfigured } from '@/lib/mysql';
+import {
+  getMySQLPool,
+  initMySQLTables,
+  isMySQLConfigured,
+  getCachedData,
+  setCachedData,
+  invalidateCache,
+  isConnectionLimitError,
+} from '@/lib/mysql';
 import { type OrderItem } from '@/lib/dbService';
 
 export const dynamic = 'force-dynamic';
@@ -10,13 +18,19 @@ export async function GET() {
     return NextResponse.json({ configured: false, orders: [] });
   }
 
+  // 1. Check in-memory cache first to avoid exhausting Hostinger connection limits
+  const cached = getCachedData<OrderItem[]>('orders', 15000);
+  if (cached) {
+    return NextResponse.json({ configured: true, orders: cached, cached: true });
+  }
+
   const pool = getMySQLPool();
   if (!pool) {
-    return NextResponse.json({ error: 'Database pool unavailable' }, { status: 500 });
+    const fallback = getCachedData<OrderItem[]>('orders', 3600000) || [];
+    return NextResponse.json({ configured: true, orders: fallback, fallback: true });
   }
 
   try {
-    await initMySQLTables();
     const [rows] = await pool.query('SELECT * FROM orders ORDER BY createdAtTimestamp DESC, id DESC');
     const orders = (rows as any[]).map((r) => ({
       id: r.id,
@@ -35,10 +49,23 @@ export async function GET() {
       createdAt: r.createdAt,
     }));
 
+    setCachedData('orders', orders);
     return NextResponse.json({ configured: true, orders });
   } catch (error: any) {
-    console.error('MySQL GET orders error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL GET orders rate-limited on Hostinger, serving cached/local orders.');
+      const fallback = getCachedData<OrderItem[]>('orders', 3600000) || [];
+      return NextResponse.json({
+        configured: true,
+        orders: fallback,
+        rateLimited: true,
+        cached: true,
+      });
+    }
+
+    console.warn('MySQL GET orders warning:', error?.message || error);
+    const fallback = getCachedData<OrderItem[]>('orders', 3600000) || [];
+    return NextResponse.json({ configured: true, orders: fallback, fallback: true });
   }
 }
 
@@ -96,8 +123,16 @@ export async function POST(req: NextRequest) {
       timestamp,
     ]);
 
+    invalidateCache('orders');
     return NextResponse.json({ success: true, order });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL POST order: Hostinger connection limit reached.');
+      return NextResponse.json(
+        { error: 'Hostinger database đang bận (vượt giới hạn kết nối/giờ). Vui lòng thử lại sau ít phút.' },
+        { status: 429 }
+      );
+    }
     console.error('MySQL POST order error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -120,8 +155,16 @@ export async function PUT(req: NextRequest) {
     }
 
     await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    invalidateCache('orders');
     return NextResponse.json({ success: true, id, status });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL PUT order: Hostinger connection limit reached.');
+      return NextResponse.json(
+        { error: 'Hostinger database đang bận. Vui lòng thử lại sau ít phút.' },
+        { status: 429 }
+      );
+    }
     console.error('MySQL PUT order error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -145,8 +188,16 @@ export async function DELETE(req: NextRequest) {
     }
 
     await pool.query('DELETE FROM orders WHERE id = ?', [id]);
+    invalidateCache('orders');
     return NextResponse.json({ success: true, id });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL DELETE order: Hostinger connection limit reached.');
+      return NextResponse.json(
+        { error: 'Hostinger database đang bận. Vui lòng thử lại sau ít phút.' },
+        { status: 429 }
+      );
+    }
     console.error('MySQL DELETE order error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

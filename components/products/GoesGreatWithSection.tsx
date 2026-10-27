@@ -221,7 +221,7 @@ export default function GoesGreatWithSection({
                         alt={product.imageAlt || product.title}
                         fill
                         sizes="(max-width: 640px) 240px, 285px"
-                        unoptimized={product.imageSrc?.startsWith('data:') || product.imageSrc?.startsWith('http')}
+                        unoptimized={true}
                         className="object-contain p-2 transition-transform duration-500 ease-out group-hover/card:scale-105"
                         referrerPolicy="no-referrer"
                       />

@@ -1016,6 +1016,17 @@ export default function AdminPage() {
                           </tr>
                         );
                       })}
+                    {products.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="p-12 text-center text-neutral-500">
+                          <Package className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
+                          <p className="font-bold text-neutral-700">Chưa có sản phẩm nào trong cơ sở dữ liệu</p>
+                          <p className="text-xs text-neutral-400 mt-1">
+                            Bấm nút &ldquo;+ Thêm sản phẩm mới&rdquo; ở trên để tạo sản phẩm, hoặc bấm &ldquo;Khôi phục mặc định&rdquo; để nạp lại sản phẩm mẫu.
+                          </p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

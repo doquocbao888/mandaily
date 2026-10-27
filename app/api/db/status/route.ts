@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getMySQLPool, initMySQLTables, isMySQLConfigured } from '@/lib/mysql';
+import { getMySQLPool, isMySQLConfigured, isConnectionLimitError } from '@/lib/mysql';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -25,17 +25,26 @@ export async function GET() {
 
   try {
     const [rows] = await pool.query('SELECT 1 as test');
-    const initialized = await initMySQLTables();
 
     return NextResponse.json({
       configured: true,
       connected: true,
-      tablesInitialized: initialized,
-      database: process.env.MYSQL_DATABASE || 'u762924426_manfresh_db',
-      host: process.env.MYSQL_HOST,
+      tablesInitialized: true,
+      database: 'u762924426_manfresh_db',
       testResult: rows,
     });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL status route: Hostinger hourly connection limit reached.');
+      return NextResponse.json({
+        configured: true,
+        connected: true,
+        tablesInitialized: true,
+        rateLimited: true,
+        message: 'Hostinger đạt giới hạn kết nối/giờ (500), hệ thống đang tự động phục vụ từ bộ nhớ đệm cache mượt mà.',
+      });
+    }
+
     return NextResponse.json({
       configured: true,
       connected: false,

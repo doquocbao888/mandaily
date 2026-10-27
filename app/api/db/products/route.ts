@@ -1,22 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMySQLPool, initMySQLTables, isMySQLConfigured } from '@/lib/mysql';
-import { type ProductItem } from '@/config/products';
+import {
+  getMySQLPool,
+  initMySQLTables,
+  isMySQLConfigured,
+  getCachedData,
+  setCachedData,
+  invalidateCache,
+  isConnectionLimitError,
+} from '@/lib/mysql';
+import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
   if (!isMySQLConfigured()) {
-    return NextResponse.json({ configured: false, products: [] });
+    return NextResponse.json({ configured: false, products: featuredProductsConfig2.products });
+  }
+
+  // 1. Check in-memory cache first to avoid exhausting Hostinger connection limits
+  const cached = getCachedData<ProductItem[]>('products', 15000);
+  if (cached) {
+    return NextResponse.json({ configured: true, products: cached, cached: true });
   }
 
   const pool = getMySQLPool();
   if (!pool) {
-    return NextResponse.json({ error: 'Database pool unavailable' }, { status: 500 });
+    const fallback = getCachedData<ProductItem[]>('products', 3600000) || featuredProductsConfig2.products;
+    return NextResponse.json({ configured: true, products: fallback, fallback: true });
   }
 
   try {
-    await initMySQLTables();
     const [rows] = await pool.query('SELECT * FROM products ORDER BY orderIndex ASC, id ASC');
     const products = (rows as any[]).map((r) => ({
       id: r.id,
@@ -46,10 +60,23 @@ export async function GET() {
       videoReviews: typeof r.videoReviews === 'string' ? JSON.parse(r.videoReviews || '[]') : (r.videoReviews || []),
     }));
 
+    setCachedData('products', products);
     return NextResponse.json({ configured: true, products });
   } catch (error: any) {
-    console.error('MySQL GET products error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL GET products rate-limited on Hostinger, serving cached/local products seamlessly.');
+      const fallback = getCachedData<ProductItem[]>('products', 3600000) || featuredProductsConfig2.products;
+      return NextResponse.json({
+        configured: true,
+        products: fallback,
+        rateLimited: true,
+        cached: true,
+      });
+    }
+
+    console.warn('MySQL GET products warning:', error?.message || error);
+    const fallback = getCachedData<ProductItem[]>('products', 3600000) || featuredProductsConfig2.products;
+    return NextResponse.json({ configured: true, products: fallback, fallback: true });
   }
 }
 
@@ -121,8 +148,16 @@ export async function POST(req: NextRequest) {
       JSON.stringify(product.videoReviews || []),
     ]);
 
+    invalidateCache('products');
     return NextResponse.json({ success: true, product });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL POST product: Hostinger connection limit reached. Try again in a few moments.');
+      return NextResponse.json(
+        { error: 'Hostinger database đang bận (vượt giới hạn kết nối/giờ). Vui lòng thử lại sau ít phút.' },
+        { status: 429 }
+      );
+    }
     console.error('MySQL POST product error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -146,8 +181,16 @@ export async function DELETE(req: NextRequest) {
     }
 
     await pool.query('DELETE FROM products WHERE id = ?', [id]);
+    invalidateCache('products');
     return NextResponse.json({ success: true, id });
   } catch (error: any) {
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL DELETE product: Hostinger connection limit reached.');
+      return NextResponse.json(
+        { error: 'Hostinger database đang bận (vượt giới hạn kết nối/giờ). Vui lòng thử lại sau ít phút.' },
+        { status: 429 }
+      );
+    }
     console.error('MySQL DELETE product error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -117,7 +117,7 @@ export function subscribeProducts(
   }
 
   // Poll every 3 seconds for snappy cross-device updates
-  const interval = setInterval(fetchProducts, 3000);
+  const interval = setInterval(fetchProducts, 60000);
 
   return () => {
     isMounted = false;
@@ -174,7 +174,7 @@ export function subscribeProductById(
     window.addEventListener('focus', handleUpdate);
   }
 
-  const interval = setInterval(fetchOne, 4000);
+  const interval = setInterval(fetchOne, 60000);
 
   return () => {
     isMounted = false;
@@ -337,7 +337,7 @@ export function subscribeOrders(
   }
 
   // Poll orders every 3 seconds for real-time cross-device sync
-  const interval = setInterval(fetchOrders, 3000);
+  const interval = setInterval(fetchOrders, 60000);
 
   return () => {
     isMounted = false;
@@ -582,7 +582,7 @@ export function subscribeMedia(
   }
 
   // Poll media every 3 seconds for real-time cross-device sync
-  const interval = setInterval(fetchMedia, 3000);
+  const interval = setInterval(fetchMedia, 60000);
 
   return () => {
     isMounted = false;

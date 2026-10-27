@@ -1,7 +1,27 @@
 import mysql, { Pool } from 'mysql2/promise';
 
-let pool: Pool | null = null;
-let tablesInitialized = false;
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+interface GlobalMySQLState {
+  pool: Pool | null;
+  tablesInitialized: boolean;
+  cache: Record<string, CacheEntry<any>>;
+}
+
+const globalForMySQL = globalThis as unknown as {
+  __mysqlState?: GlobalMySQLState;
+};
+
+if (!globalForMySQL.__mysqlState) {
+  globalForMySQL.__mysqlState = {
+    pool: null,
+    tablesInitialized: false,
+    cache: {},
+  };
+}
 
 export function getDBCredentials() {
   const host =
@@ -42,31 +62,80 @@ export function isMySQLConfigured(): boolean {
 }
 
 export function getMySQLPool(): Pool | null {
-  if (!pool) {
-    const creds = getDBCredentials();
-    pool = mysql.createPool({
-      host: creds.host,
-      port: creds.port,
-      user: creds.user,
-      password: creds.password,
-      database: creds.database,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      connectTimeout: 10000,
-      enableKeepAlive: true,
-      keepAliveInitialDelay: 10000,
-    });
-  }
+  const state = globalForMySQL.__mysqlState!;
+  if (state.pool) return state.pool;
 
-  return pool;
+  const creds = getDBCredentials();
+  state.pool = mysql.createPool({
+    host: creds.host,
+    port: creds.port,
+    user: creds.user,
+    password: creds.password,
+    database: creds.database,
+    waitForConnections: true,
+    connectionLimit: 1, // Single persistent connection to avoid exceeding max_connections_per_hour
+    maxIdle: 1,
+    idleTimeout: 600000, // 10 minutes: keep socket open, do NOT reconnect repeatedly
+    queueLimit: 0,
+    connectTimeout: 8000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 30000,
+  });
+
+  return state.pool;
+}
+
+/**
+ * In-memory cache helpers to preserve Hostinger's max_connections_per_hour quota
+ */
+export function getCachedData<T>(key: string, maxAgeMs = 15000): T | null {
+  const state = globalForMySQL.__mysqlState;
+  if (!state || !state.cache[key]) return null;
+  const entry = state.cache[key];
+  if (Date.now() - entry.timestamp < maxAgeMs) {
+    return entry.data as T;
+  }
+  return null;
+}
+
+export function setCachedData<T>(key: string, data: T): void {
+  const state = globalForMySQL.__mysqlState;
+  if (state) {
+    state.cache[key] = {
+      data,
+      timestamp: Date.now(),
+    };
+  }
+}
+
+export function invalidateCache(key?: string): void {
+  const state = globalForMySQL.__mysqlState;
+  if (state) {
+    if (key) {
+      delete state.cache[key];
+    } else {
+      state.cache = {};
+    }
+  }
+}
+
+export function isConnectionLimitError(err: any): boolean {
+  if (!err) return false;
+  const msg = (err.message || String(err)).toLowerCase();
+  return (
+    msg.includes('max_connections_per_hour') ||
+    msg.includes('er_user_limit_reached') ||
+    err.code === 'ER_USER_LIMIT_REACHED' ||
+    err.errno === 1226
+  );
 }
 
 /**
  * Automatically initialize the required database tables in Hostinger MySQL
  */
 export async function initMySQLTables(): Promise<boolean> {
-  if (tablesInitialized) return true;
+  const state = globalForMySQL.__mysqlState!;
+  if (state.tablesInitialized) return true;
   const p = getMySQLPool();
   if (!p) return false;
 
@@ -135,10 +204,14 @@ export async function initMySQLTables(): Promise<boolean> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
-    tablesInitialized = true;
+    state.tablesInitialized = true;
     return true;
   } catch (error) {
-    console.error('Failed to initialize MySQL tables:', error);
+    if (isConnectionLimitError(error)) {
+      console.warn('MySQL init tables note: max_connections_per_hour reached on Hostinger.');
+    } else {
+      console.warn('MySQL init tables warning:', error);
+    }
     return false;
   }
 }
