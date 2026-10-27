@@ -18,8 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     await initMySQLTables();
 
-    const url = new URL(req.url);
-    const force = url.searchParams.get('force') === 'true';
+    const force = req.nextUrl.searchParams.get('force') === 'true';
 
     // Check existing products count
     const [rows] = await pool.query('SELECT COUNT(*) as count FROM products');

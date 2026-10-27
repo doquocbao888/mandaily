@@ -139,7 +139,7 @@ export async function DELETE(req: NextRequest) {
   }
 
   try {
-    const { searchParams } = new URL(req.url);
+    const searchParams = req.nextUrl.searchParams;
     const id = searchParams.get('id');
     if (!id) {
       return NextResponse.json({ error: 'Missing id' }, { status: 400 });
