@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect, useSyncExternalStore } from 'react';
@@ -986,16 +987,7 @@ export default function AdminPage() {
                             </td>
                             <td className="p-4">
                               <div className="flex items-center space-x-2">
-                                <div className="relative w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden border flex-shrink-0">
-                                  <Image
-                                    src={p.imageSrc}
-                                    alt={p.imageAlt}
-                                    fill
-                                    sizes="48px"
-                                    className="object-contain"
-                                    referrerPolicy="no-referrer"
-                                  />
-                                </div>
+                                <div className="w-12 h-12 bg-neutral-100 rounded-lg overflow-hidden border flex-shrink-0 flex items-center justify-center"><img src={p.imageSrc} alt={p.imageAlt} className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div>
                                 <span className="text-xs text-neutral-500 font-medium">
                                   ({p.thumbnails?.length || 1} ảnh)
                                 </span>
@@ -1646,17 +1638,7 @@ export default function AdminPage() {
 
             {/* Product Snapshot */}
             <div className="bg-[#f9f9f8] p-3.5 rounded-xl border border-neutral-200 flex items-center space-x-3 mb-6">
-              <div className="relative w-16 h-16 bg-white rounded-lg border border-neutral-200 overflow-hidden flex-shrink-0">
-                <Image
-                  src={productToDelete.imageSrc}
-                  alt={productToDelete.imageAlt || productToDelete.title}
-                  fill
-                  sizes="64px"
-                  unoptimized={productToDelete.imageSrc?.startsWith('data:') || productToDelete.imageSrc?.startsWith('http')}
-                  className="object-contain"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
+              <div className="w-16 h-16 bg-white rounded-lg border border-neutral-200 overflow-hidden flex-shrink-0 flex items-center justify-center"><img src={productToDelete.imageSrc} alt={productToDelete.imageAlt || productToDelete.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" /></div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-bold text-sm text-neutral-900 truncate">{productToDelete.title}</h4>
                 <p className="text-xs text-neutral-500 truncate mt-0.5">{productToDelete.subtitle}</p>

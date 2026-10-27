@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useRef } from 'react';
@@ -350,13 +351,10 @@ export default function MediaManager({
                   </span>
                 </div>
               ) : (
-                <Image
+                <img
                   src={item.url}
                   alt={item.name}
-                  fill
-                  sizes="200px"
-                  unoptimized={item.url.startsWith('data:') || item.url.startsWith('http')}
-                  className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                   referrerPolicy="no-referrer"
                 />
               )}
@@ -464,12 +462,10 @@ export default function MediaManager({
               {previewItem.mediaType === 'video' ? (
                 <video src={previewItem.url} controls autoPlay className="w-full h-full object-contain" />
               ) : (
-                <Image
+                <img
                   src={previewItem.url}
                   alt={previewItem.name}
-                  fill
-                  unoptimized={previewItem.url.startsWith('data:') || previewItem.url.startsWith('http')}
-                  className="object-contain"
+                  className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
               )}
