@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getMySQLPool, initMySQLTables, isMySQLConfigured } from '@/lib/mysql';
 import { featuredProductsConfig2 } from '@/config/products';
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   if (!isMySQLConfigured()) {
     return NextResponse.json({
       configured: false,
@@ -18,9 +18,16 @@ export async function POST() {
   try {
     await initMySQLTables();
 
+    const url = new URL(req.url);
+    const force = url.searchParams.get('force') === 'true';
+
     // Check existing products count
     const [rows] = await pool.query('SELECT COUNT(*) as count FROM products');
     const count = (rows as any[])[0]?.count || 0;
+
+    if (count > 0 && !force) {
+      return NextResponse.json({ success: true, message: 'Products already exist, skipping auto-seed', count });
+    }
 
     let inserted = 0;
     for (let i = 0; i < featuredProductsConfig2.products.length; i++) {

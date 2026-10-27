@@ -38,29 +38,10 @@ const noCacheHeaders = {
 };
 
 /**
- * Seed initial products to Hostinger MySQL if needed
+ * Seed initial products to Hostinger MySQL (Disabled to prevent auto-restoring deleted products)
  */
 export async function seedInitialProductsIfNeeded() {
-  if (isSyncingProducts) return;
-  isSyncingProducts = true;
-  try {
-    const res = await fetch(`/api/db/status?t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: noCacheHeaders,
-    });
-    const status = await res.json();
-    if (status.connected) {
-      await fetch('/api/db/sync', {
-        method: 'POST',
-        cache: 'no-store',
-        headers: noCacheHeaders,
-      });
-    }
-  } catch (err) {
-    console.warn('MySQL seed note:', err);
-  } finally {
-    isSyncingProducts = false;
-  }
+  return;
 }
 
 /**
@@ -68,7 +49,7 @@ export async function seedInitialProductsIfNeeded() {
  */
 export async function restoreDefaultProducts() {
   try {
-    const res = await fetch('/api/db/sync', {
+    const res = await fetch('/api/db/sync?force=true', {
       method: 'POST',
       cache: 'no-store',
       headers: noCacheHeaders,
@@ -102,10 +83,7 @@ export function subscribeProducts(
       if (!res.ok) throw new Error('Failed to fetch products from MySQL');
       const data = await res.json();
       if (isMounted) {
-        if (Array.isArray(data.products) && data.products.length > 0) {
-          onData(data.products);
-        } else if (Array.isArray(data.products) && data.configured) {
-          // If MySQL is configured and returned empty table, display empty or sync default
+        if (Array.isArray(data.products)) {
           onData(data.products);
         } else {
           onData(featuredProductsConfig2.products);

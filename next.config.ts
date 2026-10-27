@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['firebase', '@firebase/app', '@firebase/firestore', '@firebase/auth'],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
+  },
   output: 'standalone',
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.

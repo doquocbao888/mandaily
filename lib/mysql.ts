@@ -126,7 +126,7 @@ export async function initMySQLTables(): Promise<boolean> {
       CREATE TABLE IF NOT EXISTS media (
         id VARCHAR(100) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        url TEXT NOT NULL,
+        url LONGTEXT NOT NULL,
         type VARCHAR(50),
         mediaType VARCHAR(50),
         size INT DEFAULT 0,
