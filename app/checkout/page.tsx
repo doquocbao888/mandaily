@@ -145,7 +145,7 @@ export default function CheckoutPage() {
               <CheckCircle2 className="w-12 h-12" />
             </div>
             <div>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-neutral-900 mb-1">
+              <h2 className="text-2xl sm:text-3xl font-sans font-bold text-neutral-900 mb-1">
                 Cảm ơn bạn đã đặt hàng, {successOrder.fullName}!
               </h2>
               <p className="text-sm text-neutral-600">
@@ -206,7 +206,7 @@ export default function CheckoutPage() {
               
               {/* Shipping Address Section */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-4">
-                <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
+                <h2 className="text-lg font-sans font-bold text-neutral-900 uppercase tracking-wide">
                   Địa chỉ giao hàng
                 </h2>
 
@@ -262,7 +262,7 @@ export default function CheckoutPage() {
 
               {/* Payment Method Section */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-4">
-                <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
+                <h2 className="text-lg font-sans font-bold text-neutral-900 uppercase tracking-wide">
                   Phương thức thanh toán
                 </h2>
 
@@ -402,7 +402,7 @@ export default function CheckoutPage() {
 
             {/* Right Column: Order Summary (matching screenshot right column) */}
             <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-6">
-              <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
+              <h2 className="text-lg font-sans font-bold text-neutral-900 uppercase tracking-wide">
                 Tóm tắt đơn hàng
               </h2>
 
@@ -497,7 +497,7 @@ export default function CheckoutPage() {
                     {shippingFee === 0 ? 'Miễn phí' : formatVND(shippingFee)}
                   </span>
                 </div>
-                <div className="flex justify-between text-lg font-serif font-bold text-neutral-900 pt-3 border-t border-neutral-200">
+                <div className="flex justify-between text-lg font-sans font-bold text-neutral-900 pt-3 border-t border-neutral-200">
                   <span>Tổng thanh toán</span>
                   <span className="text-[#9e6f1c] font-sans font-extrabold">{formatVND(grandTotal)}</span>
                 </div>

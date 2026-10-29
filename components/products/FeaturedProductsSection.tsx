@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
+import SectionHeader from '@/components/common/SectionHeader';
 import { featuredProductsConfig, type FeaturedProductsConfig, type ProductItem } from '@/config/products';
 interface FeaturedProductsSectionProps {
   config?: FeaturedProductsConfig;
@@ -45,14 +46,10 @@ export default function FeaturedProductsSection({
     >
       <div className="max-w-[1240px] mx-auto flex flex-col items-center">
         {/* Section Header */}
-        <div className="text-center mb-10 sm:mb-14">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-[#583927] tracking-tight mb-2">
-            {config.sectionTitle}
-          </h2>
-          <p className="text-neutral-600 text-sm sm:text-base font-normal">
-            {config.sectionSubtitle}
-          </p>
-        </div>
+        <SectionHeader
+          title={config.sectionTitle}
+          subtitle={config.sectionSubtitle}
+        />
 
         {/* Product Grid (2 columns on desktop, 1 on mobile) */}
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">

@@ -87,7 +87,7 @@ export default function CartDrawer() {
             {/* 1. Header with Manscaped Brand Brown Background */}
             <div className="flex items-center justify-between px-6 py-4 bg-[#9c631b] text-white relative">
               <div className="w-6" /> {/* Spacer for optical center */}
-              <h2 className="text-base font-bold tracking-wide text-center flex-1 font-serif">
+              <h2 className="text-base font-bold tracking-wide text-center flex-1 font-sans">
                 Giỏ hàng
               </h2>
               <button
@@ -148,31 +148,31 @@ export default function CartDrawer() {
                   <div className="w-16 h-16 bg-[#f7f5ef] text-[#9c631b] rounded-full flex items-center justify-center mx-auto mb-4">
                     <ShoppingBag className="w-8 h-8" />
                   </div>
-                  <h3 className="font-serif font-bold text-lg text-neutral-900 mb-1">
-                    Your cart is empty
+                  <h3 className="font-sans font-bold text-lg text-neutral-900 mb-1">
+                    Giỏ hàng của bạn đang trống
                   </h3>
                   <p className="text-xs text-neutral-500 mb-6 max-w-xs mx-auto">
-                    Take it up a crotch. Discover our award-winning groin and body grooming tools.
+                    Khám phá ngay các dòng sản phẩm chăm sóc nam giới cao cấp từ MANFRESH.
                   </p>
                   <button
                     onClick={() => setIsCartOpen(false)}
                     className="bg-[#9c631b] hover:bg-[#865314] text-white font-bold text-xs uppercase tracking-wider py-3 px-6 rounded-full transition shadow-sm cursor-pointer"
                   >
-                    Start Shopping
+                    Khám phá ngay
                   </button>
                 </div>
               ) : (
                 <div className="px-4 sm:px-5 space-y-4">
                   {/* Cart Title & VIP Announcement */}
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-serif font-bold text-[#9c631b]">
-                      {totalItems} {totalItems === 1 ? 'item' : 'items'} in your cart
+                    <h3 className="text-xl sm:text-2xl font-sans font-extrabold text-[#9c631b]">
+                      Có {totalItems} sản phẩm trong giỏ hàng
                     </h3>
                     <p className="text-sm font-bold text-neutral-900 mt-2">
-                      Saving money looks handsome on you.
+                      Chăm sóc diện mạo với ưu đãi tốt nhất.
                     </p>
                     <p className="text-[11px] sm:text-xs text-neutral-600 leading-relaxed mt-1">
-                      Your <span className="underline cursor-pointer font-semibold text-neutral-900">VIP Membership</span> enrolls you in a VIP Package subscription that includes <strong>both a fresh trimmer blade and foil blade refill</strong>, billed <strong>every 3 months at $25.00 + tax</strong>. Customize or cancel anytime.
+                      Gói <span className="underline cursor-pointer font-semibold text-neutral-900">Hội viên VIP</span> giúp bạn tự động nhận bộ lưỡi tông đơ & cạo màng thay thế định kỳ mỗi 3 tháng với mức giá ưu đãi. Có thể tùy chỉnh hoặc hủy bất kỳ lúc nào.
                     </p>
                   </div>
 
@@ -277,7 +277,7 @@ export default function CartDrawer() {
               {/* 3. Bundle and Save Carousel Section */}
               <div className="mt-6 bg-[#f5f4ef] py-5 px-4 sm:px-5 border-t border-[#ede9df]">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-serif font-bold text-base sm:text-lg text-neutral-900">
+                  <h4 className="font-sans font-bold text-base sm:text-lg text-neutral-900">
                     Ưu đãi mua kèm combo
                   </h4>
                   <div className="flex items-center space-x-2">

@@ -5,6 +5,7 @@ import ProductCard from './ProductCard';
 import { type FeaturedProductsConfig, type ProductItem } from '@/config/products';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
+import SectionHeader from '@/components/common/SectionHeader';
 interface FeaturedProductsSectionProps {
   config: FeaturedProductsConfig;
 }
@@ -142,14 +143,10 @@ export default function FeaturedProductsSection({ config }: FeaturedProductsSect
     >
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         {/* Section Header */}
-        <div className="text-center mb-12 sm:mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-[#583927] tracking-tight mb-2">
-            {config.sectionTitle}
-          </h2>
-          <p className="text-neutral-600 text-sm sm:text-base font-normal">
-            {config.sectionSubtitle}
-          </p>
-        </div>
+        <SectionHeader
+          title={config.sectionTitle}
+          subtitle={config.sectionSubtitle}
+        />
 
         {/* Carousel Container */}
         <div className="w-full relative">

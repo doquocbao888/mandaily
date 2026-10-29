@@ -462,7 +462,7 @@ export default function ProductDetailPage() {
             {/* Header Area with 30-Day Guarantee Badge on Top Right */}
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-serif font-bold text-neutral-900 tracking-tight uppercase">
+                <h1 className="text-2xl sm:text-3xl font-sans font-black text-neutral-900 tracking-tight uppercase">
                   {product.title.replace(' - NEW!', '')}
                 </h1>
                 <p className="text-neutral-600 text-sm font-medium mt-1">
@@ -561,8 +561,12 @@ export default function ProductDetailPage() {
 
         </div>
 
-        {/* Next Section: UGC Video Reviews 'The buzz is real' */}
-        <VideoReviewsSection reviews={product?.videoReviews} />
+        {/* Next Section: UGC Video Reviews 'Sức nóng là có thật.' */}
+        <VideoReviewsSection
+          reviews={product?.videoReviews}
+          title="Sức nóng là có thật."
+          subtitle="Gắn thẻ @manfresh trong bài đánh giá của bạn để có cơ hội được chúng tôi chia sẻ."
+        />
 
         {/* Next Section: 'Goes great with...' Product Carousel (synced with admin in real-time) */}
         <GoesGreatWithSection currentProductId={id} />

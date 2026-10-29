@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
+import SectionHeader from '@/components/common/SectionHeader';
 
 interface TechItem {
   id: string;
@@ -166,14 +167,10 @@ export default function GameChangingTechSection() {
     <section className="relative w-full bg-[#f7f4ee] py-14 sm:py-20 lg:py-24 overflow-hidden select-none">
       <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-16">
-          <span className="inline-block text-[#b98141] text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-2">
-            DÀNH RIÊNG CHO PHÁI MẠNH
-          </span>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-900 tracking-tight">
-            Công nghệ đột phá nâng tầm trải nghiệm.
-          </h2>
-        </div>
+        <SectionHeader
+          title="Công nghệ đột phá nâng tầm trải nghiệm."
+          subtitle="Được thiết kế tỉ mỉ mang đến sự an toàn, chính xác và đẳng cấp tuyệt đối cho phái mạnh."
+        />
 
         {/* Scrollable Peek Carousel Container */}
         <div

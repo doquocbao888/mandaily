@@ -199,6 +199,20 @@ export default function AdminPage() {
     window.dispatchEvent(new Event('manscaped_auth_change'));
   };
 
+  const handleClearCache = () => {
+    if (confirm('Bạn có chắc chắn muốn xóa toàn bộ bộ nhớ cache (localStorage & trạng thái tạm)?')) {
+      try {
+        localStorage.clear();
+        setToastMessage({ text: 'Đã xóa bộ nhớ cache thành công! Đang tải lại trang...' });
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch {
+        setToastMessage({ text: 'Lỗi khi xóa cache.', isError: true });
+      }
+    }
+  };
+
   const executeDeleteProduct = async () => {
     if (!productToDelete) return;
     const target = productToDelete;
@@ -590,6 +604,14 @@ export default function AdminPage() {
           </div>
 
           <div className="flex items-center space-x-3">
+            <button
+              onClick={handleClearCache}
+              className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold rounded-xl border border-neutral-300 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Xóa toàn bộ Cache & LocalStorage"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-600" />
+              <span>Xóa Cache</span>
+            </button>
             <div className="flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Đã kết nối Hostinger MySQL (u762924426_manfresh_db)</span>
@@ -1356,7 +1378,7 @@ export default function AdminPage() {
                   <div>
                     <h4 className="text-sm font-bold text-neutral-900 flex items-center space-x-2">
                       <Film className="w-4 h-4 text-amber-600" />
-                      <span>Video Reviews cho sản phẩm này (&ldquo;The buzz is real.&rdquo;)</span>
+                      <span>Video Reviews cho sản phẩm này (&ldquo;Sức nóng là có thật.&rdquo;)</span>
                     </h4>
                     <p className="text-xs text-neutral-500 mt-0.5">
                       Cấu hình 3 video review hiển thị ở trang chi tiết sản phẩm bằng link YouTube hoặc YouTube Shorts.

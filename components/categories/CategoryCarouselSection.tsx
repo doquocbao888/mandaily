@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
+import SectionHeader from '@/components/common/SectionHeader';
 import { categoryCarouselConfig, type CategoryCarouselConfig } from '@/config/categories';
 
 interface CategoryCarouselSectionProps {
@@ -124,19 +125,17 @@ export default function CategoryCarouselSection({
     >
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         {/* Section Heading & Shop All Button */}
-        <div className="text-center mb-12 sm:mb-16 max-w-2xl">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-normal text-[#1a1a1a] tracking-tight leading-[1.15] mb-6 whitespace-pre-line">
-            {config.sectionTitle}
-          </h2>
-          <div>
-            <Link
-              href={config.shopAllHref}
-              className="inline-flex items-center justify-center bg-[#b98141] hover:bg-[#a57134] text-white text-sm font-bold px-8 py-2.5 rounded-full transition-colors duration-200 shadow-xs cursor-pointer"
-            >
-              {config.shopAllText}
-            </Link>
-          </div>
-        </div>
+        <SectionHeader
+          title={config.sectionTitle}
+          subtitle="Bộ sưu tập dụng cụ & mỹ phẩm chăm sóc nam giới toàn diện từ MANFRESH."
+        >
+          <Link
+            href={config.shopAllHref}
+            className="inline-flex items-center justify-center bg-[#b98141] hover:bg-[#a57134] text-white text-sm font-bold px-8 py-2.5 rounded-full transition-colors duration-200 shadow-xs cursor-pointer mt-1"
+          >
+            {config.shopAllText}
+          </Link>
+        </SectionHeader>
 
         {/* Scrollable Container with drag support */}
         <div className="w-full relative">

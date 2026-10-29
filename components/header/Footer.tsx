@@ -23,7 +23,7 @@ export default function Footer() {
           {/* Money-Back Guarantee */}
           <div className="flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-white flex-shrink-0"
+              className="w-5 h-5 text-[#c59b63] flex-shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -34,13 +34,13 @@ export default function Footer() {
               <circle cx="12" cy="12" r="9" strokeDasharray="3 2" />
               <path d="M12 7v10M15 9.5a2.5 2.5 0 0 0-5 0c0 3 5 1.5 5 4.5a2.5 2.5 0 0 1-5 0" />
             </svg>
-            <span>Money-Back Guarantee</span>
+            <span>Cam kết hoàn tiền</span>
           </div>
 
-          {/* Free Shipping Over $49 */}
+          {/* Free Shipping */}
           <div className="flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-white flex-shrink-0"
+              className="w-5 h-5 text-[#c59b63] flex-shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -51,13 +51,13 @@ export default function Footer() {
               <rect x="3" y="8" width="18" height="13" rx="2" />
               <path d="M12 8v13M3 13h18M12 8C12 5 9 5 8 7c-1 2 2 1 4 1zM12 8c0-3 3-3 4-1 1 2-2 1-4 1z" />
             </svg>
-            <span>Free Shipping Over $49</span>
+            <span>Miễn phí vận chuyển đơn từ 500.000đ</span>
           </div>
 
           {/* 2-Year Warranty */}
           <div className="flex items-center gap-3">
             <svg
-              className="w-5 h-5 text-white flex-shrink-0"
+              className="w-5 h-5 text-[#c59b63] flex-shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -68,7 +68,7 @@ export default function Footer() {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <path d="m9 12 2 2 4-4" />
             </svg>
-            <span>2-Year Warranty</span>
+            <span>Bảo hành chính hãng 24 tháng</span>
           </div>
         </div>
 
@@ -82,53 +82,53 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 lg:gap-14 mb-16">
           {/* Column 1: Company */}
           <div>
-            <h3 className="text-[#c59b63] text-[15px] font-semibold tracking-wide mb-5">
-              Company
+            <h3 className="text-[#c59b63] text-[15px] font-bold tracking-wide mb-5 uppercase">
+              Về MANFRESH
             </h3>
             <ul className="space-y-3.5 text-[14px] text-white">
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  About Us
+                  Về chúng tôi
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Leadership
+                  Đội ngũ lãnh đạo
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Press
+                  Báo chí &amp; Truyền thông
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Careers
+                  Cơ hội nghề nghiệp
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Blog
+                  Tin tức &amp; Blog
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  FAQ
+                  Hỏi đáp thường gặp
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Patents
+                  Bằng sáng chế &amp; Công nghệ
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Store Finder
+                  Hệ thống cửa hàng
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Reviews
+                  Đánh giá từ khách hàng
                 </Link>
               </li>
             </ul>
@@ -136,28 +136,28 @@ export default function Footer() {
 
           {/* Column 2: Customer Experience */}
           <div>
-            <h3 className="text-[#c59b63] text-[15px] font-semibold tracking-wide mb-5">
-              Customer Experience
+            <h3 className="text-[#c59b63] text-[15px] font-bold tracking-wide mb-5 uppercase">
+              Trải nghiệm khách hàng
             </h3>
             <ul className="space-y-3.5 text-[14px] text-white">
               <li>
                 <Link href="/tracking" className="hover:text-[#c59b63] transition-colors font-medium">
-                  Tra Cứu Đơn Hàng (Live Tracking)
+                  Tra cứu đơn hàng trực tuyến
                 </Link>
               </li>
               <li>
                 <Link href="/products" className="hover:text-[#c59b63] transition-colors">
-                  Bộ Sưu Tập Sản Phẩm
+                  Bộ sưu tập sản phẩm
                 </Link>
               </li>
               <li>
                 <Link href="/tracking" className="hover:text-[#c59b63] transition-colors">
-                  Warranty & 30-Day Return
+                  Chính sách bảo hành &amp; Đổi trả 30 ngày
                 </Link>
               </li>
               <li>
                 <Link href="tel:19008888" className="hover:text-[#c59b63] transition-colors font-semibold">
-                  Hotline Hỗ Trợ: 1900 8888
+                  Hotline hỗ trợ: 1900 8888
                 </Link>
               </li>
             </ul>
@@ -165,48 +165,48 @@ export default function Footer() {
 
           {/* Column 3: Privacy & Terms */}
           <div>
-            <h3 className="text-[#c59b63] text-[15px] font-semibold tracking-wide mb-5">
-              Privacy & Terms
+            <h3 className="text-[#c59b63] text-[15px] font-bold tracking-wide mb-5 uppercase">
+              Chính sách &amp; Điều khoản
             </h3>
             <ul className="space-y-3.5 text-[14px] text-white">
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Terms of Use & Sale
+                  Điều khoản sử dụng &amp; Mua bán
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Privacy Policy
+                  Chính sách bảo mật
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Cookie Policy
+                  Chính sách Cookie
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  CA Supply Chains Act
+                  Minh bạch chuỗi cung ứng
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  CA Notice at Collection
+                  Thông báo thu thập thông tin
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  CA Do Not Sell or Share Personal Information
+                  Cam kết không bán thông tin cá nhân
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  CA Limit Use of Sensitive Personal Information
+                  Bảo vệ thông tin cá nhân nhạy cảm
                 </Link>
               </li>
               <li>
                 <Link href="#" className="hover:text-[#c59b63] transition-colors">
-                  Privacy Preferences
+                  Cài đặt quyền riêng tư
                 </Link>
               </li>
             </ul>
@@ -220,7 +220,7 @@ export default function Footer() {
             {/* Accepted payment methods */}
             <div className="mb-9">
               <h4 className="text-white text-[15px] sm:text-[16px] font-bold mb-4 tracking-tight">
-                Accepted payment methods
+                Phương thức thanh toán chấp nhận
               </h4>
               <div className="flex flex-wrap items-center gap-2">
                 {/* VISA */}
@@ -316,12 +316,12 @@ export default function Footer() {
             {/* Follow us on social */}
             <div>
               <h4 className="text-white text-[15px] sm:text-[16px] font-bold mb-4 tracking-tight">
-                Follow us on social
+                Theo dõi MANFRESH trên mạng xã hội
               </h4>
               <div className="flex items-center gap-4 sm:gap-5 text-white">
                 {/* 1. Facebook */}
                 <a
-                  href="https://facebook.com/manscaped"
+                  href="https://facebook.com/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Facebook"
@@ -334,7 +334,7 @@ export default function Footer() {
 
                 {/* 2. Instagram */}
                 <a
-                  href="https://instagram.com/manscaped"
+                  href="https://instagram.com/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Instagram"
@@ -357,7 +357,7 @@ export default function Footer() {
 
                 {/* 3. X (Twitter) */}
                 <a
-                  href="https://twitter.com/manscaped"
+                  href="https://twitter.com/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="X (Twitter)"
@@ -370,7 +370,7 @@ export default function Footer() {
 
                 {/* 4. YouTube */}
                 <a
-                  href="https://youtube.com/manscaped"
+                  href="https://youtube.com/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="YouTube"
@@ -386,7 +386,7 @@ export default function Footer() {
 
                 {/* 5. Pinterest */}
                 <a
-                  href="https://pinterest.com/manscaped"
+                  href="https://pinterest.com/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Pinterest"
@@ -399,7 +399,7 @@ export default function Footer() {
 
                 {/* 6. TikTok */}
                 <a
-                  href="https://tiktok.com/@manscaped"
+                  href="https://tiktok.com/@manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="TikTok"
@@ -407,36 +407,6 @@ export default function Footer() {
                 >
                   <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.35 0 .69.07 1 .2v-3.52a6.37 6.37 0 0 0-1-.08 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.71a8.18 8.18 0 0 0 4.76 1.52V6.78a4.83 4.83 0 0 1-1-.09z" />
-                  </svg>
-                </a>
-
-                {/* 7. Quora */}
-                <a
-                  href="https://quora.com/topic/MANFRESH"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Quora"
-                  className="w-6 h-6 flex items-center justify-center text-white hover:text-[#c59b63] transition-colors"
-                >
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12.723 0C5.748 0 0 5.748 0 12.723c0 5.617 3.664 10.378 8.761 12.008l.844-2.02a10.51 10.51 0 0 1-.954-.424c-4.048-1.748-6.86-5.74-6.86-10.394 0-6.19 5.037-11.227 11.227-11.227 6.19 0 11.227 5.037 11.227 11.227 0 4.654-2.812 8.646-6.86 10.394l.43 1.031 1.77 4.238c.677-.32 1.325-.705 1.93-1.148 4.09-2.983 6.64-7.828 6.64-13.315C25.155 5.748 19.407 0 12.723 0zm-.397 20.473a8.21 8.21 0 0 1-3.666-.867l.794-1.9a6.243 6.243 0 1 0 6.115-.145l.955 2.285a8.204 8.204 0 0 1-4.198.627z" />
-                  </svg>
-                </a>
-
-                {/* 8. Twitch */}
-                <a
-                  href="https://twitch.tv/manfresh"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Twitch"
-                  className="w-6 h-6 flex items-center justify-center text-white hover:text-[#c59b63] transition-colors"
-                >
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24" fill="currentColor">
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M2.143 0L0 5.143v15.429h5.143V24l3.429-3.429h4.285L21 12.429V0H2.143zm16.286 11.143l-3 3h-4.286l-2.571 2.571V14.143H5.143V2.571h13.286v8.572zm-7.714-4.714H8.57v4.285h2.143V6.429zm5.143 0h-2.143v4.285h2.143V6.429z"
-                    />
                   </svg>
                 </a>
               </div>
@@ -499,28 +469,28 @@ export default function Footer() {
           <div className="flex flex-col text-[11px] sm:text-[12px] text-neutral-400 space-y-1.5 lg:text-right">
             {/* Top row: Copyright & Links */}
             <div className="flex flex-wrap items-center lg:justify-end gap-x-2 gap-y-1">
-              <span>Copyright © 2026, Manscaped. All Rights Reserved</span>
+              <span>Bản quyền © 2026, MANFRESH®. Tất cả quyền được bảo lưu.</span>
               <span className="hidden sm:inline text-neutral-600 mx-1">|</span>
               <Link href="#" className="hover:text-white transition-colors">
-                Warranty & Return
+                Bảo hành &amp; Đổi trả
               </Link>
               <span className="text-neutral-600">|</span>
               <Link href="#" className="hover:text-white transition-colors">
-                Terms of Use and Sale
+                Điều khoản sử dụng
               </Link>
               <span className="text-neutral-600">|</span>
               <Link href="#" className="hover:text-white transition-colors">
-                Privacy Policy
+                Chính sách bảo mật
               </Link>
               <span className="text-neutral-600">|</span>
               <Link href="#" className="hover:text-white transition-colors">
-                Cookie Policy
+                Chính sách Cookie
               </Link>
             </div>
 
             {/* Bottom row: Registered Trademark Notice */}
             <p className="text-neutral-400">
-              ® symbol designates a registered trademark of Manscaped, LLC in the United States and elsewhere.
+              Ký hiệu ® đại diện cho thương hiệu đã được đăng ký bản quyền chính thức của MANFRESH.
             </p>
           </div>
         </div>

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
+import SectionHeader from '@/components/common/SectionHeader';
 import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 import { formatVND } from '@/lib/formatters';
 
@@ -165,14 +166,10 @@ export default function GoesGreatWithSection({
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         
         {/* Section Header */}
-        <div className="text-center mb-10 sm:mb-14">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#8c531b] tracking-tight">
-            {title}
-          </h2>
-          <p className="mt-2.5 text-neutral-700 text-sm sm:text-base font-normal">
-            {subtitle}
-          </p>
-        </div>
+        <SectionHeader
+          title={title}
+          subtitle={subtitle}
+        />
 
         {/* Carousel Container */}
         <div className="w-full relative">

@@ -1,6 +1,14 @@
 import type {Metadata} from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css'; // Global styles
 import ClientErrorGuard from '@/components/ClientErrorGuard';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin', 'vietnamese'],
+  weight: ['400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-sans',
+});
 
 export const metadata: Metadata = {
   title: 'MANFRESH Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
@@ -23,7 +31,7 @@ import FloatingSupportWidget from '@/components/common/FloatingSupportWidget';
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <html lang="en">
+    <html lang="vi" className={plusJakartaSans.className}>
       <head>
         <script
           dangerouslySetInnerHTML={{

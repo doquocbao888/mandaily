@@ -207,7 +207,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
 
 export const featuredProductsConfig2: FeaturedProductsConfig = {
   sectionTitle: 'Sản phẩm thiết yếu hàng đầu',
-  sectionSubtitle: 'GỢI Ý TỪ MANFRESH',
+  sectionSubtitle: 'Gợi ý chọn lọc những sản phẩm chăm sóc bán chạy nhất từ MANFRESH.',
   products: [
     ...featuredProductsConfig.products,
     {

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Play, Pause, Volume2, VolumeX, Maximize2, X, Youtube } from 'lucide-react';
+import SectionHeader from '@/components/common/SectionHeader';
 import type { VideoReviewItem } from '@/config/products';
 
 export type VideoReview = VideoReviewItem;
@@ -94,8 +95,8 @@ export function getYouTubeEmbedUrl(
 
 export default function VideoReviewsSection({
   reviews: customReviews,
-  title = 'The buzz is real.',
-  subtitle = 'Tag @manscaped in your review for a chance to be featured.'
+  title = 'Sức nóng là có thật.',
+  subtitle = 'Gắn thẻ @manfresh trong bài đánh giá của bạn để có cơ hội được chúng tôi chia sẻ.'
 }: VideoReviewsSectionProps = {}) {
   const displayReviews = (customReviews && customReviews.length > 0) ? customReviews : REVIEWS;
   const [activeIndex, setActiveIndex] = useState(0);
@@ -250,14 +251,10 @@ export default function VideoReviewsSection({
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center mb-10 sm:mb-14">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#a6741b] tracking-tight">
-            {title}
-          </h2>
-          <p className="mt-3 text-neutral-800 text-sm sm:text-base font-medium">
-            {subtitle}
-          </p>
-        </div>
+        <SectionHeader
+          title={title}
+          subtitle={subtitle}
+        />
 
         {/* Desktop View: 3 side-by-side expanding cards (Kept 100% intact) */}
         <div 

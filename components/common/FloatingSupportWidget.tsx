@@ -35,7 +35,7 @@ export default function FloatingSupportWidget() {
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="font-extrabold text-xs uppercase tracking-wider text-neutral-900">
-                    Hỗ trợ Manscaped™
+                    Hỗ trợ MANFRESH™
                   </span>
                 </div>
                 <button
@@ -122,7 +122,7 @@ export default function FloatingSupportWidget() {
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className="relative w-13 h-13 rounded-full bg-black text-white border-2 border-[#c59b63] shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all cursor-pointer group"
-          aria-label="Liên hệ hỗ trợ Manscaped"
+          aria-label="Liên hệ hỗ trợ MANFRESH"
         >
           {isOpen ? (
             <X className="w-6 h-6 text-[#c59b63]" />
@@ -158,7 +158,7 @@ export default function FloatingSupportWidget() {
                   <div className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-[#9e6f1c]" />
                     <h3 className="font-extrabold text-base uppercase tracking-tight text-neutral-900">
-                      Chính Sách Manscaped™ Toàn Cầu
+                      Chính Sách MANFRESH™ Toàn Cầu
                     </h3>
                   </div>
                   <button
@@ -176,7 +176,7 @@ export default function FloatingSupportWidget() {
                       1. Bảo hành chính hãng 2 năm
                     </span>
                     <p className="text-neutral-600">
-                      Tất cả tông đơ và thiết bị điện tử Manscaped được áp dụng chính sách bảo hành 24 tháng, hỗ trợ đổi mới 1-1 nếu có lỗi kỹ thuật từ nhà sản xuất.
+                      Tất cả tông đơ và thiết bị điện tử MANFRESH được áp dụng chính sách bảo hành 24 tháng, hỗ trợ đổi mới 1-1 nếu có lỗi kỹ thuật từ nhà sản xuất.
                     </p>
                   </div>
 

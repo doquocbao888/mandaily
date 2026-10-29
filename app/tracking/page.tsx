@@ -404,7 +404,7 @@ function OrderTrackingContent() {
           <HelpCircle className="w-8 h-8 text-[#9e6f1c] mx-auto" />
           <h3 className="text-lg font-bold uppercase tracking-wide text-neutral-900">Cần trợ giúp về đơn hàng?</h3>
           <p className="text-xs sm:text-sm text-neutral-600">
-            Đội ngũ chuyên viên chăm sóc khách hàng Manscaped sẵn sàng giải đáp và xử lý đơn hàng 24/7.
+            Đội ngũ chuyên viên chăm sóc khách hàng MANFRESH sẵn sàng giải đáp và xử lý đơn hàng 24/7.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <a

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import SectionHeader from '@/components/common/SectionHeader';
 
 export interface FaqItem {
   id: string;
@@ -112,9 +113,11 @@ export default function ProductFaqSection({
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Section Heading */}
-        <h2 className="text-3xl sm:text-4xl md:text-[44px] font-serif font-bold text-neutral-900 tracking-tight leading-tight mb-8 sm:mb-12">
-          {title}
-        </h2>
+        <SectionHeader
+          title={title}
+          subtitle="Giải đáp mọi thắc mắc về tính năng, cách sử dụng và chế độ bảo hành sản phẩm MANFRESH."
+          align="left"
+        />
 
         {/* Accordion List */}
         <div className="border-t border-neutral-300">

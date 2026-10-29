@@ -6,13 +6,13 @@ export default function PressSection() {
           Được các tạp chí hàng đầu vinh danh & đánh giá
         </p>
         <div className="flex flex-wrap justify-center items-center gap-x-12 sm:gap-x-16 gap-y-6 opacity-65 hover:opacity-100 transition-opacity duration-300">
-          <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase font-serif">GQ</span>
-          <span className="text-xl sm:text-2xl font-black tracking-[0.25em] uppercase font-mono">WIRED</span>
-          <span className="text-xl sm:text-2xl font-serif italic font-bold">Forbes</span>
-          <span className="text-lg sm:text-xl font-serif tracking-widest uppercase font-semibold">Esquire</span>
-          <span className="text-lg sm:text-xl tracking-[0.2em] uppercase font-extrabold">GLAMOUR</span>
-          <span className="text-xl sm:text-2xl font-serif font-black tracking-tight">allure</span>
-          <span className="text-sm sm:text-base font-bold tracking-widest uppercase font-sans">Men&apos;s Health</span>
+          <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase font-sans">GQ</span>
+          <span className="text-xl sm:text-2xl font-black tracking-[0.25em] uppercase font-sans">WIRED</span>
+          <span className="text-xl sm:text-2xl font-sans italic font-extrabold">Forbes</span>
+          <span className="text-lg sm:text-xl font-sans tracking-widest uppercase font-extrabold">Esquire</span>
+          <span className="text-lg sm:text-xl tracking-[0.2em] uppercase font-extrabold font-sans">GLAMOUR</span>
+          <span className="text-xl sm:text-2xl font-sans font-black tracking-tight">allure</span>
+          <span className="text-sm sm:text-base font-extrabold tracking-widest uppercase font-sans">Men&apos;s Health</span>
         </div>
       </div>
     </section>

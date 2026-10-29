@@ -93,7 +93,11 @@ export default function HomePage() {
         <FeaturedProductsCarousel config={featuredProductsConfig2} />
 
         {/* 11. Video Reviews Section (4 videos on Homepage) */}
-        <VideoReviewsSection reviews={homeVideoReviews} />
+        <VideoReviewsSection
+          reviews={homeVideoReviews}
+          title="Sức nóng là có thật."
+          subtitle="Gắn thẻ @manfresh trong bài đánh giá của bạn để có cơ hội được chúng tôi chia sẻ."
+        />
       </main>
 
       {/* Footer */}
