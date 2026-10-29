@@ -221,6 +221,8 @@ export default function ProductDetailPage() {
   const handleAddToCart = async () => {
     const priceStr = salePrice;
     const numericPrice = parseVND(priceStr);
+    const origPriceStr = originalPrice;
+    const numericOriginalPrice = parseVND(origPriceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
 
@@ -230,6 +232,8 @@ export default function ProductDetailPage() {
       subtitle: product.subtitle,
       price: priceStr,
       numericPrice,
+      originalPrice: origPriceStr,
+      numericOriginalPrice,
       quantity,
       imageSrc: mainImg,
       variantName: variantLabel,
@@ -242,6 +246,8 @@ export default function ProductDetailPage() {
   const handleBuyNow = () => {
     const priceStr = salePrice;
     const numericPrice = parseVND(priceStr);
+    const origPriceStr = originalPrice;
+    const numericOriginalPrice = parseVND(origPriceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
 
@@ -251,6 +257,8 @@ export default function ProductDetailPage() {
       subtitle: product.subtitle,
       price: priceStr,
       numericPrice,
+      originalPrice: origPriceStr,
+      numericOriginalPrice,
       quantity,
       imageSrc: mainImg,
       variantName: variantLabel,
@@ -477,9 +485,11 @@ export default function ProductDetailPage() {
                   <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
                     {salePrice}
                   </span>
-                  <span className="text-base sm:text-lg text-neutral-400 line-through font-normal">
-                    {originalPrice}
-                  </span>
+                  {originalPrice !== salePrice && (
+                    <span className="text-base sm:text-lg text-neutral-400 line-through font-normal">
+                      {originalPrice}
+                    </span>
+                  )}
                   {discountPercent && (
                     <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
                       Giảm {discountPercent}%

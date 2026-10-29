@@ -60,9 +60,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <span className="text-neutral-900 font-bold text-base sm:text-lg">
             {salePrice}
           </span>
-          <span className="text-neutral-400 line-through text-xs sm:text-sm font-normal">
-            {originalPrice}
-          </span>
+          {originalPrice !== salePrice && (
+            <span className="text-neutral-400 line-through text-xs sm:text-sm font-normal">
+              {originalPrice}
+            </span>
+          )}
           {discountPercent && (
             <span className="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded ml-0.5">
               -{discountPercent}%

@@ -9,6 +9,8 @@ export interface CartItem {
   subtitle: string;
   price: string;
   numericPrice: number;
+  originalPrice?: string;
+  numericOriginalPrice?: number;
   quantity: number;
   imageSrc: string;
   variantName?: string;
@@ -75,6 +77,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const qtyToAdd = newItem.quantity || 1;
     const numericPrice = parseVND(newItem.numericPrice || newItem.price);
     const cleanPrice = formatVND(newItem.price || numericPrice);
+    const numericOriginalPrice = newItem.numericOriginalPrice
+      ? parseVND(newItem.numericOriginalPrice)
+      : (newItem.originalPrice ? parseVND(newItem.originalPrice) : undefined);
+    const cleanOriginalPrice = numericOriginalPrice ? formatVND(numericOriginalPrice) : undefined;
 
     const existingIndex = cart.findIndex(
       (item) => item.id === newItem.id && item.variantName === newItem.variantName
@@ -85,8 +91,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       updated[existingIndex].quantity += qtyToAdd;
       updated[existingIndex].numericPrice = numericPrice;
       updated[existingIndex].price = cleanPrice;
+      if (numericOriginalPrice) {
+        updated[existingIndex].numericOriginalPrice = numericOriginalPrice;
+        updated[existingIndex].originalPrice = cleanOriginalPrice;
+      }
     } else {
-      updated = [...cart, { ...newItem, price: cleanPrice, numericPrice, quantity: qtyToAdd }];
+      updated = [
+        ...cart,
+        {
+          ...newItem,
+          price: cleanPrice,
+          numericPrice,
+          originalPrice: cleanOriginalPrice,
+          numericOriginalPrice,
+          quantity: qtyToAdd,
+        },
+      ];
     }
     saveCartToStorage(updated);
     setIsCartOpen(true);

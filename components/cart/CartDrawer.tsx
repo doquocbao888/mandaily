@@ -19,7 +19,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
 import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 import { subscribeProducts } from '@/lib/dbService';
-import { formatVND, getProductPrices } from '@/lib/formatters';
+import { formatVND, parseVND, getProductPrices } from '@/lib/formatters';
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -103,10 +103,73 @@ export default function CartDrawer() {
     }
   };
 
+  // Determine real regular price and savings for each item from product config or cart item
+  const getItemPricing = (item: (typeof cart)[0]) => {
+    // 1. If item itself has numericOriginalPrice or originalPrice
+    if (item.numericOriginalPrice && item.numericOriginalPrice > item.numericPrice) {
+      const orig = item.numericOriginalPrice;
+      return {
+        regularPrice: orig,
+        saving: orig - item.numericPrice,
+        hasDiscount: true,
+      };
+    }
+    if (item.originalPrice) {
+      const parsedOrig = parseVND(item.originalPrice);
+      if (parsedOrig > item.numericPrice) {
+        return {
+          regularPrice: parsedOrig,
+          saving: parsedOrig - item.numericPrice,
+          hasDiscount: true,
+        };
+      }
+    }
+
+    // 2. Lookup in allProducts by id
+    const prod = allProducts.find((p) => p.id === item.id);
+    if (prod) {
+      // Check variants if variantName exists
+      if (item.variantName && prod.variants && prod.variants.length > 0) {
+        const v = prod.variants.find(
+          (varItem) => varItem.name === item.variantName || varItem.id === item.variantName
+        );
+        if (v) {
+          const vOrig = parseVND(v.originalPrice);
+          const vPrice = parseVND(v.price);
+          if (vOrig > vPrice) {
+            return {
+              regularPrice: vOrig,
+              saving: vOrig - vPrice,
+              hasDiscount: true,
+            };
+          }
+        }
+      }
+
+      // Check product level vipPrice & regularPrice
+      const { originalPrice } = getProductPrices(prod.vipPrice, prod.regularPrice);
+      const parsedOrig = parseVND(originalPrice);
+      if (parsedOrig > item.numericPrice) {
+        return {
+          regularPrice: parsedOrig,
+          saving: parsedOrig - item.numericPrice,
+          hasDiscount: true,
+        };
+      }
+    }
+
+    // 3. Default: item price is normal price (no fake markup)
+    return {
+      regularPrice: item.numericPrice,
+      saving: 0,
+      hasDiscount: false,
+    };
+  };
+
   // Estimate total product original value (MSRP before saving)
   const totalOriginalValue = cart.reduce((sum, item) => {
-    const origPrice = (item.numericPrice * 1.091);
-    return sum + origPrice * item.quantity;
+    const { regularPrice } = getItemPricing(item);
+    return sum + regularPrice * item.quantity;
   }, 0);
 
   if (!isCartOpen) return null;
@@ -227,8 +290,7 @@ export default function CartDrawer() {
                   {/* Cart Items List */}
                   <div className="space-y-4 pt-1">
                     {cart.map((item) => {
-                      const itemRegularPrice = item.numericPrice * 1.091;
-                      const savingAmount = itemRegularPrice - item.numericPrice;
+                      const { regularPrice, saving, hasDiscount } = getItemPricing(item);
 
                       return (
                         <div
@@ -271,13 +333,17 @@ export default function CartDrawer() {
                                 <span className="text-base font-bold text-[#a0681c]">
                                   {formatVND(item.numericPrice)}
                                 </span>
-                                <span className="text-xs text-neutral-400 line-through">
-                                  {formatVND(itemRegularPrice)}
-                                </span>
+                                {hasDiscount && (
+                                  <span className="text-xs text-neutral-400 line-through">
+                                    {formatVND(regularPrice)}
+                                  </span>
+                                )}
                               </div>
-                              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
-                                Tiết kiệm {formatVND(savingAmount)}
-                              </p>
+                              {hasDiscount && saving > 0 && (
+                                <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                                  Tiết kiệm {formatVND(saving)}
+                                </p>
+                              )}
                             </div>
 
                             {/* Quantity Pill Controller with Trash Icon */}
@@ -389,9 +455,11 @@ export default function CartDrawer() {
                                 <span className="text-sm font-bold text-[#a0681c]">
                                   {salePrice}
                                 </span>
-                                <span className="text-xs text-neutral-400 line-through">
-                                  {originalPrice}
-                                </span>
+                                {originalPrice !== salePrice && (
+                                  <span className="text-xs text-neutral-400 line-through">
+                                    {originalPrice}
+                                  </span>
+                                )}
                               </div>
                             );
                           })()}
@@ -400,16 +468,21 @@ export default function CartDrawer() {
                         {/* Round Add To Cart Pill Button */}
                         <button
                           type="button"
-                          onClick={() => addToCart({
-                            id: prod.id,
-                            title: prod.title,
-                            subtitle: prod.subtitle,
-                            price: prod.regularPrice || prod.vipPrice,
-                            numericPrice: priceNum,
-                            quantity: 1,
-                            imageSrc: prod.imageSrc,
-                            variantName: 'Combo ưu đãi'
-                          })}
+                          onClick={() => {
+                            const { salePrice, originalPrice } = getProductPrices(prod.vipPrice, prod.regularPrice);
+                            addToCart({
+                              id: prod.id,
+                              title: prod.title,
+                              subtitle: prod.subtitle,
+                              price: salePrice,
+                              numericPrice: parseVND(salePrice),
+                              originalPrice: originalPrice,
+                              numericOriginalPrice: parseVND(originalPrice),
+                              quantity: 1,
+                              imageSrc: prod.imageSrc,
+                              variantName: 'Combo ưu đãi'
+                            });
+                          }}
                           className="mt-3 w-full bg-black hover:bg-neutral-800 text-white font-bold text-xs py-2.5 px-4 rounded-full uppercase tracking-wider transition active:scale-[0.98] cursor-pointer"
                         >
                           Thêm vào giỏ
@@ -439,7 +512,7 @@ export default function CartDrawer() {
                   <div className="flex justify-between text-neutral-600">
                     <span>Tổng giá trị sản phẩm</span>
                     <span className="text-neutral-900 font-medium">
-                      {formatVND(totalOriginalValue > 0 ? totalOriginalValue : totalPrice * 1.1)}
+                      {formatVND(totalOriginalValue > totalPrice ? totalOriginalValue : totalPrice)}
                     </span>
                   </div>
 

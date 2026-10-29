@@ -45,20 +45,20 @@ export function getProductPrices(
   if (p1 > 0 && p2 > 0) {
     if (p1 === p2) {
       saleNum = p1;
-      originalNum = Math.round((p1 * 1.18) / 10000) * 10000;
+      originalNum = p1;
     } else {
       saleNum = Math.min(p1, p2);
       originalNum = Math.max(p1, p2);
     }
   } else if (p1 > 0) {
     saleNum = p1;
-    originalNum = Math.round((p1 * 1.18) / 10000) * 10000;
+    originalNum = p1;
   } else if (p2 > 0) {
     saleNum = p2;
-    originalNum = Math.round((p2 * 1.18) / 10000) * 10000;
+    originalNum = p2;
   } else {
-    saleNum = 450000;
-    originalNum = 500000;
+    saleNum = 0;
+    originalNum = 0;
   }
 
   const discountPercent =

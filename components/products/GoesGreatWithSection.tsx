@@ -248,9 +248,11 @@ export default function GoesGreatWithSection({
                           <span className="text-neutral-900 font-bold text-sm sm:text-base">
                             {salePrice}
                           </span>
-                          <span className="text-neutral-400 line-through text-[11px] sm:text-xs font-normal">
-                            {originalPrice}
-                          </span>
+                          {originalPrice !== salePrice && (
+                            <span className="text-neutral-400 line-through text-[11px] sm:text-xs font-normal">
+                              {originalPrice}
+                            </span>
+                          )}
                           {discountPercent && (
                             <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1 py-0.2 rounded">
                               -{discountPercent}%
