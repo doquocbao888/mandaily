@@ -8,10 +8,10 @@ import { useCart } from '@/context/CartContext';
 import QuickSearchModal from '@/components/search/QuickSearchModal';
 
 const categories = [
-  { label: 'Deals & Kits', href: '/products?category=deals', hasDropdown: true },
-  { label: 'Groin', href: '/products?category=groin', hasDropdown: true },
-  { label: 'Beard & Face', href: '/products?category=beard', hasDropdown: true },
-  { label: 'Head & Body', href: '/products?category=body', hasDropdown: true },
+  { label: 'Ưu Đãi & Combo', href: '/products?category=deals', hasDropdown: true },
+  { label: 'Chăm Sóc Vùng Kín', href: '/products?category=groin', hasDropdown: true },
+  { label: 'Râu & Mặt', href: '/products?category=beard', hasDropdown: true },
+  { label: 'Tóc & Toàn Thân', href: '/products?category=body', hasDropdown: true },
 ];
 
 export default function Header() {
@@ -25,21 +25,21 @@ export default function Header() {
       <div className="bg-black text-white text-[11px] sm:text-[12px] h-[36px] flex items-center justify-between px-3 sm:px-8">
         {/* Mobile: compact promo message */}
         <div className="block sm:hidden w-full text-center truncate tracking-wide text-neutral-200">
-          <span>Free Shipping on Orders Over $49 | </span>
-          <Link href="/products" className="underline font-medium text-[#c59b63]">Shop Collection</Link>
+          <span>Miễn phí giao hàng cho đơn từ 499.000đ | </span>
+          <Link href="/products" className="underline font-medium text-[#c59b63]">Mua sắm ngay</Link>
         </div>
 
         {/* Desktop: Full utility links */}
         <div className="hidden sm:flex items-center space-x-6">
-          <Link href="tel:19008888" className="hover:underline transition-all">Support: 1900 8888</Link>
-          <Link href="/tracking" className="hover:underline text-[#c59b63] font-semibold transition-all">Track Order</Link>
-          <Link href="/products" className="hover:underline transition-all">All Products</Link>
+          <Link href="tel:19008888" className="hover:underline transition-all">Hỗ trợ: 1900 8888</Link>
+          <Link href="/tracking" className="hover:underline text-[#c59b63] font-semibold transition-all">Tra cứu đơn hàng</Link>
+          <Link href="/products" className="hover:underline transition-all">Tất cả sản phẩm</Link>
         </div>
         <div className="hidden sm:flex items-center space-x-6">
-          <Link href="/products?category=deals" className="hover:underline font-semibold text-[#c59b63]">Sale (Up to 30%)</Link>
+          <Link href="/products?category=deals" className="hover:underline font-semibold text-[#c59b63]">Khuyến mãi (Lên tới 30%)</Link>
           <div className="flex items-center space-x-1 cursor-pointer hover:opacity-80 transition-opacity">
             <Globe className="w-3.5 h-3.5" />
-            <span>VN / EN</span>
+            <span>Việt Nam (VN)</span>
           </div>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function Header() {
         {/* Center: Brand Logo */}
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <Link href="/" className="text-[19px] sm:text-[22px] font-black tracking-[0.1em] uppercase text-black hover:opacity-95 transition-opacity">
-            MANSCAPED
+            MANFRESH
           </Link>
         </div>
 
@@ -119,7 +119,7 @@ export default function Header() {
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between px-5 h-[64px] border-b border-neutral-200 bg-neutral-900 text-white">
-                <span className="text-[18px] font-black tracking-[0.1em] uppercase">MANSCAPED</span>
+                <span className="text-[18px] font-black tracking-[0.1em] uppercase">MANFRESH</span>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white hover:text-neutral-300 transition-colors cursor-pointer"
@@ -177,7 +177,7 @@ export default function Header() {
               {/* Drawer Footer */}
               <div className="p-4 border-t border-neutral-200 bg-neutral-50 flex items-center justify-between">
                 <span className="text-[13px] font-medium text-neutral-500">
-                  © MANSCAPED Vietnam
+                  © MANFRESH Vietnam
                 </span>
                 <div className="flex items-center gap-1 text-[13px] font-medium text-neutral-600">
                   <Globe className="w-4 h-4" />

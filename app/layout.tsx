@@ -3,17 +3,17 @@ import './globals.css'; // Global styles
 import ClientErrorGuard from '@/components/ClientErrorGuard';
 
 export const metadata: Metadata = {
-  title: 'MANSCAPED™ Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
-  description: 'Thương hiệu chăm sóc nam giới số 1 thế giới. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
+  title: 'MANFRESH Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
+  description: 'Thương hiệu chăm sóc nam giới số 1. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
   openGraph: {
-    title: 'MANSCAPED™ Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
-    description: 'Thương hiệu chăm sóc nam giới số 1 thế giới. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
+    title: 'MANFRESH Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
+    description: 'Thương hiệu chăm sóc nam giới số 1. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MANSCAPED™ Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
-    description: 'Thương hiệu chăm sóc nam giới số 1 thế giới. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
+    title: 'MANFRESH Vietnam | Đẳng Cấp Chăm Sóc Phái Mạnh & Tông Đơ SkinSafe™',
+    description: 'Thương hiệu chăm sóc nam giới số 1. Dụng cụ cạo lông SkinSafe™, chống nước IPX7, giao hàng hỏa tốc và bảo hành chính hãng 2 năm.',
   },
 };
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useSyncExternalStore } from 'react';
+import { formatVND, parseVND } from '@/lib/formatters';
 
 export interface CartItem {
   id: string;
@@ -72,6 +73,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = (newItem: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     const qtyToAdd = newItem.quantity || 1;
+    const numericPrice = parseVND(newItem.numericPrice || newItem.price);
+    const cleanPrice = formatVND(newItem.price || numericPrice);
+
     const existingIndex = cart.findIndex(
       (item) => item.id === newItem.id && item.variantName === newItem.variantName
     );
@@ -79,8 +83,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (existingIndex > -1) {
       updated = [...cart];
       updated[existingIndex].quantity += qtyToAdd;
+      updated[existingIndex].numericPrice = numericPrice;
+      updated[existingIndex].price = cleanPrice;
     } else {
-      updated = [...cart, { ...newItem, quantity: qtyToAdd }];
+      updated = [...cart, { ...newItem, price: cleanPrice, numericPrice, quantity: qtyToAdd }];
     }
     saveCartToStorage(updated);
     setIsCartOpen(true);

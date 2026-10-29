@@ -19,32 +19,32 @@ const techItems: TechItem[] = [
   {
     id: 'motors',
     imageSrc: '/assets/aistudio/homepage-superbowl_spotlight-gallery_1-motors-cover_desktop_cdbcdc42.jpg',
-    imageAlt: 'Powerful, Industry-Leading Motors',
+    imageAlt: 'Động cơ mạnh mẽ hàng đầu',
     productImg: '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg',
     productTitle: 'The Lawn Mower® Ultra Gen 6',
-    productSubtitle: 'Ultimate Ball & Body Hair Trimmer',
-    title: 'Powerful, Industry-Leading Motors',
-    description: 'Constant RPMs prevent the blade from slowing down, so your devices are strong until the last stroke.',
+    productSubtitle: 'Tông đơ cắt tỉa lông vùng kín & toàn thân đỉnh cao',
+    title: 'Động cơ mạnh mẽ, dẫn đầu phân khúc',
+    description: 'Vòng tua RPM ổn định liên tục giúp lưỡi cắt không bị nghẽn hay giảm tốc độ, đảm bảo sức mạnh vượt trội từ nhát cạo đầu tiên đến đường tỉa cuối cùng.',
   },
   {
     id: 'skinsafe',
     imageSrc: '/assets/aistudio/homepage-superbowl_spotlight-gallery_2-skinsafe_desktop_c51e21b6.jpg',
-    imageAlt: 'SkinSafe Blade Technology',
+    imageAlt: 'Công nghệ lưỡi an toàn SkinSafe',
     productImg: '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg',
     productTitle: 'The Chairman® Pro',
-    productSubtitle: 'Electric Foil Face Shaver',
-    title: 'SkinSafe® Blade Technology',
-    description: 'Designed to give you a skin-close shave while reducing the risks of nicks and snags. So you can shave with confidence.\n*SkinSafe® technology does not guarantee cut protection.',
+    productSubtitle: 'Máy cạo râu lá điện tử cao cấp',
+    title: 'Công nghệ lưỡi cạo an toàn SkinSafe®',
+    description: 'Thiết kế bo tròn giúp cạo sát tận gốc nhưng hạn chế tối đa nguy cơ trầy xước và đau rát, mang lại sự tự tin tuyệt đối cho phái mạnh.\n*Công nghệ SkinSafe® tối ưu hóa độ êm ái khi cạo.',
   },
   {
     id: 'waterproof',
     imageSrc: '/assets/aistudio/homepage-superbowl_spotlight-gallery_3-waterproof_desktop_975e5290.jpg',
-    imageAlt: 'Waterproof Design',
+    imageAlt: 'Thiết kế chống nước IPX7',
     productImg: '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg',
     productTitle: 'Weed Whacker® 3.0 Pro',
-    productSubtitle: 'Electric Nose, Ear & Eyebrow Hair Trimmer',
-    title: 'Waterproof Design',
-    description: 'Take it in the shower. Trim wet or dry.\n**IPX7 rated to protect against immersion in up to one meter of fresh water for up to 30 minutes.',
+    productSubtitle: 'Tông đơ tỉa lông mũi, tai & lông mày',
+    title: 'Thiết kế chống nước hoàn toàn IPX7',
+    description: 'Thoải mái cạo tỉa khi đang tắm hoặc cạo khô tùy thích. Đạt chuẩn kháng nước IPX7 bảo vệ thiết bị an toàn tuyệt đối ngay cả khi ngâm dưới nước.',
   },
 ];
 
@@ -168,10 +168,10 @@ export default function GameChangingTechSection() {
         {/* Header */}
         <div className="text-center mb-10 sm:mb-16">
           <span className="inline-block text-[#b98141] text-xs sm:text-sm font-bold tracking-[0.2em] uppercase mb-2">
-            MADE FOR YOU
+            DÀNH RIÊNG CHO PHÁI MẠNH
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-neutral-900 tracking-tight">
-            Game-changing tech.
+            Công nghệ đột phá nâng tầm trải nghiệm.
           </h2>
         </div>
 

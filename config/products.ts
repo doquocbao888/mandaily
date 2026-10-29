@@ -56,20 +56,20 @@ export interface FeaturedProductsConfig {
 }
 
 export const featuredProductsConfig: FeaturedProductsConfig = {
-  sectionTitle: 'Take it up a crotch.',
-  sectionSubtitle: "The greatest invention known to man's balls.",
+  sectionTitle: 'Bứt phá phong độ.',
+  sectionSubtitle: 'Đỉnh cao công nghệ chăm sóc toàn diện dành riêng cho phái mạnh.',
   products: [
     {
       id: 'lawn-mower-ultra-6',
       orderIndex: 0,
       title: 'The Lawn Mower® Ultra Gen 6 - NEW!',
-      subtitle: 'Groin & Body Hair Trimmer',
+      subtitle: 'Tông đơ cắt tỉa lông vùng kín & toàn thân',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
-      vipPrice: '$109.99',
-      regularPrice: '$119.99',
+      vipPrice: '450.000đ',
+      regularPrice: '500.000đ',
       href: '/products/lawn-mower-ultra-6',
       imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
-      imageAlt: 'The Lawn Mower Ultra Gen 6 Trimmer with blade attachment',
+      imageAlt: 'Tông đơ MANFRESH Lawn Mower Ultra Gen 6',
       thumbnails: [
         '/assets/aistudio/30-00006-NA_f201a618.png',
         '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
@@ -102,35 +102,35 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
           id: 'lite',
           name: 'TRIMDAY LITE / Ultra Gen 6',
           badge: 'Gọn nhẹ',
-          price: '$109.99',
-          originalPrice: '$119.99',
-          saving: 'Tiết kiệm $10.00'
+          price: '450.000đ',
+          originalPrice: '500.000đ',
+          saving: 'Tiết kiệm 50.000đ'
         },
         {
           id: 'max',
           name: 'The Performance Package Ultra 6',
           badge: 'Đầy đủ',
-          price: '$159.99',
-          originalPrice: '$179.99',
-          saving: 'Tiết kiệm $20.00'
+          price: '650.000đ',
+          originalPrice: '750.000đ',
+          saving: 'Tiết kiệm 100.000đ'
         }
       ],
       gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml', 'Tặng kèm Túi Đựng Chống Nước Du Lịch'],
       cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
       warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1',
-      detailedDescription: `Everything you need to take care of your hairs so you can feel clean-cut and confident.\n\n<strong>PACKAGE INCLUDES</strong>\n• <strong>The Lawn Mower® Ultra Gen 6</strong> Groin & Body Hair Trimmer\n• <strong>Weed Whacker® 3.0 Pro</strong> Electric Nose, Ear & Eyebrow Hair Trimmer\n• <strong>Ball Scrub</strong> Gentle Groin Cleanser & Exfoliator\n• <strong>Ball Shave Gel</strong> Non-Foaming Groin Shaving Gel\n• <strong>Ball Deo</strong> Deodorant to Fight Ingrowns, Chafe, and Odor in Warm Amber Night Scent\n\n<strong>FREE GIFTS</strong>\n• <strong>Magic Mat®</strong> Disposable Shaving Mats\n• <strong>Boxers 2.0</strong> Midnight Bravo ($34.99 value)\n• <strong>The Shed 2.0 Toiletry Bag</strong> ($39.99 value)`
+      detailedDescription: `Tất cả những gì bạn cần để chăm sóc cơ thể gọn gàng, sạch sẽ và tự tin tuyệt đối.\n\n<strong>TRỌN BỘ SẢN PHẨM BAO GỒM</strong>\n• Tông đơ cắt tỉa lông vùng kín & toàn thân <strong>The Lawn Mower® Ultra Gen 6</strong>\n• Tông đơ tỉa lông mũi, tai & lông mày điện tử <strong>Weed Whacker® 3.0 Pro</strong>\n• Gel tẩy tế bào chết & làm sạch dịu nhẹ <strong>Ball Scrub</strong>\n• Gel cạo râu chống trầy xước không bọt <strong>Ball Shave Gel</strong>\n• Lăn khử mùi & chống hăm <strong>Ball Deo</strong> hương Warm Amber Night sang trọng\n\n<strong>QUÀ TẶNG KÈM MIỄN PHÍ</strong>\n• Thảm cạo dùng một lần <strong>Magic Mat®</strong>\n• Quần lót nam cao cấp <strong>Boxers 2.0</strong> (trị giá 350.000đ)\n• Túi đựng cá nhân chống nước cao cấp <strong>The Shed 2.0</strong> (trị giá 400.000đ)`
     },
     {
       id: 'the-platinum-package-ultra-gen-6',
       orderIndex: 0,
       title: 'The Platinum Package Ultra Gen 6',
-      subtitle: 'Luxury Full Body Grooming Kit',
-      categoryPath: ['Trang chủ', 'DEALS & KITS', 'The Platinum Package Ultra Gen 6'],
-      vipPrice: '$189.99',
-      regularPrice: '$199.99',
+      subtitle: 'Gói chăm sóc toàn thân xa xỉ',
+      categoryPath: ['Trang chủ', 'ƯU ĐÃI & COMBO', 'The Platinum Package Ultra Gen 6'],
+      vipPrice: '1.890.000đ',
+      regularPrice: '1.990.000đ',
       href: '/products/the-platinum-package-ultra-gen-6',
       imageSrc: '/assets/aistudio/kit_platinum_package_ultra_gen_6.png',
-      imageAlt: 'The Platinum Package Ultra Gen 6 Luxury Full Body Grooming Kit',
+      imageAlt: 'Bộ combo chăm sóc cao cấp The Platinum Package Ultra Gen 6',
       thumbnails: [
         '/assets/aistudio/kit_platinum_package_ultra_gen_6.png',
         '/assets/aistudio/the-platinum-package-6_hero-tile-medium_desktop_46f99d0d.jpg'
@@ -140,7 +140,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       reviewCount: '2,640 đánh giá',
       soldCount: 'Đã bán 82k',
       salesBadge: 'Top Tier Luxury Kit',
-      shortDescription: 'Gói chăm sóc toàn thân xa xỉ nhất từ Manscaped, hoàn thiện vẻ lịch lãm của phái mạnh.',
+      shortDescription: 'Gói chăm sóc toàn thân xa xỉ nhất từ MANFRESH, hoàn thiện vẻ lịch lãm của phái mạnh.',
       highlights: ['Tông đơ Ultra Gen 6 thế hệ mới', 'Bộ khử mùi & dưỡng da chuyên sâu', 'Túi da The Shed 2.0 kèm theo'],
       reviewSample: { author: 'Đăng Khoa', rating: 5, comment: 'Đầy đủ mọi thứ cần cho nam giới, rất cao cấp.' },
       variants: [],
@@ -152,13 +152,13 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       id: 'the-performance-package-ultra-6',
       orderIndex: 1,
       title: 'The Performance Package Ultra Gen 6',
-      subtitle: 'Deluxe Full Body Grooming Kit',
-      categoryPath: ['Trang chủ', 'DEALS & KITS', 'The Performance Package Ultra Gen 6'],
-      vipPrice: '$159.99',
-      regularPrice: '$179.99',
+      subtitle: 'Bộ combo chăm sóc cao cấp toàn diện',
+      categoryPath: ['Trang chủ', 'ƯU ĐÃI & COMBO', 'The Performance Package Ultra Gen 6'],
+      vipPrice: '650.000đ',
+      regularPrice: '750.000đ',
       href: '/products/the-performance-package-ultra-6',
       imageSrc: '/assets/aistudio/kit_performance_package_ultra_gen_6.png',
-      imageAlt: 'The Performance Package Ultra Gen 6 Deluxe Full Body Grooming Kit',
+      imageAlt: 'The Performance Package Ultra Gen 6',
       thumbnails: [
         '/assets/aistudio/kit_performance_package_ultra_gen_6.png',
         '/assets/aistudio/the-performance-package-6_product_desktop_401c846d.jpg',
@@ -185,17 +185,17 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
           id: 'standard-kit',
           name: 'The Performance Package Ultra 6',
           badge: 'Gói Chuẩn',
-          price: '$159.99',
-          originalPrice: '$179.99',
-          saving: 'Tiết kiệm $20.00'
+          price: '650.000đ',
+          originalPrice: '750.000đ',
+          saving: 'Tiết kiệm 100.000đ'
         },
         {
           id: 'platinum-kit',
           name: 'The Platinum Package Ultra 6',
           badge: 'Cao Cấp',
-          price: '$219.99',
-          originalPrice: '$249.99',
-          saving: 'Tiết kiệm $30.00'
+          price: '2.190.000đ',
+          originalPrice: '2.490.000đ',
+          saving: 'Tiết kiệm 150.000đ'
         }
       ],
       gifts: ['Tặng Crop Preserver 100ml', 'Tặng Hộp Đựng Hạng Sang (Luxe Case)'],
@@ -206,8 +206,8 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
 };
 
 export const featuredProductsConfig2: FeaturedProductsConfig = {
-  sectionTitle: 'Top-tier essentials.',
-  sectionSubtitle: 'OUR RECOS',
+  sectionTitle: 'Sản phẩm thiết yếu hàng đầu',
+  sectionSubtitle: 'GỢI Ý TỪ MANFRESH',
   products: [
     ...featuredProductsConfig.products,
     {
@@ -216,8 +216,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'The Perfect Package Ultra Gen 6',
       subtitle: 'Ball and Body Hair Kit',
       categoryPath: ['Trang chủ', 'DEALS & KITS', 'The Perfect Package Ultra Gen 6'],
-      vipPrice: '$139.99',
-      regularPrice: '$149.99',
+      vipPrice: '1.390.000đ',
+      regularPrice: '1.490.000đ',
       href: '/products/the-perfect-package-ultra-gen-6',
       imageSrc: '/assets/aistudio/kit_perfect_package_ultra_gen_6.png',
       imageAlt: 'The Perfect Package Ultra Gen 6 Ball and Body Hair Kit',
@@ -243,8 +243,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'Ultra Smooth Package',
       subtitle: '3-Step Ball Shaving Routine',
       categoryPath: ['Trang chủ', 'DEALS & KITS', 'Ultra Smooth Package'],
-      vipPrice: '$44.99',
-      regularPrice: '$49.99',
+      vipPrice: '450.000đ',
+      regularPrice: '500.000đ',
       href: '/products/ultra-smooth-package',
       imageSrc: '/assets/aistudio/kit_ultra_smooth_package.png',
       imageAlt: 'Ultra Smooth Package 3-Step Ball Shaving Routine',
@@ -270,8 +270,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'The Chairman® Pro',
       subtitle: 'Electric Foil Face Shaver',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Chairman® Pro'],
-      vipPrice: '$149.99',
-      regularPrice: '$159.99',
+      vipPrice: '1.490.000đ',
+      regularPrice: '650.000đ',
       href: '/products/chairman-pro',
       imageSrc: '/assets/aistudio/70-00186_4597ae5e.jpg',
       imageAlt: 'The Chairman Pro Shaver',
@@ -293,9 +293,9 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
           id: 'chairman-pro-standard',
           name: 'The Chairman® Pro Standard',
           badge: 'Khuyên dùng',
-          price: '$149.99',
-          originalPrice: '$159.99',
-          saving: 'Tiết kiệm $10.00'
+          price: '1.490.000đ',
+          originalPrice: '650.000đ',
+          saving: 'Tiết kiệm 50.000đ'
         }
       ],
       gifts: ['Tặng Dung Dịch Cạo Râu 100ml', 'Tặng Túi Du Lịch'],
@@ -308,8 +308,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'The Beard Hedger®',
       subtitle: 'Electric Beard Trimmer',
       categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Beard Hedger®'],
-      vipPrice: '$89.99',
-      regularPrice: '$99.99',
+      vipPrice: '890.000đ',
+      regularPrice: '990.000đ',
       href: '/products/beard-hedger',
       imageSrc: '/assets/aistudio/image_075587b8.png',
       imageAlt: 'The Beard Hedger Trimmer',
@@ -331,9 +331,9 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
           id: 'beard-hedger-standard',
           name: 'The Beard Hedger® Standard',
           badge: 'Tiêu chuẩn',
-          price: '$89.99',
-          originalPrice: '$99.99',
-          saving: 'Tiết kiệm $10.00'
+          price: '890.000đ',
+          originalPrice: '990.000đ',
+          saving: 'Tiết kiệm 50.000đ'
         }
       ],
       gifts: ['Tặng Lược Chải Râu Chuyên Dụng'],
@@ -344,10 +344,10 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       id: 'beard-balls-strays',
       orderIndex: 4,
       title: 'The Beard, Balls & Strays Bundle',
-      subtitle: 'Three-device bundle with next-gen power.',
-      categoryPath: ['Trang chủ', 'BUNDLES', 'The Beard, Balls & Strays Bundle'],
-      vipPrice: '$199.99',
-      regularPrice: '$209.99',
+      subtitle: 'Bộ 3 thiết bị chuyên dụng chăm sóc râu và toàn thân công suất cao.',
+      categoryPath: ['Trang chủ', 'COMBO ƯU ĐÃI', 'The Beard, Balls & Strays Bundle'],
+      vipPrice: '1.990.000đ',
+      regularPrice: '2.090.000đ',
       href: '/products/beard-balls-strays',
       imageSrc: '/assets/aistudio/the-beard-balls-and-strays-bundle_product_desktop_255fa9af.jpg',
       imageAlt: 'Beard, Balls & Strays Bundle',
@@ -369,9 +369,9 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
           id: 'bundle-standard',
           name: 'The Beard, Balls & Strays Complete Set',
           badge: 'Trọn bộ',
-          price: '$199.99',
-          originalPrice: '$209.99',
-          saving: 'Tiết kiệm $35.00'
+          price: '1.990.000đ',
+          originalPrice: '2.090.000đ',
+          saving: 'Tiết kiệm 150.000đ'
         }
       ],
       gifts: ['Tặng Túi Đựng Hạng Sang (Luxe Travel Bag)', 'Tặng Khăn Chuyên Dụng'],
@@ -384,8 +384,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'Ball Scrub',
       subtitle: 'Gentle Groin Cleanser & Exfoliator',
       categoryPath: ['Trang chủ', 'FORMULATIONS', 'Ball Scrub'],
-      vipPrice: '$11.99',
-      regularPrice: '$12.99',
+      vipPrice: '120.000đ',
+      regularPrice: '150.000đ',
       href: '/products/ball-scrub',
       imageSrc: '/assets/aistudio/product_ball_scrub.png',
       imageAlt: 'Ball Scrub Gentle Groin Cleanser',
@@ -411,8 +411,8 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       title: 'The Shed 2.0',
       subtitle: 'Toiletry Bag',
       categoryPath: ['Trang chủ', 'ACCESSORIES', 'The Shed 2.0'],
-      vipPrice: '$34.99',
-      regularPrice: '$39.99',
+      vipPrice: '350.000đ',
+      regularPrice: '400.000đ',
       href: '/products/the-shed-2',
       imageSrc: '/assets/aistudio/product_the_shed_2.png',
       imageAlt: 'The Shed 2.0 Toiletry Bag',
@@ -434,14 +434,14 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
     {
       id: 'boxers-2',
       orderIndex: 7,
-      title: 'MANSCAPED® Boxers 2.0',
+      title: 'MANFRESH® Boxers 2.0',
       subtitle: 'Premium Ultra Soft Boxer Briefs',
-      categoryPath: ['Trang chủ', 'APPAREL', 'MANSCAPED® Boxers 2.0'],
-      vipPrice: '$25.99',
-      regularPrice: '$34.99',
+      categoryPath: ['Trang chủ', 'APPAREL', 'MANFRESH® Boxers 2.0'],
+      vipPrice: '260.000đ',
+      regularPrice: '350.000đ',
       href: '/products/boxers-2',
       imageSrc: '/assets/aistudio/product_boxers_2.png',
-      imageAlt: 'MANSCAPED Boxers 2.0',
+      imageAlt: 'MANFRESH Boxers 2.0',
       thumbnails: [
         '/assets/aistudio/product_boxers_2.png'
       ],
@@ -461,13 +461,13 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       id: 'the-shears-3',
       orderIndex: 8,
       title: 'The Shears 3.0',
-      subtitle: "5-Piece Precision Men's Nail Grooming Kit",
-      categoryPath: ['Trang chủ', 'TOOLS', 'The Shears 3.0'],
-      vipPrice: '$19.99',
-      regularPrice: '$24.99',
+      subtitle: 'Bộ dụng cụ chăm sóc móng 5 món cao cấp cho nam',
+      categoryPath: ['Trang chủ', 'DỤNG CỤ', 'The Shears 3.0'],
+      vipPrice: '200.000đ',
+      regularPrice: '250.000đ',
       href: '/products/the-shears-3',
       imageSrc: '/assets/aistudio/product_the_shears_3.png',
-      imageAlt: 'The Shears 3.0 Nail Grooming Kit',
+      imageAlt: 'Bộ bấm móng cao cấp The Shears 3.0',
       thumbnails: [
         '/assets/aistudio/product_the_shears_3.png'
       ],

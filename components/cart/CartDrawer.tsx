@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
 import { featuredProductsConfig2 } from '@/config/products';
+import { formatVND } from '@/lib/formatters';
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function CartDrawer() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const freeShippingThreshold = 49.0;
+  const freeShippingThreshold = 500000;
   const isFreeShipping = totalPrice >= freeShippingThreshold;
   const progress = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
   const remainingForFree = Math.max(0, freeShippingThreshold - totalPrice);
@@ -87,12 +88,12 @@ export default function CartDrawer() {
             <div className="flex items-center justify-between px-6 py-4 bg-[#9c631b] text-white relative">
               <div className="w-6" /> {/* Spacer for optical center */}
               <h2 className="text-base font-bold tracking-wide text-center flex-1 font-serif">
-                Cart
+                Giỏ hàng
               </h2>
               <button
                 onClick={() => setIsCartOpen(false)}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white/90 hover:text-white hover:bg-black/15 transition-colors cursor-pointer"
-                aria-label="Close cart"
+                aria-label="Đóng giỏ hàng"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -118,10 +119,10 @@ export default function CartDrawer() {
                     <div>
                       {remainingForFree > 0 ? (
                         <span>
-                          Add <strong className="text-[#9c631b] font-bold">${remainingForFree.toFixed(2)}</strong> more for <strong>Free Shipping!</strong>
+                          Mua thêm <strong className="text-[#9c631b] font-bold">{formatVND(remainingForFree)}</strong> để được <strong>Miễn phí vận chuyển!</strong>
                         </span>
                       ) : (
-                        <span>You qualify for <strong>Free Shipping!</strong></span>
+                        <span>Bạn đã đủ điều kiện <strong>Miễn phí vận chuyển!</strong></span>
                       )}
                     </div>
                   </div>
@@ -135,7 +136,7 @@ export default function CartDrawer() {
                       />
                     </div>
                     <span className="bg-[#774712] text-white text-[10px] font-bold px-2 py-0.5 rounded leading-none">
-                      Free
+                      Miễn phí
                     </span>
                   </div>
                 </div>
@@ -277,14 +278,14 @@ export default function CartDrawer() {
               <div className="mt-6 bg-[#f5f4ef] py-5 px-4 sm:px-5 border-t border-[#ede9df]">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-serif font-bold text-base sm:text-lg text-neutral-900">
-                    Bundle and Save
+                    Ưu đãi mua kèm combo
                   </h4>
                   <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => handleScrollCarousel('left')}
                       className="w-7 h-7 rounded-full bg-[#e5e4de] hover:bg-[#d8d7d0] text-neutral-700 flex items-center justify-center transition cursor-pointer"
-                      title="Previous"
+                      title="Trước"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </button>
@@ -292,7 +293,7 @@ export default function CartDrawer() {
                       type="button"
                       onClick={() => handleScrollCarousel('right')}
                       className="w-7 h-7 rounded-full bg-[#b37728] hover:bg-[#9c631b] text-white flex items-center justify-center transition cursor-pointer shadow-xs"
-                      title="Next"
+                      title="Sau"
                     >
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -305,8 +306,7 @@ export default function CartDrawer() {
                   className="flex space-x-3 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
                 >
                   {bundleItems.map((prod) => {
-                    const priceNum = parseFloat((prod.regularPrice || prod.vipPrice).replace('$', '')) || 34.99;
-                    const origNum = priceNum + 5.0;
+                    const priceNum = parseInt((prod.regularPrice || prod.vipPrice || '0').replace(/[^0-9]/g, ''), 10) || 200000;
 
                     return (
                       <div
@@ -336,11 +336,13 @@ export default function CartDrawer() {
                           {/* Pricing */}
                           <div className="flex items-baseline justify-center space-x-1.5 mt-2">
                             <span className="text-sm font-bold text-[#a0681c]">
-                              ${priceNum.toFixed(2)}
+                              {prod.vipPrice || prod.regularPrice}
                             </span>
-                            <span className="text-xs text-neutral-400 line-through">
-                              ${origNum.toFixed(2)}
-                            </span>
+                            {prod.regularPrice && prod.regularPrice !== prod.vipPrice && (
+                              <span className="text-xs text-neutral-400 line-through">
+                                {prod.regularPrice}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -355,11 +357,11 @@ export default function CartDrawer() {
                             numericPrice: priceNum,
                             quantity: 1,
                             imageSrc: prod.imageSrc,
-                            variantName: 'Add-on Kit'
+                            variantName: 'Combo ưu đãi'
                           })}
                           className="mt-3 w-full bg-black hover:bg-neutral-800 text-white font-bold text-xs py-2.5 px-4 rounded-full uppercase tracking-wider transition active:scale-[0.98] cursor-pointer"
                         >
-                          Add To Cart
+                          Thêm vào giỏ
                         </button>
                       </div>
                     );
@@ -369,7 +371,7 @@ export default function CartDrawer() {
 
               {/* 4. Summary Breakdown Section */}
               <div className="p-4 sm:p-5 space-y-3.5">
-                <h4 className="font-bold text-sm text-neutral-900">Summary</h4>
+                <h4 className="font-bold text-sm text-neutral-900">Tóm tắt đơn hàng</h4>
 
                 {/* Member Rewards Note */}
                 <div className="flex items-start space-x-3 bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/60">
@@ -377,13 +379,13 @@ export default function CartDrawer() {
                     <Award className="w-4 h-4" />
                   </div>
                   <p className="text-[11px] text-neutral-700 leading-tight">
-                    Earn 550+ points on this order. Learn more about our{' '}
+                    Tích lũy 550+ điểm thưởng với đơn hàng này. Tìm hiểu thêm về{' '}
                     <span className="underline cursor-pointer font-semibold text-neutral-900">
-                      Members Only Rewards Program
+                      Chương trình Hội viên MANFRESH
                     </span>{' '}
-                    or{' '}
+                    hoặc{' '}
                     <span className="underline cursor-pointer font-semibold text-neutral-900">
-                      Log in
+                      Đăng nhập
                     </span>.
                   </p>
                 </div>
@@ -391,32 +393,32 @@ export default function CartDrawer() {
                 {/* Financial Totals Table */}
                 <div className="space-y-2 text-xs pt-1">
                   <div className="flex justify-between text-neutral-600">
-                    <span>Total Product Value</span>
+                    <span>Tổng giá trị sản phẩm</span>
                     <span className="text-neutral-900 font-medium">
-                      ${(totalOriginalValue > 0 ? totalOriginalValue : totalPrice * 1.091).toFixed(2)}
+                      {formatVND(totalOriginalValue > 0 ? totalOriginalValue : totalPrice * 1.1)}
                     </span>
                   </div>
 
                   <div className="flex justify-between text-neutral-600">
-                    <span>Subtotal</span>
-                    <span className="text-neutral-900 font-medium">${totalPrice.toFixed(2)}</span>
+                    <span>Tạm tính</span>
+                    <span className="text-neutral-900 font-medium">{formatVND(totalPrice)}</span>
                   </div>
 
                   <div className="flex justify-between text-neutral-600">
-                    <span>Shipping</span>
+                    <span>Phí vận chuyển</span>
                     <span className="text-neutral-900 font-medium">
-                      {isFreeShipping ? 'Free' : '--'}
+                      {isFreeShipping ? 'Miễn phí' : '30.000đ'}
                     </span>
                   </div>
 
                   <div className="flex justify-between text-neutral-600">
-                    <span>Estimated Tax</span>
-                    <span className="text-neutral-500">Calculated at checkout</span>
+                    <span>Thuế VAT</span>
+                    <span className="text-neutral-500">Đã bao gồm trong giá</span>
                   </div>
 
                   <div className="flex justify-between text-sm font-bold text-neutral-900 pt-2 border-t border-neutral-200">
-                    <span>Estimated Total</span>
-                    <span>${totalPrice.toFixed(2)}</span>
+                    <span>Tổng thanh toán</span>
+                    <span className="text-amber-800">{formatVND(totalPrice + (isFreeShipping ? 0 : 30000))}</span>
                   </div>
                 </div>
               </div>
@@ -431,7 +433,7 @@ export default function CartDrawer() {
                 <div className="flex items-center justify-center space-x-1.5 px-1">
                   <RotateCcw className="w-5 h-5 text-neutral-700 flex-shrink-0" />
                   <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
-                    MONEY-<br />BACK<br />GUARANTEE
+                    CAM KẾT<br />HOÀN TIỀN
                   </span>
                 </div>
 
@@ -439,7 +441,7 @@ export default function CartDrawer() {
                 <div className="flex items-center justify-center space-x-1.5 px-1 border-x border-neutral-200">
                   <Truck className="w-5 h-5 text-neutral-700 flex-shrink-0" />
                   <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
-                    FREE<br />SHIPPING<br />OVER $49
+                    MIỄN PHÍ<br />GIAO HÀNG<br />ĐƠN TỪ 499K
                   </span>
                 </div>
 
@@ -447,7 +449,7 @@ export default function CartDrawer() {
                 <div className="flex items-center justify-center space-x-1.5 px-1">
                   <ShieldCheck className="w-5 h-5 text-neutral-700 flex-shrink-0" />
                   <span className="text-[9px] font-bold text-neutral-800 uppercase tracking-tight leading-none text-left">
-                    2-YEAR<br />WARRANTY
+                    BẢO HÀNH<br />2 NĂM
                   </span>
                 </div>
               </div>
@@ -461,7 +463,7 @@ export default function CartDrawer() {
                 }}
                 className="w-full bg-[#b77a2f] hover:bg-[#a26822] text-white font-bold py-3.5 px-6 rounded-full shadow-md transition-all active:scale-[0.99] flex items-center justify-center text-sm sm:text-base uppercase tracking-wider cursor-pointer mt-2"
               >
-                Checkout
+                Tiến hành thanh toán
               </button>
             </div>
           </motion.div>

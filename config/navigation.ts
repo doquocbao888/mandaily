@@ -25,43 +25,43 @@ export interface NavigationConfig {
 
 export const navigationConfig: NavigationConfig = {
   logo: {
-    src: '/assets/manscaped-logo.png',
-    alt: 'MANSCAPED',
+    src: '/assets/manfresh-logo.svg',
+    alt: 'MANFRESH',
     href: '/',
-    width: 135,
-    height: 25,
+    width: 140,
+    height: 26,
   },
   utilityLinks: {
     rewards: {
-      label: 'Unlock Rewards & Subscription',
-      href: '#',
+      label: 'Ưu Đãi Thành Viên',
+      href: '/products?category=deals',
     },
     cause: {
-      label: 'Our Cause',
+      label: 'Sứ Mệnh Thương Hiệu',
       href: '#',
     },
     sale: {
-      label: 'Sale',
-      href: '#',
+      label: 'Khuyến Mãi (Sale)',
+      href: '/products?category=deals',
     },
     language: {
-      label: 'EN',
-      current: 'EN',
+      label: 'VN',
+      current: 'VN',
     },
     account: {
-      label: 'Account',
-      href: '#',
+      label: 'Tài khoản',
+      href: '/admin',
     },
     cart: {
-      label: 'Cart',
-      href: '#',
+      label: 'Giỏ hàng',
+      href: '/checkout',
       count: 0,
     },
   },
   categories: [
-    { label: 'Deals & Kits', href: '#', hasDropdown: true },
-    { label: 'Groin', href: '#', hasDropdown: true },
-    { label: 'Beard & Face', href: '#', hasDropdown: true },
-    { label: 'Head & Body', href: '#', hasDropdown: true },
+    { label: 'Ưu Đãi & Combo', href: '/products?category=deals', hasDropdown: true },
+    { label: 'Chăm Sóc Vùng Kín', href: '/products?category=groin', hasDropdown: true },
+    { label: 'Râu & Mặt', href: '/products?category=beard', hasDropdown: true },
+    { label: 'Tóc & Toàn Thân', href: '/products?category=body', hasDropdown: true },
   ],
 };

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { CheckCircle2, ShieldCheck, Copy, Check, ArrowRight, CreditCard, Truck, Lock, Tag, X, Package } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createOrderInDb } from '@/lib/dbService';
+import { formatVND } from '@/lib/formatters';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -39,21 +40,21 @@ export default function CheckoutPage() {
     e.preventDefault();
     setPromoError(null);
     const code = promoInput.trim().toUpperCase();
-    if (code === 'MANSCAPED10' || code === 'SALE15' || code === 'FREESHIP') {
+    if (code === 'MANFRESH10' || code === 'SALE15' || code === 'FREESHIP') {
       setAppliedPromo(code);
       setPromoInput('');
     } else {
-      setPromoError('Mã không hợp lệ. Thử MANSCAPED10 hoặc FREESHIP');
+      setPromoError('Mã không hợp lệ. Thử MANFRESH10 hoặc FREESHIP');
     }
   };
 
-  const discountAmount = appliedPromo === 'MANSCAPED10'
+  const discountAmount = appliedPromo === 'MANFRESH10'
     ? totalPrice * 0.1
     : appliedPromo === 'SALE15'
     ? totalPrice * 0.15
     : 0;
 
-  const shippingFee = (totalPrice >= 49 || appliedPromo === 'FREESHIP') ? 0 : 5.0;
+  const shippingFee = (totalPrice >= 500000 || appliedPromo === 'FREESHIP') ? 0 : 30000;
   const grandTotal = Math.max(0, totalPrice - discountAmount + shippingFee);
 
   const handleCopy = (text: string, field: string) => {
@@ -86,13 +87,13 @@ export default function CheckoutPage() {
         productName: productSummary,
         variant: paymentMethod === 'cod' ? 'Thanh toán COD' : 'Chuyển khoản VietQR',
         quantity: totalQty,
-        totalPrice: `$${grandTotal.toFixed(2)}`,
+        totalPrice: formatVND(grandTotal),
         status: 'Đang xử lý',
         createdAt: new Date().toLocaleString('vi-VN'),
         paymentMethod: paymentMethod === 'cod' ? 'COD' : 'VietQR',
         notes: note.trim() || '',
         discountCode: appliedPromo || '',
-        discountAmount: discountAmount > 0 ? `-$${discountAmount.toFixed(2)}` : '',
+        discountAmount: discountAmount > 0 ? `-${formatVND(discountAmount)}` : '',
       });
 
       setSuccessOrder({
@@ -127,11 +128,11 @@ export default function CheckoutPage() {
       {/* Top Brand Bar */}
       <header className="bg-white border-b border-neutral-200 py-4 px-4 sm:px-8 flex items-center justify-between">
         <Link href="/" className="text-xl font-black tracking-widest uppercase text-black">
-          MANSCAPED
+          MANFRESH
         </Link>
         <div className="flex items-center space-x-1.5 text-xs text-neutral-600 font-medium">
           <Lock className="w-4 h-4 text-[#9e6f1c]" />
-          <span>Secure Checkout</span>
+          <span>Thanh toán bảo mật</span>
         </div>
       </header>
 
@@ -174,7 +175,7 @@ export default function CheckoutPage() {
             {successOrder.method.includes('VietQR') && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 text-left">
                 <p className="font-bold mb-1">⚠️ Lưu ý chuyển khoản VietQR:</p>
-                Vui lòng chuyển khoản đúng số tiền và nội dung <strong className="font-mono">MANSCAPED {successOrder.id}</strong> tới tài khoản MB Bank: <strong className="font-mono">8888688888</strong>. Đơn hàng sẽ được tự động duyệt ngay khi nhận được thanh toán.
+                Vui lòng chuyển khoản đúng số tiền và nội dung <strong className="font-mono">MANFRESH {successOrder.id}</strong> tới tài khoản MB Bank: <strong className="font-mono">8888688888</strong>. Đơn hàng sẽ được tự động duyệt ngay khi nhận được thanh toán.
               </div>
             )}
 
@@ -206,7 +207,7 @@ export default function CheckoutPage() {
               {/* Shipping Address Section */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-4">
                 <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
-                  Shipping address
+                  Địa chỉ giao hàng
                 </h2>
 
                 <div className="space-y-4">
@@ -262,7 +263,7 @@ export default function CheckoutPage() {
               {/* Payment Method Section */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-4">
                 <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
-                  Payment Method
+                  Phương thức thanh toán
                 </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -326,7 +327,7 @@ export default function CheckoutPage() {
                           <span className="font-bold text-amber-400">VIETQR PAY</span>
                           <span className="text-[9px]">MB BANK</span>
                           <div className="mt-2 bg-white text-black font-bold px-2 py-0.5 rounded text-xs">
-                            ${grandTotal.toFixed(2)}
+                            {formatVND(grandTotal)}
                           </div>
                         </div>
                       </div>
@@ -357,18 +358,18 @@ export default function CheckoutPage() {
                         <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
                           <div>
                             <span className="text-neutral-400 block text-[10px]">Chủ tài khoản:</span>
-                            <span className="font-bold text-neutral-900">CONG TY TNHH MANSCAPED VIET NAM</span>
+                            <span className="font-bold text-neutral-900">CONG TY TNHH MANFRESH VIET NAM</span>
                           </div>
                         </div>
 
                         <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
                           <div>
                             <span className="text-neutral-400 block text-[10px]">Nội dung CK:</span>
-                            <span className="font-bold font-mono text-[#9e6f1c]">MANSCAPED {orderId}</span>
+                            <span className="font-bold font-mono text-[#9e6f1c]">MANFRESH {orderId}</span>
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleCopy(`MANSCAPED ${orderId}`, 'nd')}
+                            onClick={() => handleCopy(`MANFRESH ${orderId}`, 'nd')}
                             className="text-[#9e6f1c] hover:underline font-semibold flex items-center space-x-1"
                           >
                             {copiedField === 'nd' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
@@ -391,7 +392,7 @@ export default function CheckoutPage() {
                   <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Complete order (${grandTotal.toFixed(2)})</span>
+                    <span>Hoàn tất đặt hàng ({formatVND(grandTotal)})</span>
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -402,7 +403,7 @@ export default function CheckoutPage() {
             {/* Right Column: Order Summary (matching screenshot right column) */}
             <div className="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-8 border border-neutral-200 shadow-sm space-y-6">
               <h2 className="text-lg font-serif font-bold text-neutral-900 uppercase tracking-wide">
-                Order Summary
+                Tóm tắt đơn hàng
               </h2>
 
               {/* Items List */}
@@ -420,10 +421,10 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-xs text-neutral-900 truncate">{item.title}</h4>
-                        <p className="text-[11px] text-neutral-500 truncate">{item.variantName || 'Standard'}</p>
+                        <p className="text-[11px] text-neutral-500 truncate">{item.variantName || 'Mặc định'}</p>
                       </div>
                       <span className="font-extrabold text-xs text-neutral-900">
-                        ${(item.numericPrice * item.quantity).toFixed(2)}
+                        {formatVND(item.numericPrice * item.quantity)}
                       </span>
                     </div>
                   ))
@@ -433,7 +434,7 @@ export default function CheckoutPage() {
               {/* Loyalty Points Banner */}
               <div className="bg-[#eaf7ee] border border-[#c3ebcb] rounded-2xl p-4 flex items-center space-x-3 text-xs text-[#1e6b36]">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
-                <span className="font-medium">You’re earning Loyalty Points with this purchase.</span>
+                <span className="font-medium">Bạn nhận được điểm tích lũy thành viên với đơn hàng này.</span>
               </div>
 
               {/* Promo Code Voucher Form */}
@@ -462,7 +463,7 @@ export default function CheckoutPage() {
                         type="text"
                         value={promoInput}
                         onChange={(e) => setPromoInput(e.target.value)}
-                        placeholder="Mã giảm giá (MANSCAPED10)"
+                        placeholder="Mã giảm giá (MANFRESH10)"
                         className="flex-1 bg-neutral-50 border border-neutral-300 rounded-xl px-3 py-2 text-xs uppercase font-medium outline-none focus:border-[#9e6f1c]"
                       />
                       <button
@@ -478,27 +479,27 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Financial Subtotals */}
+              {/* Financial Subtotals in VND */}
               <div className="space-y-2.5 text-sm pt-2 border-t border-neutral-200">
                 <div className="flex justify-between text-neutral-600">
-                  <span>Subtotal · {cart.reduce((s, c) => s + c.quantity, 0)} items</span>
-                  <span className="font-semibold text-neutral-900">${totalPrice.toFixed(2)}</span>
+                  <span>Tạm tính · {cart.reduce((s, c) => s + c.quantity, 0)} sản phẩm</span>
+                  <span className="font-semibold text-neutral-900">{formatVND(totalPrice)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-semibold">
-                    <span>Discount ({appliedPromo})</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>Mã giảm giá ({appliedPromo})</span>
+                    <span>-{formatVND(discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-neutral-600">
-                  <span>Shipping</span>
+                  <span>Phí vận chuyển</span>
                   <span className="font-semibold text-neutral-900">
-                    {shippingFee === 0 ? 'Free' : '$5.00'}
+                    {shippingFee === 0 ? 'Miễn phí' : formatVND(shippingFee)}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-serif font-bold text-neutral-900 pt-3 border-t border-neutral-200">
-                  <span>Total</span>
-                  <span className="text-[#9e6f1c]">USD ${grandTotal.toFixed(2)}</span>
+                  <span>Tổng thanh toán</span>
+                  <span className="text-[#9e6f1c] font-sans font-extrabold">{formatVND(grandTotal)}</span>
                 </div>
               </div>
             </div>

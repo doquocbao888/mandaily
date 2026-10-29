@@ -19,81 +19,81 @@ interface ProductFaqSectionProps {
 const DEFAULT_FAQS: FaqItem[] = [
   {
     id: 'faq-1',
-    question: 'What is The Lawn Mower® Ultra Gen 6?',
+    question: 'The Lawn Mower® Ultra Gen 6 là gì?',
     answer:
-      'The Lawn Mower® Ultra Gen 6 is our most advanced groin and body hair trimmer yet. Engineered with next-generation SkinSafe™ ceramic blade technology, interchangeable trimmer and foil blade heads, a dual-speed motor (up to 7,200 RPM), smart LED digital display, dual-temperature spotlight, and IPX7 waterproof rating, it delivers the ultimate precision grooming experience from head to toe.',
+      'The Lawn Mower® Ultra Gen 6 là tông đơ cắt tỉa lông vùng kín và toàn thân hiện đại nhất của MANFRESH. Được trang bị công nghệ lưỡi gốm SkinSafe™ thế hệ mới, đầu cạo lưỡi kép thay đổi linh hoạt, động cơ 2 tốc độ (lên đến 7.200 vòng/phút), màn hình LED thông minh, đèn rọi hai dải nhiệt màu và chuẩn kháng nước IPX7, mang lại trải nghiệm chăm sóc mượt mà và an toàn tối đa.',
   },
   {
     id: 'faq-2',
-    question: 'What is included in the box?',
+    question: 'Bên trong hộp sản phẩm gồm những gì?',
     answer:
-      'Inside the box, you’ll find: The Lawn Mower® Ultra Gen 6 Trimmer body, SkinSafe™ Trimmer Blade, SkinSafe™ Foil Blade for an ultra-close finish, 2 adjustable guard combs (2mm, 4mm, 6mm, 8mm), magnetic wireless charging dock with USB-C cable, premium cleaning brush, and the quick start guide & safety manual.',
+      'Hộp sản phẩm chính hãng gồm có: Thân máy tông đơ The Lawn Mower® Ultra Gen 6, Lưỡi tông đơ SkinSafe™, Đầu cạo sát Foil Blade SkinSafe™, 2 cữ lược điều chỉnh độ dài (2mm, 4mm, 6mm, 8mm), dock sạc không dây từ tính kèm cáp USB-C, chổi vệ sinh cao cấp và sổ hướng dẫn sử dụng tiếng Việt.',
   },
   {
     id: 'faq-3',
     question:
-      'How do I replace The Lawn Mower® Ultra Gen 6 Replacement Trimmer Blade and The Lawn Mower® Ultra Gen 6 Replacement Foil Blade?',
+      'Cách tháo lắp và thay thế đầu lưỡi cạo như thế nào?',
     answer:
-      'To replace the blade, first ensure the trimmer is powered off. Hold the trimmer firmly in one hand and gently push the blade head forward and upward with your thumb to pop it out of the socket. To attach a new blade (either the Trimmer Blade or Foil Blade), align the bottom locking tabs of the blade module with the slot on the trimmer body, and press down firmly until you hear a solid click.',
+      'Trước khi thay lưỡi, hãy tắt nguồn máy. Giữ chặt thân tông đơ bằng một tay và dùng ngón tay cái đẩy nhẹ đầu lưỡi về phía trước theo chiều hướng lên để bật lưỡi ra khỏi khớp. Để lắp đầu lưỡi mới (lưỡi tông đơ hoặc đầu cạo màng mỏng Foil Blade), căn chỉnh các mấu gài ở đáy với rãnh trên thân máy rồi nhấn dứt khoát cho đến khi nghe tiếng tách chắc chắn.',
   },
   {
     id: 'faq-4',
-    question: 'How do I charge The Lawn Mower® Ultra Gen 6 and how long does the battery last?',
+    question: 'Cách sạc pin và thời lượng pin sử dụng được bao lâu?',
     answer:
-      'The Lawn Mower® Ultra Gen 6 features a premium high-capacity 800mAh Li-ion battery providing up to 90 minutes of continuous runtime on a single charge. You can charge it wirelessly using the included magnetic charging dock or directly via the universal USB-C port. A full charge takes approximately 90 minutes, and the LED screen displays real-time battery percentage so you never get caught mid-trim.',
+      'The Lawn Mower® Ultra Gen 6 sở hữu viên pin Li-ion dung lượng cao 800mAh cho thời gian hoạt động liên tục lên đến 90 phút sau một lần sạc đầy. Bạn có thể sạc tiện lợi trên dock sạc từ tính đi kèm hoặc cắm sạc trực tiếp qua cổng USB-C. Thời gian sạc đầy khoảng 90 phút, màn hình LED hiển thị chính xác % pin để bạn luôn chủ động.',
   },
   {
     id: 'faq-5',
-    question: 'What information is shown on the display screen?',
+    question: 'Màn hình LED thông minh hiển thị những thông tin gì?',
     answer:
-      'The high-contrast smart LED screen displays real-time battery percentage (0–100%), active motor speed mode (Standard vs. Turbo Boost), travel lock status indicator (locked/unlocked), cleaning and maintenance reminder icon, and charging status animation.',
+      'Màn hình kỹ thuật số LED độ tương phản cao hiển thị phần trăm pin thực tế (0–100%), chế độ tốc độ động cơ (Tiêu chuẩn / Siêu tốc Turbo), biểu tượng khóa an toàn du lịch (khóa / mở), biểu tượng nhắc nhở vệ sinh bảo dưỡng và hiệu ứng trạng thái đang sạc.',
   },
   {
     id: 'faq-6',
-    question: 'How do I prevent the device from turning on while traveling?',
+    question: 'Làm thế nào để kích hoạt khóa du lịch chống vô tình bật máy?',
     answer:
-      'The trimmer features an intelligent Travel Lock. To engage the Travel Lock, press and hold the power button for 3 seconds. The lock icon will blink and remain solid on the display, preventing any accidental activation in your luggage or dopp kit. To unlock, simply press and hold the power button again for 3 seconds.',
+      'Thiết bị tích hợp tính năng Khóa du lịch thông minh. Để khóa máy, nhấn và giữ nút nguồn trong 3 giây. Biểu tượng ổ khóa sẽ nhấp nháy rồi sáng cố định trên màn hình LED, ngăn máy tự khởi động trong vali hay balo. Để mở khóa, bạn chỉ cần nhấn giữ nút nguồn lại trong 3 giây.',
   },
   {
     id: 'faq-7',
-    question: 'What is the dual-temperature spotlight and how do I use it?',
+    question: 'Đèn rọi hai dải nhiệt màu hoạt động như thế nào?',
     answer:
-      'The built-in 4000K LED spotlight illuminates tricky crevices and low-light areas for maximum visibility. Ultra Gen 6 introduces dual-temperature lighting (Warm Glow and Cool Daylight), allowing you to toggle the light tone to best contrast against your skin tone and hair color by double-clicking the light control button.',
+      'Đèn rọi LED 4000K tích hợp giúp chiếu sáng rõ các vùng khuất khó nhìn để thao tác chuẩn xác. Ultra Gen 6 trang bị hai tông ánh sáng (Ánh sáng ấm và Ánh sáng trắng ban ngày). Bạn có thể bấm đúp vào nút điều khiển đèn để chuyển đổi tông sáng phù hợp nhất với màu da và sợi lông.',
   },
   {
     id: 'faq-8',
-    question: 'What makes it better for sensitive areas?',
+    question: 'Tại sao sản phẩm này lại an toàn và êm ái hơn cho vùng da nhạy cảm?',
     answer:
-      'The Ultra Gen 6 incorporates our proprietary SkinSafe™ ceramic blade design with rounded micro-teeth set back 0.5mm from the cutting edge. This prevents delicate skin from snagging, pulling, or getting pinched between blades. Additionally, the low-vibration motor and ergonomic non-slip grip give you total maneuverability and confidence in sensitive zones.',
+      'Ultra Gen 6 sử dụng công nghệ lưỡi gốm SkinSafe™ độc quyền với các răng vi mô bo tròn thụt lùi 0,5mm so with mép cắt, ngăn ngừa tình trạng kéo rứt, kẹp da hoặc trầy xước. Kết hợp cùng động cơ giảm chấn rung êm ái và tay cầm công thái học chống trơn trượt, giúp bạn tự tin tuyệt đối khi cạo tỉa vùng nhạy cảm.',
   },
   {
     id: 'faq-9',
-    question: 'How close of a shave can I get with The Lawn Mower® Ultra Gen 6 Groin & Body Hair Trimmer?',
+    question: 'The Lawn Mower® Ultra Gen 6 có thể cạo sát đến mức nào?',
     answer:
-      'With the ceramic trimmer blade alone, you achieve a comfortable, zero-gap 0.2mm trim that prevents ingrown hairs and razor burn. For an ultra-smooth, skin-level finish, switch to the included SkinSafe™ Foil Blade, which lifts and cuts hair cleanly down to the skin without irritation.',
+      'Với lưỡi gốm tiêu chuẩn, máy cạo tỉa siêu êm ở cự ly chỉ 0,2mm, không gây kích ứng da hay lông mọc ngược. Nếu muốn cạo sát phẳng mịn như da em bé, bạn lắp thêm đầu màng cạo Foil Blade đi kèm để triệt sạch tận gốc mà không làm đỏ rát.',
   },
   {
     id: 'faq-10',
-    question: 'How often should the blade be replaced?',
+    question: 'Bao lâu thì nên thay lưỡi dao cạo một lần?',
     answer:
-      'We recommend replacing your SkinSafe™ Trimmer Blade and Foil Blade every 3 months for optimal hygiene, sharpness, and peak performance. Over time, dull blades can cause irritation or pulling. Fresh replacement blades can be purchased directly on our store whenever you need them.',
+      'Chúng tôi khuyến nghị nên thay lưỡi cạo SkinSafe™ định kỳ mỗi 3 tháng một lần để đảm bảo vệ sinh, độ sắc bén và hiệu suất êm ái tối ưu. Lưỡi cạo thay thế chính hãng luôn có sẵn trên website MANFRESH.',
   },
   {
     id: 'faq-11',
-    question: 'How do I clean The Lawn Mower® Ultra Gen 6?',
+    question: 'Cách vệ sinh máy sau khi sử dụng như thế nào?',
     answer:
-      'Cleaning is effortless thanks to its 100% waterproof construction. After each use, detach the blade head and use the included brush to sweep away loose hairs from the blade and motor cavity. You can then rinse the entire trimmer and blade heads directly under warm running tap water. Allow them to air-dry thoroughly before reassembling.',
+      'Vệ sinh cực kỳ đơn giản nhờ chuẩn chống nước 100%. Sau khi dùng, tháo đầu lưỡi và dùng chổi quét sạch lông thừa trong khoang máy. Bạn có thể xả trực tiếp toàn bộ thân máy và đầu lưỡi dưới vòi nước ấm, sau đó để ráo nơi thoáng mát trước khi cất giữ.',
   },
   {
     id: 'faq-12',
-    question: 'Is The Lawn Mower® Ultra Gen 6 waterproof and okay to use in the shower?',
+    question: 'Máy có kháng nước hoàn toàn để dùng trong phòng tắm không?',
     answer:
-      'Yes! The Lawn Mower® Ultra Gen 6 is IPX7 waterproof certified, meaning it can withstand immersion in water up to 1 meter deep for up to 30 minutes. It is fully safe and optimized for wet or dry trimming in the shower, tub, or over the sink, allowing for easy cleanup.',
+      'Hoàn toàn có! The Lawn Mower® Ultra Gen 6 đạt chuẩn kháng nước IPX7, chịu được độ sâu nước 1 mét trong tối đa 30 phút. Bạn có thể thoải mái sử dụng cạo khô hoặc cạo ướt cùng bọt tắm ngay dưới vòi sen một cách an toàn và tiện lợi.',
   },
 ];
 
 export default function ProductFaqSection({
-  title = 'You have questions. We have answers.',
+  title = 'Câu hỏi thường gặp & Giải đáp chi tiết',
   faqs = DEFAULT_FAQS,
   className = '',
 }: ProductFaqSectionProps) {
@@ -107,7 +107,7 @@ export default function ProductFaqSection({
   return (
     <section
       id="faqs"
-      aria-label="Frequently Asked Questions"
+      aria-label="Câu hỏi thường gặp"
       className={`w-full py-16 sm:py-20 md:py-24 bg-[#f8f7f2] border-t border-neutral-200/60 scroll-mt-20 ${className}`}
     >
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">

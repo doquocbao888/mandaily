@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
 import { featuredProductsConfig2, type ProductItem } from '@/config/products';
+import { formatVND } from '@/lib/formatters';
 
 interface GoesGreatWithSectionProps {
   currentProductId?: string;
@@ -15,8 +16,8 @@ interface GoesGreatWithSectionProps {
 
 export default function GoesGreatWithSection({
   currentProductId,
-  title = 'Goes great with...',
-  subtitle = 'Here’s some favorites to keep you turning heads.'
+  title = 'Kết hợp hoàn hảo cùng...',
+  subtitle = 'Các sản phẩm chăm sóc được yêu thích nhất để bạn luôn tỏa sáng.'
 }: GoesGreatWithSectionProps) {
   const [products, setProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -158,7 +159,7 @@ export default function GoesGreatWithSection({
 
   return (
     <section 
-      aria-label="Goes great with"
+      aria-label="Gợi ý kết hợp hoàn hảo"
       className="w-full bg-transparent py-16 sm:py-20 lg:py-24 select-none overflow-hidden"
     >
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
@@ -242,10 +243,10 @@ export default function GoesGreatWithSection({
                       {product.subtitle}
                     </p>
 
-                    {/* Clean Pricing */}
+                    {/* Clean Pricing in VND */}
                     <div className="flex items-baseline gap-2 pt-2.5 text-xs sm:text-sm">
                       <span className="text-neutral-900 font-bold text-sm sm:text-base">
-                        {product.regularPrice || product.vipPrice}
+                        {formatVND(product.regularPrice || product.vipPrice)}
                       </span>
                     </div>
 

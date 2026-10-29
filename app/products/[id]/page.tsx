@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProductById, type ProductItem } from '@/config/products';
 import { useCart } from '@/context/CartContext';
+import { formatVND, parseVND } from '@/lib/formatters';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import VideoReviewsSection from '@/components/products/VideoReviewsSection';
@@ -49,8 +50,8 @@ export default function ProductDetailPage() {
     title: 'The Lawn Mower® Ultra Gen 6',
     subtitle: 'Groin & Body Hair Trimmer',
     categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
-    vipPrice: '$109.99',
-    regularPrice: '$119.99',
+    vipPrice: '450.000đ',
+    regularPrice: '500.000đ',
     href: `/products/${id || 'lawn-mower-ultra-6'}`,
     imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
     imageAlt: 'The Lawn Mower Ultra Gen 6 Trimmer with blade attachment',
@@ -214,8 +215,8 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = async () => {
-    const priceStr = product.regularPrice || product.vipPrice || '$109.99';
-    const numericPrice = parseFloat(priceStr.replace('$', '')) || 109.99;
+    const priceStr = formatVND(product.regularPrice || product.vipPrice || '500.000đ');
+    const numericPrice = parseVND(priceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
 
@@ -235,8 +236,8 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    const priceStr = product.regularPrice || product.vipPrice || '$109.99';
-    const numericPrice = parseFloat(priceStr.replace('$', '')) || 109.99;
+    const priceStr = formatVND(product.regularPrice || product.vipPrice || '500.000đ');
+    const numericPrice = parseVND(priceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
 
@@ -469,7 +470,7 @@ export default function ProductDetailPage() {
                 </p>
                 <div className="flex items-center space-x-3 mt-3">
                   <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-                    {product.regularPrice || product.vipPrice}
+                    {formatVND(product.regularPrice || product.vipPrice)}
                   </span>
                 </div>
               </div>
@@ -539,7 +540,7 @@ export default function ProductDetailPage() {
                   className="flex-1 bg-[#b78103] hover:bg-[#a17102] text-white font-extrabold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm sm:text-base uppercase tracking-wider cursor-pointer"
                 >
                   <ShoppingBag className="w-5 h-5" />
-                  <span>Mua ngay · {product.regularPrice || product.vipPrice}</span>
+                  <span>Mua ngay · {formatVND(product.regularPrice || product.vipPrice)}</span>
                 </button>
               </div>
 

@@ -412,7 +412,7 @@ export default function Footer() {
 
                 {/* 7. Quora */}
                 <a
-                  href="https://quora.com/topic/MANSCAPED"
+                  href="https://quora.com/topic/MANFRESH"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Quora"
@@ -425,7 +425,7 @@ export default function Footer() {
 
                 {/* 8. Twitch */}
                 <a
-                  href="https://twitch.tv/manscaped"
+                  href="https://twitch.tv/manfresh"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Twitch"
@@ -446,12 +446,12 @@ export default function Footer() {
           {/* Right Column: Newsletter Signup */}
           <div className="lg:col-span-5 flex flex-col justify-start">
             <h4 className="text-white text-[17px] sm:text-[19px] font-bold mb-4 tracking-tight">
-              Get early access to new products
+              Nhận thông tin ưu đãi và sản phẩm mới sớm nhất
             </h4>
 
             {subscribed ? (
               <div className="bg-[#b88243]/20 border border-[#b88243] rounded p-4 text-[#c59b63] text-sm">
-                Thank you for subscribing to MANSCAPED updates!
+                Cảm ơn bạn đã đăng ký nhận thông tin từ MANFRESH!
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="w-full">
@@ -462,7 +462,7 @@ export default function Footer() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="YOUR EMAIL*"
+                    placeholder="NHẬP EMAIL CỦA BẠN*"
                     className="w-full bg-black border border-neutral-700 focus:border-white rounded-[2px] px-4 py-3.5 text-white placeholder:text-neutral-500 text-[12px] sm:text-[13px] tracking-wider uppercase outline-none transition-colors"
                   />
                 </div>
@@ -472,12 +472,12 @@ export default function Footer() {
                   type="submit"
                   className="mt-4 bg-[#b88243] hover:bg-[#a67438] active:scale-98 text-white font-bold text-[14px] sm:text-[15px] px-10 py-3 rounded-full transition-all duration-200 cursor-pointer shadow-sm tracking-wide"
                 >
-                  Submit
+                  Đăng ký ngay
                 </button>
 
                 {/* Disclaimer */}
                 <p className="text-[12px] text-neutral-400 leading-relaxed mt-4">
-                  By entering your email you agree to receive emails from MANSCAPED® about its products, offers and promotions. You can unsubscribe at anytime.
+                  Bằng việc nhập email, bạn đồng ý nhận thông tin về sản phẩm, ưu đãi và chương trình khuyến mãi từ MANFRESH®. Bạn có thể hủy đăng ký bất cứ lúc nào.
                 </p>
               </form>
             )}
@@ -491,7 +491,7 @@ export default function Footer() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <span className="text-2xl sm:text-[26px] font-black tracking-widest text-white uppercase font-sans">
-              MANSCAPED
+              MANFRESH
             </span>
           </div>
 

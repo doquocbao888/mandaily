@@ -13,40 +13,40 @@ interface QuickSearchModalProps {
   onClose: () => void;
 }
 
-// Exact 4 trending items from Manscaped's reference screenshot (image_521decfc.png)
+// Exact 4 trending items from reference screenshot
 const TRENDING_PRODUCTS = [
   {
     id: 'lawn-mower-ultra-6',
     title: 'The Lawn Mower® Ultra Gen 6',
-    subtitle: 'Ultimate Ball & Body Hair Trimmer',
-    price: '$119.99',
-    badge: 'New',
+    subtitle: 'Tông đơ cắt tỉa lông vùng kín & toàn thân cao cấp',
+    price: '1.490.000đ',
+    badge: 'MỚI',
     badgeBg: 'bg-[#192638]',
     imageSrc: '/assets/aistudio/search_dropdown_mower_6.png',
   },
   {
     id: 'the-performance-package-ultra-6',
     title: 'The Performance Package Ultra Gen 6',
-    subtitle: 'Deluxe Full Body Grooming Kit',
-    price: '$179.99',
-    badge: 'New',
+    subtitle: 'Bộ combo chăm sóc toàn thân chuyên nghiệp',
+    price: '2.190.000đ',
+    badge: 'MỚI',
     badgeBg: 'bg-[#192638]',
     imageSrc: '/assets/aistudio/search_dropdown_perf_pkg_6.png',
   },
   {
     id: 'lawn-mower-5-ultra',
     title: 'The Lawn Mower® 5.0 Ultra',
-    subtitle: 'Groin & Body Hair Trimmer',
-    price: '$109.99',
-    badge: 'Best Seller',
+    subtitle: 'Tông đơ vùng kín & toàn thân SkinSafe™',
+    price: '1.290.000đ',
+    badge: 'BÁN CHẠY',
     badgeBg: 'bg-[#985a12]',
     imageSrc: '/assets/aistudio/search_dropdown_mower_5.png',
   },
   {
     id: 'lawn-mower-3-plus',
     title: 'The Lawn Mower® 3.0 Plus',
-    subtitle: 'Advanced Ball & Body Hair Trimmer',
-    price: '$69.99',
+    subtitle: 'Tông đơ nhỏ gọn linh hoạt cho phái mạnh',
+    price: '890.000đ',
     badge: null,
     badgeBg: '',
     imageSrc: '/assets/aistudio/search_dropdown_mower_3.png',
@@ -54,11 +54,11 @@ const TRENDING_PRODUCTS = [
 ];
 
 const SUGGESTED_KEYWORDS = [
-  'Shaving Kit',
-  'Lawn Mower',
-  'Beard Hedger',
-  'Performance Package',
-  'Crop Preserver',
+  'Combo ưu đãi',
+  'Lawn Mower Gen 6',
+  'Tông đơ râu & mặt',
+  'Dao cạo SkinSafe',
+  'Sữa tắm khử mùi',
 ];
 
 export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalProps) {
@@ -142,7 +142,7 @@ export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalPr
                 type="button"
                 onClick={handleClose}
                 className="p-2 text-neutral-600 hover:text-black transition-colors rounded-full hover:bg-neutral-200/50 cursor-pointer"
-                aria-label="Close search"
+                aria-label="Đóng tìm kiếm"
               >
                 <X className="w-5 h-5 sm:w-6 sm:h-6 stroke-[1.8]" />
               </button>
@@ -158,7 +158,7 @@ export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalPr
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Try “Shaving Kit”"
+                  placeholder="Thử tìm “Bộ dao cạo”, “Lawn Mower”..."
                   className="w-full bg-transparent text-neutral-900 placeholder:text-neutral-500 text-sm sm:text-[15px] font-normal px-3 outline-none"
                 />
                 {searchTerm && (
@@ -166,7 +166,7 @@ export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalPr
                     type="button"
                     onClick={() => setSearchTerm('')}
                     className="p-1 rounded-full text-neutral-500 hover:text-black hover:bg-neutral-200/70 transition"
-                    aria-label="Clear input"
+                    aria-label="Xóa nội dung"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -177,7 +177,7 @@ export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalPr
               {!normalized && (
                 <div className="mt-6 sm:mt-8">
                   <h3 className="text-xs sm:text-[13px] font-semibold text-neutral-800 tracking-wide mb-4">
-                    Trending
+                    Xu hướng tìm kiếm
                   </h3>
 
                   {/* 4-Product Horizontal Grid */}

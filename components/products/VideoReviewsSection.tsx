@@ -15,7 +15,7 @@ const REVIEWS: VideoReview[] = [
     compactPoster: '/assets/aistudio/review_pierre_compact.png',
     largePoster: '/assets/aistudio/review_pierredalati.png',
     videoUrl: 'https://www.youtube.com/shorts/9bZkp7q19f0',
-    quote: 'The Lawn Mower 6.0 is hands down the best trimmer I have used. Zero tugging, super smooth on sensitive skin.'
+    quote: 'The Lawn Mower 6.0 chắc chắn là chiếc tông đơ tốt nhất tôi từng sử dụng. Hoàn toàn không giật lông, lướt siêu êm trên vùng da nhạy cảm.'
   },
   {
     id: 'blaiseffrench',
@@ -24,7 +24,7 @@ const REVIEWS: VideoReview[] = [
     compactPoster: '/assets/aistudio/review_blaiseffrench.png',
     largePoster: '/assets/aistudio/review_blaise_large.png',
     videoUrl: 'https://www.youtube.com/shorts/3JZ_D3ELwOQ',
-    quote: 'Design, ergonomics, and battery life are unmatched. It feels luxury in your hand.'
+    quote: 'Thiết kế công thái học và thời lượng pin đều không có đối thủ. Cầm trên tay có cảm giác cực kỳ sang trọng.'
   },
   {
     id: 'caleighmackenzie',
@@ -33,7 +33,7 @@ const REVIEWS: VideoReview[] = [
     compactPoster: '/assets/aistudio/review_caleighmackenzie.png',
     largePoster: '/assets/aistudio/review_caleigh_large.png',
     videoUrl: 'https://www.youtube.com/shorts/jfKfPfyJRdk',
-    quote: 'Got this as a gift and we both love it. 100% waterproof and remarkably quiet.'
+    quote: 'Mình mua làm quà tặng và cả hai đều mê mẩn. Chống nước 100% và động cơ hoạt động cực kỳ êm ái.'
   }
 ];
 

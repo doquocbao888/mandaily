@@ -18,6 +18,7 @@ import Header from '@/components/header/Header';
 import SuperBanner from '@/components/header/SuperBanner';
 import Footer from '@/components/header/Footer';
 import { subscribeProducts } from '@/lib/dbService';
+import { formatVND, parseVND } from '@/lib/formatters';
 import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 
 const CATEGORIES = [
@@ -33,33 +34,33 @@ const CATEGORY_META: Record<
   { kicker: string; title: string; desc: string; bannerImg: string }
 > = {
   deals: {
-    kicker: 'ALL OVER ESSENTIALS.',
-    title: 'Deals & Kits',
-    desc: 'Say goodbye to awkward grooming moments. Our men’s grooming kits have the tools you need to stay sharp, fresh, and ready for anything.',
+    kicker: 'BỘ SƯU TẬP & COMBO ĐẶC BIỆT.',
+    title: 'Khuyến mãi & Combo',
+    desc: 'Tạm biệt những khoảnh khắc chăm sóc bất tiện. Bộ sản phẩm grooming của chúng tôi có đầy đủ dụng cụ giúp bạn luôn lịch lãm, sảng khoái và tự tin.',
     bannerImg: '/assets/aistudio/manscaped_deals_banner_right.jpg',
   },
   groin: {
-    kicker: 'SKINSAFE™ PRECISION.',
-    title: 'Groin Grooming',
-    desc: 'Engineered for below-the-waist care. Advanced SkinSafe™ ceramic blades, quiet 7,000 RPM motor, and IPX7 waterproof durability.',
+    kicker: 'CÔNG NGHỆ SKINSAFE™ CHÍNH XÁC.',
+    title: 'Chăm sóc vùng nhạy cảm',
+    desc: 'Được thiết kế chuyên biệt cho vùng dưới. Lưỡi dao gốm SkinSafe™ tiên tiến, động cơ 7.000 vòng/phút êm ái và chống nước IPX7.',
     bannerImg: '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg',
   },
   beard: {
-    kicker: 'PRO SHAVING & STYLING.',
-    title: 'Beard & Face',
-    desc: 'From 5 o’clock shadows to full lumberjack majesty. Shape, trim, and sculpt with unmatched rotary precision.',
+    kicker: 'CẠO & TẠO KIỂU CHUYÊN NGHIỆP.',
+    title: 'Râu & Khuôn mặt',
+    desc: 'Từ râu quai nón đến phong cách lịch lãm. Cắt, tỉa và tạo kiểu với độ chính xác tuyệt đối.',
     bannerImg: '/assets/aistudio/the-beard-balls-and-strays-bundle_product_desktop_255fa9af.jpg',
   },
   body: {
-    kicker: 'HEAD TO TOE HYGIENE.',
-    title: 'Head & Body',
-    desc: 'Complete full-body cleanliness with formulations and precision clippers that leave you smelling heroic all day long.',
+    kicker: 'VỆ SINH TOÀN DIỆN TỪ ĐẦU ĐẾN CHÂN.',
+    title: 'Toàn thân',
+    desc: 'Làm sạch toàn thân hoàn hảo với các dòng dung dịch vệ sinh và tông đơ chính xác giúp bạn luôn thơm tho suốt cả ngày.',
     bannerImg: '/assets/aistudio/homepage-superbowl_category-head-and-body_25ee9350.jpg',
   },
   all: {
-    kicker: 'ALL OVER ESSENTIALS.',
-    title: 'Deals & Kits',
-    desc: 'Say goodbye to awkward grooming moments. Our men’s grooming kits have the tools you need to stay sharp, fresh, and ready for anything.',
+    kicker: 'BỘ SƯU TẬP & COMBO ĐẶC BIỆT.',
+    title: 'Khuyến mãi & Combo',
+    desc: 'Tạm biệt những khoảnh khắc chăm sóc bất tiện. Bộ sản phẩm grooming của chúng tôi có đầy đủ dụng cụ giúp bạn luôn lịch lãm, sảng khoái và tự tin.',
     bannerImg: '/assets/aistudio/manscaped_deals_banner_right.jpg',
   },
 };
@@ -116,35 +117,35 @@ function ProductsCatalogContent() {
       });
     }
 
-    // Filter by Price range
+    // Filter by Price range in VND
     if (priceFilter === 'under-50') {
       list = list.filter((p) => {
-        const price = parseFloat((p.regularPrice || p.vipPrice).replace('$', '')) || 0;
-        return price < 50;
+        const price = parseVND(p.regularPrice || p.vipPrice);
+        return price < 500000;
       });
     } else if (priceFilter === '50-150') {
       list = list.filter((p) => {
-        const price = parseFloat((p.regularPrice || p.vipPrice).replace('$', '')) || 0;
-        return price >= 50 && price <= 150;
+        const price = parseVND(p.regularPrice || p.vipPrice);
+        return price >= 500000 && price <= 1500000;
       });
     } else if (priceFilter === 'over-150') {
       list = list.filter((p) => {
-        const price = parseFloat((p.regularPrice || p.vipPrice).replace('$', '')) || 0;
-        return price > 150;
+        const price = parseVND(p.regularPrice || p.vipPrice);
+        return price > 1500000;
       });
     }
 
     // Sort
     if (sortBy === 'price-asc') {
       list.sort((a, b) => {
-        const pA = parseFloat((a.regularPrice || a.vipPrice).replace('$', '')) || 0;
-        const pB = parseFloat((b.regularPrice || b.vipPrice).replace('$', '')) || 0;
+        const pA = parseVND(a.regularPrice || a.vipPrice);
+        const pB = parseVND(b.regularPrice || b.vipPrice);
         return pA - pB;
       });
     } else if (sortBy === 'price-desc') {
       list.sort((a, b) => {
-        const pA = parseFloat((a.regularPrice || a.vipPrice).replace('$', '')) || 0;
-        const pB = parseFloat((b.regularPrice || b.vipPrice).replace('$', '')) || 0;
+        const pA = parseVND(a.regularPrice || a.vipPrice);
+        const pB = parseVND(b.regularPrice || b.vipPrice);
         return pB - pA;
       });
     } else if (sortBy === 'rating') {
@@ -298,9 +299,9 @@ function ProductsCatalogContent() {
                   <div className="flex flex-wrap gap-2">
                     {[
                       { id: 'all', label: 'Tất cả mức giá' },
-                      { id: 'under-50', label: 'Dưới $50' },
-                      { id: '50-150', label: '$50 - $150' },
-                      { id: 'over-150', label: 'Trên $150' },
+                      { id: 'under-50', label: 'Dưới 500.000đ' },
+                      { id: '50-150', label: '500.000đ - 1.500.000đ' },
+                      { id: 'over-150', label: 'Trên 1.500.000đ' },
                     ].map((p) => {
                       const active = priceFilter === p.id;
                       return (
@@ -345,7 +346,7 @@ function ProductsCatalogContent() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {filteredAndSortedProducts.map((product) => {
-              const displayPrice = product.regularPrice || product.vipPrice;
+              const displayPrice = formatVND(product.regularPrice || product.vipPrice);
 
               return (
                 <div key={product.id} className="group flex flex-col">
@@ -405,7 +406,7 @@ function ProductsCatalogContent() {
               <Truck className="w-5 h-5" />
             </div>
             <h4 className="font-bold text-sm text-neutral-900">Miễn Phí Giao Hàng Toàn Quốc</h4>
-            <p className="text-xs text-neutral-500 max-w-xs">Áp dụng cho mọi đơn hàng từ $49, đóng gói kín đáo.</p>
+            <p className="text-xs text-neutral-500 max-w-xs">Áp dụng cho mọi đơn hàng từ 500.000đ, đóng gói kín đáo.</p>
           </div>
 
           <div className="flex flex-col items-center space-y-2">

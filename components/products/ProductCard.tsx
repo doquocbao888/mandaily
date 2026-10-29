@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { type ProductItem } from '@/config/products';
+import { formatVND } from '@/lib/formatters';
 
 interface ProductCardProps {
   product: ProductItem;
@@ -19,12 +20,12 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Badges */}
         {product.badge?.toLowerCase().includes('new') && (
           <span className="absolute top-3 left-3 z-10 bg-[#1c2c4c] text-white text-[11px] font-bold px-2 py-0.5 rounded-[2px] tracking-wider shadow-xs">
-            New
+            MỚI
           </span>
         )}
         {product.badge?.toLowerCase().includes('sale') && (
           <span className="absolute top-3 right-3 z-10 bg-[#cc1414] text-white text-[11px] font-bold px-2 py-0.5 rounded-[2px] tracking-wider shadow-xs">
-            Sale
+            GIẢM GIÁ
           </span>
         )}
 
@@ -53,10 +54,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.subtitle}
         </p>
 
-        {/* Pricing */}
+        {/* Pricing in VND */}
         <div className="flex items-baseline gap-2 pt-2 text-sm sm:text-base">
           <span className="text-neutral-900 font-bold text-base sm:text-lg">
-            {product.regularPrice || product.vipPrice}
+            {formatVND(product.regularPrice || product.vipPrice)}
           </span>
         </div>
       </div>

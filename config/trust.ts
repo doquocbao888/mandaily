@@ -16,24 +16,24 @@ export const trustBarConfig: TrustBarConfig = {
   items: [
     {
       id: 'money-back',
-      iconSrc: '/assets/trust-money-back.png',
+      iconSrc: '/assets/trust-money-back.svg',
       iconWidth: 32,
       iconHeight: 32,
-      text: 'Money-Back Guarantee',
+      text: 'Cam kết hoàn tiền',
     },
     {
       id: 'shipping',
-      iconSrc: '/assets/trust-shipping.png',
+      iconSrc: '/assets/trust-shipping.svg',
       iconWidth: 38,
       iconHeight: 32,
-      text: 'Free Shipping Over $49',
+      text: 'Miễn phí giao hàng từ 499k',
     },
     {
       id: 'warranty',
-      iconSrc: '/assets/trust-warranty.png',
+      iconSrc: '/assets/trust-warranty.svg',
       iconWidth: 30,
       iconHeight: 32,
-      text: '2-Year Warranty',
+      text: 'Bảo hành chính hãng 2 năm',
     },
   ],
 };

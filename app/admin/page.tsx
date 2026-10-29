@@ -34,6 +34,7 @@ import {
 import { featuredProductsConfig, type ProductItem, type VideoReviewItem } from '@/config/products';
 import MediaManager from '@/components/admin/MediaManager';
 import ProductImagePicker from '@/components/admin/ProductImagePicker';
+import { formatVND } from '@/lib/formatters';
 import { 
   subscribeProducts, 
   subscribeOrders, 
@@ -98,8 +99,8 @@ export default function AdminPage() {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newSubtitle, setNewSubtitle] = useState('');
-  const [newVipPrice, setNewVipPrice] = useState('$109.99');
-  const [newRegularPrice, setNewRegularPrice] = useState('$119.99');
+  const [newVipPrice, setNewVipPrice] = useState('450.000đ');
+  const [newRegularPrice, setNewRegularPrice] = useState('500.000đ');
   const [newDetailedDescription, setNewDetailedDescription] = useState('');
   const [newImageSrc, setNewImageSrc] = useState('/assets/aistudio/30-00006-NA_f201a618.png');
   const [newThumbnailsText, setNewThumbnailsText] = useState('/assets/aistudio/30-00006-NA_f201a618.png\n/assets/aistudio/25aaeee852d4_1a4c043f.webp\n/assets/aistudio/b72c1da980f6_e399d627.webp');
@@ -326,7 +327,7 @@ export default function AdminPage() {
         compactPoster: '/assets/aistudio/review_pierre_compact.png',
         largePoster: '/assets/aistudio/review_pierredalati.png',
         videoUrl: 'https://www.youtube.com/shorts/9bZkp7q19f0',
-        quote: 'The Lawn Mower 6.0 is hands down the best trimmer I have used. Zero tugging, super smooth on sensitive skin.'
+        quote: 'The Lawn Mower 6.0 chắc chắn là tông đơ đỉnh nhất tôi từng dùng. Không hề kéo rứt lông, cực kỳ êm ái trên vùng da nhạy cảm.'
       },
       {
         id: 'review-2',
@@ -335,7 +336,7 @@ export default function AdminPage() {
         compactPoster: '/assets/aistudio/review_blaiseffrench.png',
         largePoster: '/assets/aistudio/review_blaise_large.png',
         videoUrl: 'https://www.youtube.com/shorts/3JZ_D3ELwOQ',
-        quote: 'Design, ergonomics, and battery life are unmatched. It feels luxury in your hand.'
+        quote: 'Thiết kế công thái học và pin xuất sắc. Cầm trên tay mang lại cảm giác sang trọng, đẳng cấp phái mạnh.'
       },
       {
         id: 'review-3',
@@ -344,7 +345,7 @@ export default function AdminPage() {
         compactPoster: '/assets/aistudio/review_caleighmackenzie.png',
         largePoster: '/assets/aistudio/review_caleigh_large.png',
         videoUrl: 'https://www.youtube.com/shorts/jfKfPfyJRdk',
-        quote: 'Got this as a gift and we both love it. 100% waterproof and remarkably quiet.'
+        quote: 'Quà tặng hoàn hảo cho chàng! Máy chống nước 100%, chạy siêu êm và cạo rất sạch sẽ.'
       }
     ];
 
@@ -441,7 +442,7 @@ export default function AdminPage() {
             <div className="w-16 h-16 bg-amber-600/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
               <ShieldCheck className="w-8 h-8" />
             </div>
-            <h1 className="text-2xl font-bold tracking-tight">MANSCAPED ADMIN</h1>
+            <h1 className="text-2xl font-bold tracking-tight">MANFRESH ADMIN</h1>
             <p className="text-xs text-neutral-400 mt-1">Đăng nhập hệ thống quản trị nội bộ</p>
           </div>
 
@@ -507,7 +508,7 @@ export default function AdminPage() {
           <div className="p-6 border-b border-neutral-800 flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl bg-amber-600 flex items-center justify-center font-bold text-lg">M</div>
             <div>
-              <span className="font-bold text-sm tracking-wide block">MANSCAPED</span>
+              <span className="font-bold text-sm tracking-wide block">MANFRESH</span>
               <span className="text-[10px] text-amber-500 font-semibold uppercase tracking-widest">Admin Portal</span>
             </div>
           </div>
@@ -763,7 +764,7 @@ export default function AdminPage() {
                       <div>
                         <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">Tổng doanh thu</p>
                         <h3 className="text-2xl font-extrabold text-neutral-900 mt-1">
-                          ${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {formatVND(totalRevenue)}
                         </h3>
                         {totalRevenue > 0 ? (
                           <span className="text-xs text-emerald-600 font-semibold mt-1 inline-block">
@@ -848,6 +849,7 @@ export default function AdminPage() {
                     <thead>
                       <tr className="border-b border-neutral-100 text-xs text-neutral-500 uppercase">
                         <th className="pb-3 font-semibold">Mã đơn</th>
+                        <th className="pb-3 font-semibold">Thời gian đặt</th>
                         <th className="pb-3 font-semibold">Khách hàng</th>
                         <th className="pb-3 font-semibold">Sản phẩm</th>
                         <th className="pb-3 font-semibold">Tổng tiền</th>
@@ -858,17 +860,23 @@ export default function AdminPage() {
                     <tbody className="divide-y divide-neutral-100">
                       {orders.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="py-6 text-center text-xs text-neutral-400">
+                          <td colSpan={7} className="py-6 text-center text-xs text-neutral-400">
                             Chưa có đơn hàng nào
                           </td>
                         </tr>
                       ) : (
                         orders.slice(0, 5).map((order) => (
                           <tr key={order.id} className="hover:bg-neutral-50">
-                            <td className="py-3 font-bold text-neutral-900">{order.id}</td>
+                            <td className="py-3 font-bold text-neutral-900 font-mono text-xs">{order.id}</td>
+                            <td className="py-3 whitespace-nowrap text-xs text-neutral-600">
+                              <span className="inline-flex items-center space-x-1 text-neutral-700 font-medium bg-neutral-100 px-2 py-0.5 rounded">
+                                <Clock className="w-3 h-3 text-amber-600 inline" />
+                                <span>{order.createdAt || 'Mới đặt'}</span>
+                              </span>
+                            </td>
                             <td className="py-3 text-neutral-700">{order.customerName}</td>
                             <td className="py-3 text-neutral-600">{order.productName}</td>
-                            <td className="py-3 font-semibold text-amber-700">{order.totalPrice}</td>
+                            <td className="py-3 font-semibold text-amber-700">{formatVND(order.totalPrice)}</td>
                             <td className="py-3">
                               <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                                 order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
@@ -996,8 +1004,8 @@ export default function AdminPage() {
                             </td>
                             <td className="p-4 font-bold text-neutral-900">{p.title}</td>
                             <td className="p-4 text-neutral-600 text-xs max-w-xs truncate">{p.subtitle}</td>
-                            <td className="p-4 font-bold text-neutral-900">{p.regularPrice || p.vipPrice}</td>
-                            <td className="p-4 text-neutral-500">{p.vipPrice || p.regularPrice}</td>
+                            <td className="p-4 font-bold text-neutral-900">{formatVND(p.regularPrice || p.vipPrice)}</td>
+                            <td className="p-4 text-neutral-500">{formatVND(p.vipPrice || p.regularPrice)}</td>
                             <td className="p-4 text-right space-x-2">
                               <button
                                 onClick={() => handleOpenEditModal(p)}
@@ -1056,6 +1064,7 @@ export default function AdminPage() {
                   <thead className="bg-neutral-50 border-b border-neutral-200 text-xs text-neutral-500 uppercase">
                     <tr>
                       <th className="p-4 font-semibold">Mã đơn</th>
+                      <th className="p-4 font-semibold">Thời gian đặt</th>
                       <th className="p-4 font-semibold">Khách hàng</th>
                       <th className="p-4 font-semibold">Sản phẩm đặt</th>
                       <th className="p-4 font-semibold">Tổng tiền</th>
@@ -1066,7 +1075,7 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-neutral-100">
                     {orders.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-10 text-center text-neutral-400 text-sm">
+                        <td colSpan={7} className="p-10 text-center text-neutral-400 text-sm">
                           Chưa có đơn hàng nào trong cơ sở dữ liệu.
                         </td>
                       </tr>
@@ -1075,7 +1084,13 @@ export default function AdminPage() {
                         .filter(o => o.customerName.toLowerCase().includes(searchOrder.toLowerCase()) || o.id.toLowerCase().includes(searchOrder.toLowerCase()))
                         .map((order) => (
                           <tr key={order.id} className="hover:bg-neutral-50/80 transition-colors">
-                            <td className="p-4 font-bold text-neutral-900">{order.id}</td>
+                            <td className="p-4 font-bold text-neutral-900 font-mono text-xs">{order.id}</td>
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="inline-flex items-center space-x-1.5 text-neutral-800 text-xs font-semibold bg-amber-50/80 border border-amber-200/80 px-2.5 py-1.5 rounded-lg">
+                                <Clock className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                                <span>{order.createdAt || 'Mới đặt'}</span>
+                              </div>
+                            </td>
                             <td className="p-4">
                               <span className="font-semibold text-neutral-900 block">{order.customerName}</span>
                               <span className="text-xs text-neutral-500">{order.phone} • {order.address}</span>
@@ -1084,7 +1099,7 @@ export default function AdminPage() {
                               <span className="font-medium text-neutral-800 block">{order.productName}</span>
                               <span className="text-xs text-neutral-500">{order.variant} (SL: {order.quantity})</span>
                             </td>
-                            <td className="p-4 font-bold text-amber-700">{order.totalPrice}</td>
+                            <td className="p-4 font-bold text-amber-700">{formatVND(order.totalPrice)}</td>
                             <td className="p-4">
                               <span className={`px-2.5 py-1 rounded-full text-xs font-bold inline-block ${
                                 order.status === 'Đã giao' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
