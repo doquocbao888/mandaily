@@ -48,84 +48,75 @@ export default function ProductImagePicker({
 
   if (thumbnailsText !== undefined) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Main Image */}
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500 mb-2">
-            Ảnh đại diện chính (Main Image)
+          <label className="block text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">
+            Ảnh đại diện chính
           </label>
-          <div className="flex items-center justify-between gap-4 bg-neutral-900 border border-neutral-700 rounded-2xl p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-xl bg-neutral-800 border border-neutral-700 overflow-hidden flex items-center justify-center p-1 shadow-inner">
-                {currentMain ? (
-                  <img src={currentMain} alt="Main preview" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
-                ) : (
-                  <ImageIcon className="w-7 h-7 text-neutral-500" />
-                )}
-              </div>
-              <div>
-                <span className="block text-sm font-bold text-white">Ảnh chính sản phẩm</span>
-                <span className="block text-xs text-neutral-400 mt-0.5">Hiển thị làm hình đại diện ngoài danh mục &amp; trang chủ</span>
-              </div>
+          <div className="flex items-center gap-4 bg-neutral-950 border border-neutral-800 rounded-xl p-3">
+            <div className="w-16 h-16 rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden flex items-center justify-center p-1">
+              {currentMain ? (
+                <img src={currentMain} alt="Main preview" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+              ) : (
+                <ImageIcon className="w-6 h-6 text-neutral-600" />
+              )}
             </div>
-
+            <div className="flex-grow">
+              <span className="block text-sm font-semibold text-white">Hình đại diện sản phẩm</span>
+              <span className="block text-xs text-neutral-500 mt-0.5">Xuất hiện trên danh mục & trang chủ</span>
+            </div>
             {onOpenMediaPickerForMain && (
               <button
                 type="button"
                 onClick={onOpenMediaPickerForMain}
-                className="px-5 py-3 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-md flex-shrink-0"
+                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold rounded-lg transition-colors"
               >
-                <ImageIcon className="w-4 h-4" />
-                <span>Chọn ảnh từ thư viện</span>
+                Thay đổi
               </button>
             )}
           </div>
         </div>
 
-        {/* Thumbnails (Clean Grid without URL text inputs) */}
+        {/* Thumbnails */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-neutral-500">
-              Ảnh phụ &amp; Thư viện sản phẩm ({thumbnailList.length} ảnh)
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-bold uppercase tracking-widest text-neutral-400">
+              Ảnh phụ & Thư viện ({thumbnailList.length})
             </label>
           </div>
 
-          {/* Grid of small image previews */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
             {thumbnailList.map((url, idx) => (
               <div
                 key={idx}
-                className="group relative aspect-square bg-neutral-900 border border-neutral-700 rounded-2xl overflow-hidden p-2 flex items-center justify-center shadow-sm hover:border-amber-500 transition-all"
+                className="group relative aspect-square bg-neutral-900 border border-neutral-800 rounded-lg overflow-hidden flex items-center justify-center p-1 shadow-sm hover:border-neutral-600 transition-all"
               >
                 <img
                   src={url}
                   alt={`Thumbnail ${idx + 1}`}
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-cover rounded"
                   referrerPolicy="no-referrer"
                 />
                 <button
                   type="button"
                   onClick={() => removeThumbnail(idx)}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md cursor-pointer"
+                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
                   title="Xóa ảnh này"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-5 h-5 text-white" />
                 </button>
-                <span className="absolute bottom-1.5 left-2 bg-black/70 text-white text-[10px] font-mono px-1.5 py-0.5 rounded">
-                  #{idx + 1}
-                </span>
               </div>
             ))}
 
-            {/* Add button tile */}
             {onOpenMediaPickerForThumb && (
               <button
                 type="button"
                 onClick={onOpenMediaPickerForThumb}
-                className="aspect-square bg-neutral-900 hover:bg-neutral-800 border-2 border-dashed border-neutral-700 hover:border-amber-500 rounded-2xl flex flex-col items-center justify-center text-neutral-400 hover:text-amber-500 transition-all cursor-pointer gap-1.5 shadow-sm"
+                className="aspect-square bg-neutral-900 border border-dashed border-neutral-800 rounded-lg flex flex-col items-center justify-center text-neutral-500 hover:text-white hover:border-neutral-600 transition-all gap-1"
               >
                 <Plus className="w-6 h-6" />
-                <span className="text-xs font-bold">Thêm ảnh phụ</span>
+                <span className="text-[10px] font-semibold">Thêm</span>
               </button>
             )}
           </div>
