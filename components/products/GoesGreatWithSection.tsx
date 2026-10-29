@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CarouselPillNavigation from '@/components/common/CarouselPillNavigation';
 import SectionHeader from '@/components/common/SectionHeader';
 import { featuredProductsConfig2, type ProductItem } from '@/config/products';
-import { formatVND } from '@/lib/formatters';
+import { formatVND, getProductPrices } from '@/lib/formatters';
 
 interface GoesGreatWithSectionProps {
   currentProductId?: string;
@@ -240,12 +240,25 @@ export default function GoesGreatWithSection({
                       {product.subtitle}
                     </p>
 
-                    {/* Clean Pricing in VND */}
-                    <div className="flex items-baseline gap-2 pt-2.5 text-xs sm:text-sm">
-                      <span className="text-neutral-900 font-bold text-sm sm:text-base">
-                        {formatVND(product.regularPrice || product.vipPrice)}
-                      </span>
-                    </div>
+                    {/* Clean Pricing in VND: 1 giá gốc gạch và làm mờ + 1 giá khuyến mãi */}
+                    {(() => {
+                      const { salePrice, originalPrice, discountPercent } = getProductPrices(product.vipPrice, product.regularPrice);
+                      return (
+                        <div className="flex items-baseline gap-2 pt-2 text-xs sm:text-sm flex-wrap">
+                          <span className="text-neutral-900 font-bold text-sm sm:text-base">
+                            {salePrice}
+                          </span>
+                          <span className="text-neutral-400 line-through text-[11px] sm:text-xs font-normal">
+                            {originalPrice}
+                          </span>
+                          {discountPercent && (
+                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1 py-0.2 rounded">
+                              -{discountPercent}%
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Discount Notice (if Sale) */}
                     {isSale && (

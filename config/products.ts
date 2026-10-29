@@ -17,11 +17,22 @@ export interface VideoReviewItem {
   quote?: string;
 }
 
+export interface PackageItem {
+  id: string;
+  name: string;
+  subtitle?: string;
+  imageSrc: string;
+  isGift?: boolean;
+  description?: string;
+}
+
 export interface ProductItem {
   id: string;
   orderIndex?: number;
   title: string;
   subtitle: string;
+  category?: string;
+  categories?: string[];
   categoryPath: string[];
   vipPrice: string;
   regularPrice: string;
@@ -47,6 +58,7 @@ export interface ProductItem {
   warrantyText: string;
   detailedDescription?: string;
   videoReviews?: VideoReviewItem[];
+  packageIncludes?: PackageItem[];
 }
 
 export interface FeaturedProductsConfig {
@@ -117,7 +129,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml', 'Tặng kèm Túi Đựng Chống Nước Du Lịch'],
       cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1',
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1',
       detailedDescription: `Tất cả những gì bạn cần để chăm sóc cơ thể gọn gàng, sạch sẽ và tự tin tuyệt đối.\n\n<strong>TRỌN BỘ SẢN PHẨM BAO GỒM</strong>\n• Tông đơ cắt tỉa lông vùng kín & toàn thân <strong>The Lawn Mower® Ultra Gen 6</strong>\n• Tông đơ tỉa lông mũi, tai & lông mày điện tử <strong>Weed Whacker® 3.0 Pro</strong>\n• Gel tẩy tế bào chết & làm sạch dịu nhẹ <strong>Ball Scrub</strong>\n• Gel cạo râu chống trầy xước không bọt <strong>Ball Shave Gel</strong>\n• Lăn khử mùi & chống hăm <strong>Ball Deo</strong> hương Warm Amber Night sang trọng\n\n<strong>QUÀ TẶNG KÈM MIỄN PHÍ</strong>\n• Thảm cạo dùng một lần <strong>Magic Mat®</strong>\n• Quần lót nam cao cấp <strong>Boxers 2.0</strong> (trị giá 350.000đ)\n• Túi đựng cá nhân chống nước cao cấp <strong>The Shed 2.0</strong> (trị giá 400.000đ)`
     },
     {
@@ -200,7 +212,7 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng Crop Preserver 100ml', 'Tặng Hộp Đựng Hạng Sang (Luxe Case)'],
       cashbackText: 'Được hoàn lên đến 85.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
     }
   ],
 };
@@ -300,7 +312,7 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng Dung Dịch Cạo Râu 100ml', 'Tặng Túi Du Lịch'],
       cashbackText: 'Được hoàn lên đến 75.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
     },
     {
       id: 'beard-hedger',
@@ -338,7 +350,7 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng Lược Chải Râu Chuyên Dụng'],
       cashbackText: 'Được hoàn lên đến 45.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
     },
     {
       id: 'beard-balls-strays',
@@ -376,7 +388,7 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       ],
       gifts: ['Tặng Túi Đựng Hạng Sang (Luxe Travel Bag)', 'Tặng Khăn Chuyên Dụng'],
       cashbackText: 'Được hoàn lên đến 100.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
     },
     {
       id: 'ball-scrub',
@@ -429,7 +441,7 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
       variants: [],
       gifts: [],
       cashbackText: 'Được hoàn lên đến 30.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG'
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM'
     },
     {
       id: 'boxers-2',
@@ -487,6 +499,17 @@ export const featuredProductsConfig2: FeaturedProductsConfig = {
 };
 
 export function getProductById(id: string): ProductItem | undefined {
-  return featuredProductsConfig2.products.find((p) => p.id === id);
+  if (!id) return undefined;
+  const cleanId = decodeURIComponent(id).trim().toLowerCase();
+  return featuredProductsConfig2.products.find((p) => {
+    const pId = p.id.toLowerCase();
+    const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
+    return (
+      pId === cleanId ||
+      pHrefSlug === cleanId ||
+      p.href?.toLowerCase() === `/products/${cleanId}` ||
+      p.href?.toLowerCase() === cleanId
+    );
+  });
 }
 

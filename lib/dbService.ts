@@ -149,17 +149,46 @@ export function subscribeProductById(
       if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       if (isMounted) {
-        const found = (data.products || []).find((p: ProductItem) => p.id === id);
+        const cleanId = decodeURIComponent(id).trim().toLowerCase();
+        const found = (data.products || []).find((p: ProductItem) => {
+          const pId = p.id.toLowerCase();
+          const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
+          return (
+            pId === cleanId ||
+            pHrefSlug === cleanId ||
+            p.href?.toLowerCase() === `/products/${cleanId}` ||
+            p.href?.toLowerCase() === cleanId
+          );
+        });
         if (found) {
           onData(found);
         } else {
-          const fallback = featuredProductsConfig2.products.find((p) => p.id === id) || null;
+          const fallback = featuredProductsConfig2.products.find((p) => {
+            const pId = p.id.toLowerCase();
+            const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
+            return (
+              pId === cleanId ||
+              pHrefSlug === cleanId ||
+              p.href?.toLowerCase() === `/products/${cleanId}` ||
+              p.href?.toLowerCase() === cleanId
+            );
+          }) || null;
           onData(fallback);
         }
       }
     } catch (err) {
       if (isMounted) {
-        const fallback = featuredProductsConfig2.products.find((p) => p.id === id) || null;
+        const cleanId = decodeURIComponent(id).trim().toLowerCase();
+        const fallback = featuredProductsConfig2.products.find((p) => {
+          const pId = p.id.toLowerCase();
+          const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
+          return (
+            pId === cleanId ||
+            pHrefSlug === cleanId ||
+            p.href?.toLowerCase() === `/products/${cleanId}` ||
+            p.href?.toLowerCase() === cleanId
+          );
+        }) || null;
         onData(fallback);
         if (onError) onError(err);
       }

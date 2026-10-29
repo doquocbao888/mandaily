@@ -149,6 +149,8 @@ export async function initMySQLTables(): Promise<boolean> {
         subtitle VARCHAR(255),
         vipPrice VARCHAR(50),
         regularPrice VARCHAR(50),
+        href VARCHAR(255),
+        category VARCHAR(100),
         imageSrc TEXT,
         thumbnails JSON,
         detailedDescription LONGTEXT,
@@ -164,9 +166,27 @@ export async function initMySQLTables(): Promise<boolean> {
         cashbackText VARCHAR(255),
         warrantyText VARCHAR(255),
         videoReviews JSON,
+        packageIncludes JSON,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Ensure columns exist if table was created previously without them
+    try {
+      await p.query(`ALTER TABLE products ADD COLUMN href VARCHAR(255)`);
+    } catch {
+      // column already exists
+    }
+    try {
+      await p.query(`ALTER TABLE products ADD COLUMN category VARCHAR(100)`);
+    } catch {
+      // column already exists
+    }
+    try {
+      await p.query(`ALTER TABLE products ADD COLUMN packageIncludes JSON`);
+    } catch {
+      // column already exists
+    }
 
     // 2. Orders Table
     await p.query(`

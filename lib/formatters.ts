@@ -25,3 +25,50 @@ export function parseVND(value: number | string | undefined | null): number {
   if (!digits) return 0;
   return parseInt(digits, 10);
 }
+
+export interface ProductPriceDisplay {
+  salePrice: string;
+  originalPrice: string;
+  discountPercent?: number;
+}
+
+export function getProductPrices(
+  vipPrice?: string | number,
+  regularPrice?: string | number
+): ProductPriceDisplay {
+  const p1 = parseVND(vipPrice);
+  const p2 = parseVND(regularPrice);
+
+  let saleNum = 0;
+  let originalNum = 0;
+
+  if (p1 > 0 && p2 > 0) {
+    if (p1 === p2) {
+      saleNum = p1;
+      originalNum = Math.round((p1 * 1.18) / 10000) * 10000;
+    } else {
+      saleNum = Math.min(p1, p2);
+      originalNum = Math.max(p1, p2);
+    }
+  } else if (p1 > 0) {
+    saleNum = p1;
+    originalNum = Math.round((p1 * 1.18) / 10000) * 10000;
+  } else if (p2 > 0) {
+    saleNum = p2;
+    originalNum = Math.round((p2 * 1.18) / 10000) * 10000;
+  } else {
+    saleNum = 450000;
+    originalNum = 500000;
+  }
+
+  const discountPercent =
+    originalNum > saleNum
+      ? Math.round(((originalNum - saleNum) / originalNum) * 100)
+      : undefined;
+
+  return {
+    salePrice: formatVND(saleNum),
+    originalPrice: formatVND(originalNum),
+    discountPercent,
+  };
+}

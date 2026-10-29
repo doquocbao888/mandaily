@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -17,8 +17,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '@/context/CartContext';
-import { featuredProductsConfig2 } from '@/config/products';
-import { formatVND } from '@/lib/formatters';
+import { featuredProductsConfig2, type ProductItem } from '@/config/products';
+import { subscribeProducts } from '@/lib/dbService';
+import { formatVND, getProductPrices } from '@/lib/formatters';
 
 export default function CartDrawer() {
   const router = useRouter();
@@ -34,19 +35,66 @@ export default function CartDrawer() {
   } = useCart();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [allProducts, setAllProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
+
+  useEffect(() => {
+    const unsub = subscribeProducts((data) => {
+      if (data && data.length > 0) {
+        setAllProducts(data);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const freeShippingThreshold = 500000;
   const isFreeShipping = totalPrice >= freeShippingThreshold;
   const progress = Math.min(100, (totalPrice / freeShippingThreshold) * 100);
   const remainingForFree = Math.max(0, freeShippingThreshold - totalPrice);
 
-  // Suggested add-on items for Bundle and Save (Weed Whacker, Shears, Shed)
-  const bundleItems = [
-    featuredProductsConfig2.products.find((p) => p.id === 'weed-whacker-3') || featuredProductsConfig2.products[3],
-    featuredProductsConfig2.products.find((p) => p.id === 'the-shears-3') || featuredProductsConfig2.products[8],
-    featuredProductsConfig2.products.find((p) => p.id === 'the-shed-2') || featuredProductsConfig2.products[6],
-    featuredProductsConfig2.products.find((p) => p.id === 'ball-scrub') || featuredProductsConfig2.products[5],
-  ].filter(Boolean);
+  // Suggested add-on items for "Ưu đãi mua kèm combo" - ONLY items belonging to 'deals' or 'combo' category
+  const bundleItems = useMemo(() => {
+    const isDealsOrCombo = (p: ProductItem) => {
+      const titleLower = (p.title || '').toLowerCase();
+      const catPathLower = (p.categoryPath || []).map((c) => c.toLowerCase());
+      const catStr = [
+        ...(Array.isArray(p.categories) ? p.categories : []),
+        p.category || '',
+        ...catPathLower,
+      ].join(' ').toLowerCase();
+
+      // Explicitly reject non-combo accessories, single tools, formulations or apparel
+      if (
+        titleLower.includes('shears') ||
+        titleLower.includes('shed') ||
+        titleLower.includes('boxers') ||
+        titleLower.includes('scrub') ||
+        titleLower.includes('mat') ||
+        catStr.includes('dụng cụ') ||
+        catStr.includes('apparel') ||
+        catStr.includes('accessories') ||
+        catStr.includes('formulations')
+      ) {
+        return false;
+      }
+
+      // Must belong to Deals, Combo, Package, Bundle, or Kit
+      return (
+        catStr.includes('ưu đãi') ||
+        catStr.includes('combo') ||
+        catStr.includes('deals') ||
+        catStr.includes('kit') ||
+        catStr.includes('bundle') ||
+        catStr.includes('package')
+      );
+    };
+
+    const dealsProducts = allProducts.filter(isDealsOrCombo);
+    // Exclude items currently in cart to encourage buying new combos
+    const cartIds = new Set(cart.map((item) => item.id));
+    const availableDeals = dealsProducts.filter((p) => !cartIds.has(p.id));
+
+    return availableDeals.length > 0 ? availableDeals : dealsProducts;
+  }, [allProducts, cart]);
 
   const handleScrollCarousel = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
@@ -163,7 +211,7 @@ export default function CartDrawer() {
                 </div>
               ) : (
                 <div className="px-4 sm:px-5 space-y-4">
-                  {/* Cart Title & VIP Announcement */}
+                  {/* Cart Title & Announcement */}
                   <div>
                     <h3 className="text-xl sm:text-2xl font-sans font-extrabold text-[#9c631b]">
                       Có {totalItems} sản phẩm trong giỏ hàng
@@ -172,7 +220,7 @@ export default function CartDrawer() {
                       Chăm sóc diện mạo với ưu đãi tốt nhất.
                     </p>
                     <p className="text-[11px] sm:text-xs text-neutral-600 leading-relaxed mt-1">
-                      Gói <span className="underline cursor-pointer font-semibold text-neutral-900">Hội viên VIP</span> giúp bạn tự động nhận bộ lưỡi tông đơ & cạo màng thay thế định kỳ mỗi 3 tháng với mức giá ưu đãi. Có thể tùy chỉnh hoặc hủy bất kỳ lúc nào.
+                      Sản phẩm chính hãng MANFRESH 100%. Bảo hành chính hãng 2 năm 1 đổi 1 và miễn phí giao hàng toàn quốc.
                     </p>
                   </div>
 
@@ -202,8 +250,8 @@ export default function CartDrawer() {
                           {/* Details */}
                           <div className="flex-1 min-w-0 flex flex-col justify-between">
                             <div>
-                              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wide block">
-                                VIP Member Price Applied
+                              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wide block">
+                                Giá ưu đãi
                               </span>
                               
                               {/* Product Title with Manscaped Brand Styling */}
@@ -218,17 +266,17 @@ export default function CartDrawer() {
                                 )}
                               </h4>
 
-                              {/* Price Display */}
-                              <div className="mt-1 flex items-baseline">
+                              {/* Price Display: 1 giá gốc gạch và làm mờ + 1 giá khuyến mãi */}
+                              <div className="mt-1 flex items-baseline space-x-2">
                                 <span className="text-base font-bold text-[#a0681c]">
-                                  ${item.numericPrice.toFixed(2)}
+                                  {formatVND(item.numericPrice)}
                                 </span>
-                                <span className="text-xs text-neutral-400 line-through ml-2">
-                                  ${itemRegularPrice.toFixed(2)}
+                                <span className="text-xs text-neutral-400 line-through">
+                                  {formatVND(itemRegularPrice)}
                                 </span>
                               </div>
-                              <p className="text-[11px] text-neutral-500 mt-0.5">
-                                You Saved 8% (-${savingAmount.toFixed(2)})
+                              <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
+                                Tiết kiệm {formatVND(savingAmount)}
                               </p>
                             </div>
 
@@ -333,17 +381,20 @@ export default function CartDrawer() {
                             {prod.subtitle}
                           </p>
 
-                          {/* Pricing */}
-                          <div className="flex items-baseline justify-center space-x-1.5 mt-2">
-                            <span className="text-sm font-bold text-[#a0681c]">
-                              {prod.vipPrice || prod.regularPrice}
-                            </span>
-                            {prod.regularPrice && prod.regularPrice !== prod.vipPrice && (
-                              <span className="text-xs text-neutral-400 line-through">
-                                {prod.regularPrice}
-                              </span>
-                            )}
-                          </div>
+                          {/* Pricing: 1 giá gốc gạch và làm mờ + 1 giá khuyến mãi */}
+                          {(() => {
+                            const { salePrice, originalPrice } = getProductPrices(prod.vipPrice, prod.regularPrice);
+                            return (
+                              <div className="flex items-baseline justify-center space-x-1.5 mt-2 flex-wrap">
+                                <span className="text-sm font-bold text-[#a0681c]">
+                                  {salePrice}
+                                </span>
+                                <span className="text-xs text-neutral-400 line-through">
+                                  {originalPrice}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Round Add To Cart Pill Button */}
@@ -373,20 +424,13 @@ export default function CartDrawer() {
               <div className="p-4 sm:p-5 space-y-3.5">
                 <h4 className="font-bold text-sm text-neutral-900">Tóm tắt đơn hàng</h4>
 
-                {/* Member Rewards Note */}
+                {/* Commitment Note */}
                 <div className="flex items-start space-x-3 bg-amber-50/50 p-2.5 rounded-xl border border-amber-200/60">
                   <div className="w-8 h-8 rounded-full border border-amber-300 bg-amber-100/70 text-amber-800 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Award className="w-4 h-4" />
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
                   <p className="text-[11px] text-neutral-700 leading-tight">
-                    Tích lũy 550+ điểm thưởng với đơn hàng này. Tìm hiểu thêm về{' '}
-                    <span className="underline cursor-pointer font-semibold text-neutral-900">
-                      Chương trình Hội viên MANFRESH
-                    </span>{' '}
-                    hoặc{' '}
-                    <span className="underline cursor-pointer font-semibold text-neutral-900">
-                      Đăng nhập
-                    </span>.
+                    Cam kết sản phẩm chính hãng MANFRESH 100%. Bảo hành chính hãng 2 năm 1 đổi 1 và miễn phí giao hàng toàn quốc.
                   </p>
                 </div>
 

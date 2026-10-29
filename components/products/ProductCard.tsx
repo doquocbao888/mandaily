@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { type ProductItem } from '@/config/products';
-import { formatVND } from '@/lib/formatters';
+import { getProductPrices } from '@/lib/formatters';
 
 interface ProductCardProps {
   product: ProductItem;
@@ -9,6 +9,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const productHref = (!product.href || product.href === '#' || product.href === '') ? `/products/${product.id}` : product.href;
+  const { salePrice, originalPrice, discountPercent } = getProductPrices(product.vipPrice, product.regularPrice);
 
   return (
     <div className="flex flex-col flex-1 bg-transparent group">
@@ -54,11 +55,19 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.subtitle}
         </p>
 
-        {/* Pricing in VND */}
-        <div className="flex items-baseline gap-2 pt-2 text-sm sm:text-base">
+        {/* Pricing in VND: 1 giá gốc gạch và làm mờ + 1 giá khuyến mãi */}
+        <div className="flex items-baseline gap-2 pt-2 flex-wrap">
           <span className="text-neutral-900 font-bold text-base sm:text-lg">
-            {formatVND(product.regularPrice || product.vipPrice)}
+            {salePrice}
           </span>
+          <span className="text-neutral-400 line-through text-xs sm:text-sm font-normal">
+            {originalPrice}
+          </span>
+          {discountPercent && (
+            <span className="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded ml-0.5">
+              -{discountPercent}%
+            </span>
+          )}
         </div>
       </div>
     </div>

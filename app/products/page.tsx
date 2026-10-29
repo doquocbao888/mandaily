@@ -23,10 +23,10 @@ import { featuredProductsConfig2, type ProductItem } from '@/config/products';
 
 const CATEGORIES = [
   { id: 'all', label: 'Tất cả' },
-  { id: 'deals', label: 'Deals & Kits' },
-  { id: 'groin', label: 'Groin' },
-  { id: 'beard', label: 'Beard & Face' },
-  { id: 'body', label: 'Head & Body' },
+  { id: 'deals', label: 'Ưu Đãi & Combo' },
+  { id: 'groin', label: 'Chăm Sóc Vùng Kín' },
+  { id: 'beard', label: 'Râu & Mặt' },
+  { id: 'body', label: 'Tóc & Toàn Thân' },
 ];
 
 const CATEGORY_META: Record<
@@ -93,6 +93,20 @@ function ProductsCatalogContent() {
     // Filter by Category
     if (activeCategory !== 'all') {
       list = list.filter((p) => {
+        let catList: string[] = [];
+        if (p.categories && Array.isArray(p.categories) && p.categories.length > 0) {
+          catList = p.categories.map((c) => c.trim().toLowerCase());
+        } else if (p.category) {
+          catList = p.category.split(',').map((c) => c.trim().toLowerCase()).filter(Boolean);
+        }
+
+        if (catList.length > 0) {
+          if (activeCategory === 'deals') return catList.includes('deals') || catList.includes('combo');
+          if (activeCategory === 'groin') return catList.includes('groin') || catList.includes('vung-kin');
+          if (activeCategory === 'beard') return catList.includes('beard') || catList.includes('rau-mat');
+          if (activeCategory === 'body') return catList.includes('body') || catList.includes('toc-toan-than');
+        }
+
         const text = `${p.title} ${p.subtitle} ${p.badge || ''} ${(p.categoryPath || []).join(' ')}`.toLowerCase();
         if (activeCategory === 'deals') {
           return (
@@ -201,7 +215,7 @@ function ProductsCatalogContent() {
               className="flex items-center gap-2 font-bold text-neutral-900 hover:text-[#9e6f1c] transition-colors cursor-pointer group"
               aria-label="Toggle Filters"
             >
-              <span className="text-sm font-semibold">Filters</span>
+              <span className="text-sm font-semibold">Bộ lọc</span>
               {/* Manscaped Style Custom Sliders SVG Icon */}
               <svg
                 width="16"
@@ -237,17 +251,17 @@ function ProductsCatalogContent() {
 
           {/* Right: Sort By Dropdown (Matching Screenshot: Sort By: Featured ∨) */}
           <div className="flex items-center gap-1.5 text-xs sm:text-sm font-normal text-neutral-800">
-            <span className="text-neutral-500 font-normal">Sort By:</span>
+            <span className="text-neutral-500 font-normal">Sắp xếp:</span>
             <div className="relative inline-flex items-center">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="appearance-none bg-transparent font-medium text-neutral-900 pr-5 pl-1 py-1 outline-none cursor-pointer text-xs sm:text-sm"
               >
-                <option value="featured">Featured</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="price-desc">Price: High to Low</option>
-                <option value="rating">Rating</option>
+                <option value="featured">Nổi bật</option>
+                <option value="price-asc">Giá: Thấp đến Cao</option>
+                <option value="price-desc">Giá: Cao đến Thấp</option>
+                <option value="rating">Đánh giá cao nhất</option>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-neutral-600 pointer-events-none absolute right-0 stroke-[2]" />
             </div>

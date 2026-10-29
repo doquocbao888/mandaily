@@ -6,12 +6,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getProductById, type ProductItem } from '@/config/products';
 import { useCart } from '@/context/CartContext';
-import { formatVND, parseVND } from '@/lib/formatters';
+import { formatVND, parseVND, getProductPrices } from '@/lib/formatters';
 import SuperBanner from '@/components/header/SuperBanner';
 import Header from '@/components/header/Header';
 import VideoReviewsSection from '@/components/products/VideoReviewsSection';
 import GoesGreatWithSection from '@/components/products/GoesGreatWithSection';
+import PackageIncludesSection from '@/components/products/PackageIncludesSection';
 import ProductFaqSection from '@/components/products/ProductFaqSection';
+import TrustBar from '@/components/hero/TrustBar';
 import Footer from '@/components/header/Footer';
 import { 
   CheckCircle2, 
@@ -74,7 +76,7 @@ export default function ProductDetailPage() {
     variants: [],
     gifts: [],
     cashbackText: '',
-    warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1'
+    warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
   };
 
   const rawThumbs = (product?.thumbnails || []).filter(
@@ -214,8 +216,10 @@ export default function ProductDetailPage() {
     notFound();
   }
 
+  const { salePrice, originalPrice, discountPercent } = getProductPrices(product.vipPrice, product.regularPrice);
+
   const handleAddToCart = async () => {
-    const priceStr = formatVND(product.regularPrice || product.vipPrice || '500.000đ');
+    const priceStr = salePrice;
     const numericPrice = parseVND(priceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
@@ -236,7 +240,7 @@ export default function ProductDetailPage() {
   };
 
   const handleBuyNow = () => {
-    const priceStr = formatVND(product.regularPrice || product.vipPrice || '500.000đ');
+    const priceStr = salePrice;
     const numericPrice = parseVND(priceStr);
     const variantLabel = 'Bản chính hãng';
     const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
@@ -468,10 +472,19 @@ export default function ProductDetailPage() {
                 <p className="text-neutral-600 text-sm font-medium mt-1">
                   {product.subtitle}
                 </p>
-                <div className="flex items-center space-x-3 mt-3">
+                {/* Pricing: 1 giá gốc gạch và làm mờ + 1 giá khuyến mãi */}
+                <div className="flex items-baseline space-x-3 mt-3 flex-wrap gap-y-1">
                   <span className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
-                    {formatVND(product.regularPrice || product.vipPrice)}
+                    {salePrice}
                   </span>
+                  <span className="text-base sm:text-lg text-neutral-400 line-through font-normal">
+                    {originalPrice}
+                  </span>
+                  {discountPercent && (
+                    <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-md">
+                      Giảm {discountPercent}%
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -500,62 +513,120 @@ export default function ProductDetailPage() {
               </a>
             </div>
 
-            {/* Product Purchase Box */}
-            <div className="border border-neutral-200 rounded-2xl p-5 mb-4 bg-white shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+            {/* Luxury Product Purchase Box */}
+            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-white via-[#faf9f6] to-[#f5f2ea] border border-[#e5dfd3] p-5 sm:p-7 shadow-xl shadow-amber-950/5 mb-6 space-y-5">
+              
+              {/* Top Accent Gold Glow Line */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-[#c49231] to-transparent" />
+
+              {/* Header: Stock Status & Free Shipping Guarantee */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 border-b border-[#ece7dc]">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 shadow-2xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
+                  </span>
+                  <span className="text-[11px] font-extrabold text-emerald-800 tracking-wider uppercase">
                     Còn hàng · Sẵn sàng giao ngay
                   </span>
                 </div>
-                <span className="text-xs text-neutral-500 font-medium">
-                  Miễn phí giao hàng toàn quốc
-                </span>
+
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-neutral-600">
+                  <Truck className="w-3.5 h-3.5 text-[#a0681c]" />
+                  <span>Miễn phí giao hàng toàn quốc</span>
+                </div>
               </div>
 
-              {/* Quantity & Buy CTA */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="flex items-center border border-neutral-300 rounded-xl bg-neutral-50 overflow-hidden h-12 w-fit">
+              {/* Action Buttons: Quantity Controller + Add to Cart + Buy Now */}
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row items-stretch gap-3">
+                  {/* Luxury Quantity Selector */}
+                  <div className="flex items-center justify-between sm:justify-center border border-[#ded8cb] rounded-2xl bg-white shadow-2xs px-1 h-13 w-full sm:w-36 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 active:scale-90 transition cursor-pointer font-bold text-lg select-none"
+                      aria-label="Giảm số lượng"
+                    >
+                      −
+                    </button>
+                    <span className="w-12 text-center font-mono font-black text-neutral-900 text-base select-none">
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="w-10 h-10 rounded-xl flex items-center justify-center text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 active:scale-90 transition cursor-pointer font-bold text-lg select-none"
+                      aria-label="Tăng số lượng"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Primary Buy Now Button (High Luxury Gold & Bronze Aesthetic) */}
                   <button
                     type="button"
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3.5 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors cursor-pointer"
+                    onClick={handleBuyNow}
+                    className="flex-1 group relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#9c6a1b] via-[#b88226] to-[#8f5f14] hover:from-[#8f6016] hover:via-[#aa761f] hover:to-[#7f520e] active:scale-[0.99] text-white py-3.5 px-6 shadow-lg shadow-amber-950/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer border-t border-amber-300/40"
                   >
-                    -
-                  </button>
-                  <span className="w-10 text-center font-bold text-neutral-900 text-sm select-none">{quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="px-3.5 py-2 text-neutral-600 hover:bg-neutral-200 font-bold transition-colors cursor-pointer"
-                  >
-                    +
+                    {/* Subtle Sheen Effect on Hover */}
+                    <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                    
+                    <ShoppingBag className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110 text-amber-100" />
+                    <span className="font-extrabold text-sm sm:text-base tracking-wider uppercase drop-shadow-xs">
+                      Mua ngay · {salePrice}
+                    </span>
                   </button>
                 </div>
 
+                {/* Secondary Button: Thêm vào giỏ hàng (Add to Cart) */}
                 <button
                   type="button"
-                  onClick={handleBuyNow}
-                  className="flex-1 bg-[#b78103] hover:bg-[#a17102] text-white font-extrabold py-3.5 px-6 rounded-xl shadow-md transition-all flex items-center justify-center space-x-2 text-sm sm:text-base uppercase tracking-wider cursor-pointer"
+                  onClick={handleAddToCart}
+                  className="w-full h-12 rounded-2xl border-2 border-neutral-900/10 hover:border-neutral-900 bg-white/80 hover:bg-white text-neutral-900 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-[0.99]"
                 >
-                  <ShoppingBag className="w-5 h-5" />
-                  <span>Mua ngay · {formatVND(product.regularPrice || product.vipPrice)}</span>
+                  <Sparkles className="w-4 h-4 text-[#a0681c]" />
+                  <span>Thêm vào giỏ hàng</span>
                 </button>
               </div>
 
-              {/* Trust Badges */}
-              <div className="pt-3 border-t border-neutral-100 grid grid-cols-2 gap-2 text-xs text-neutral-600">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-amber-700 flex-shrink-0" />
-                  <span>Bảo hành chính hãng 1 đổi 1</span>
+              {/* Luxury Guarantee Micro-Cards (3 Columns) */}
+              <div className="pt-3.5 border-t border-[#ece7dc] grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                <div className="flex items-center gap-2.5 bg-white/70 border border-[#ebe5d8] rounded-xl p-2.5 shadow-2xs">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#a0681c] flex items-center justify-center flex-shrink-0 border border-amber-200/50">
+                    <ShieldCheck className="w-4 h-4 stroke-[2]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-neutral-900 leading-tight">Bảo hành 2 năm</p>
+                    <p className="text-[10px] text-neutral-500 truncate">1 đổi 1 chính hãng</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>Kiểm tra hàng trước khi nhận</span>
+
+                <div className="flex items-center gap-2.5 bg-white/70 border border-[#ebe5d8] rounded-xl p-2.5 shadow-2xs">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#a0681c] flex items-center justify-center flex-shrink-0 border border-amber-200/50">
+                    <CheckCircle2 className="w-4 h-4 stroke-[2]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-neutral-900 leading-tight">Đồng kiểm khi nhận</p>
+                    <p className="text-[10px] text-neutral-500 truncate">Kiểm tra trước khi trả</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5 bg-white/70 border border-[#ebe5d8] rounded-xl p-2.5 shadow-2xs">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-[#a0681c] flex items-center justify-center flex-shrink-0 border border-amber-200/50">
+                    <RotateCcw className="w-4 h-4 stroke-[2]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-neutral-900 leading-tight">30 ngày hoàn tiền</p>
+                    <p className="text-[10px] text-neutral-500 truncate">Đổi trả không lý do</p>
+                  </div>
                 </div>
               </div>
+
             </div>
+
+            {/* In The Box / Accessories Carousel Section */}
+            <PackageIncludesSection product={product} />
 
           </div>
 
@@ -570,6 +641,9 @@ export default function ProductDetailPage() {
 
         {/* Next Section: 'Goes great with...' Product Carousel (synced with admin in real-time) */}
         <GoesGreatWithSection currentProductId={id} />
+
+        {/* Feature Guarantees (synced with image_b9267d67.png) */}
+        <TrustBar />
 
       </main>
 

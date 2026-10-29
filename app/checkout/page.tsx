@@ -168,7 +168,7 @@ export default function CheckoutPage() {
               </div>
               <div className="flex justify-between font-bold text-base pt-1">
                 <span className="text-neutral-900">Tổng thanh toán:</span>
-                <span className="text-[#9e6f1c]">${successOrder.total.toFixed(2)}</span>
+                <span className="text-[#9e6f1c]">{formatVND(successOrder.total)}</span>
               </div>
             </div>
 

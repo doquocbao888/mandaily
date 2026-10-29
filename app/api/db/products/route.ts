@@ -37,10 +37,12 @@ export async function GET() {
       orderIndex: r.orderIndex,
       title: r.title,
       subtitle: r.subtitle || '',
-      categoryPath: ['Trang chủ', 'PRODUCTS', r.title],
+      category: r.category || 'deals',
+      categories: (r.category || 'deals').split(',').map((c: string) => c.trim()).filter(Boolean),
+      categoryPath: ['Trang chủ', r.category || 'PRODUCTS', r.title],
       vipPrice: r.vipPrice || '',
       regularPrice: r.regularPrice || '',
-      href: `/products/${r.id}`,
+      href: r.href || `/products/${r.id}`,
       imageSrc: r.imageSrc,
       imageAlt: r.title,
       thumbnails: typeof r.thumbnails === 'string' ? JSON.parse(r.thumbnails || '[]') : (r.thumbnails || []),
@@ -58,6 +60,7 @@ export async function GET() {
       warrantyText: r.warrantyText || '',
       detailedDescription: r.detailedDescription || '',
       videoReviews: typeof r.videoReviews === 'string' ? JSON.parse(r.videoReviews || '[]') : (r.videoReviews || []),
+      packageIncludes: typeof r.packageIncludes === 'string' ? JSON.parse(r.packageIncludes || '[]') : (r.packageIncludes || []),
     }));
 
     setCachedData('products', products);
@@ -96,17 +99,19 @@ export async function POST(req: NextRequest) {
 
     const query = `
       INSERT INTO products (
-        id, orderIndex, title, subtitle, vipPrice, regularPrice,
+        id, orderIndex, title, subtitle, vipPrice, regularPrice, href, category,
         imageSrc, thumbnails, detailedDescription, badge, rating,
         reviewCount, soldCount, salesBadge, shortDescription,
-        highlights, variants, gifts, cashbackText, warrantyText, videoReviews
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        highlights, variants, gifts, cashbackText, warrantyText, videoReviews, packageIncludes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         orderIndex = VALUES(orderIndex),
         title = VALUES(title),
         subtitle = VALUES(subtitle),
         vipPrice = VALUES(vipPrice),
         regularPrice = VALUES(regularPrice),
+        href = VALUES(href),
+        category = VALUES(category),
         imageSrc = VALUES(imageSrc),
         thumbnails = VALUES(thumbnails),
         detailedDescription = VALUES(detailedDescription),
@@ -121,8 +126,13 @@ export async function POST(req: NextRequest) {
         gifts = VALUES(gifts),
         cashbackText = VALUES(cashbackText),
         warrantyText = VALUES(warrantyText),
-        videoReviews = VALUES(videoReviews);
+        videoReviews = VALUES(videoReviews),
+        packageIncludes = VALUES(packageIncludes);
     `;
+
+    const categoryStr = Array.isArray(product.categories) && product.categories.length > 0
+      ? product.categories.join(',')
+      : (product.category || 'deals');
 
     await pool.query(query, [
       product.id,
@@ -131,6 +141,8 @@ export async function POST(req: NextRequest) {
       product.subtitle || '',
       product.vipPrice || '',
       product.regularPrice || '',
+      product.href || `/products/${product.id}`,
+      categoryStr,
       product.imageSrc,
       JSON.stringify(product.thumbnails || [product.imageSrc]),
       product.detailedDescription || '',
@@ -146,6 +158,7 @@ export async function POST(req: NextRequest) {
       product.cashbackText || '',
       product.warrantyText || '',
       JSON.stringify(product.videoReviews || []),
+      JSON.stringify(product.packageIncludes || []),
     ]);
 
     invalidateCache('products');

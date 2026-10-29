@@ -29,12 +29,14 @@ import {
   ArrowDown,
   ArrowUpDown,
   Film,
-  Upload
+  Upload,
+  ExternalLink,
+  Globe
 } from 'lucide-react';
-import { featuredProductsConfig, type ProductItem, type VideoReviewItem } from '@/config/products';
+import { featuredProductsConfig, type ProductItem, type VideoReviewItem, type PackageItem } from '@/config/products';
 import MediaManager from '@/components/admin/MediaManager';
 import ProductImagePicker from '@/components/admin/ProductImagePicker';
-import { formatVND } from '@/lib/formatters';
+import { formatVND, getProductPrices } from '@/lib/formatters';
 import { 
   subscribeProducts, 
   subscribeOrders, 
@@ -99,6 +101,40 @@ export default function AdminPage() {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newSubtitle, setNewSubtitle] = useState('');
+  const [newHref, setNewHref] = useState('');
+  const [newCategory, setNewCategory] = useState('deals');
+  const [newCategories, setNewCategories] = useState<string[]>(['deals']);
+
+  const toggleNewCategory = (catId: string) => {
+    if (newCategories.includes(catId)) {
+      if (newCategories.length > 1) {
+        setNewCategories(newCategories.filter(c => c !== catId));
+      }
+    } else {
+      setNewCategories([...newCategories, catId]);
+    }
+  };
+
+  const toggleEditCategory = (catId: string) => {
+    if (!editingProduct) return;
+    const rawCat = editingProduct.category || 'deals';
+    const currentCats = rawCat.split(',').map(s => s.trim()).filter(Boolean);
+    let updated: string[];
+    if (currentCats.includes(catId)) {
+      if (currentCats.length > 1) {
+        updated = currentCats.filter(c => c !== catId);
+      } else {
+        updated = currentCats;
+      }
+    } else {
+      updated = [...currentCats, catId];
+    }
+    setEditingProduct({
+      ...editingProduct,
+      category: updated.join(','),
+      categories: updated,
+    });
+  };
   const [newVipPrice, setNewVipPrice] = useState('450.000đ');
   const [newRegularPrice, setNewRegularPrice] = useState('500.000đ');
   const [newDetailedDescription, setNewDetailedDescription] = useState('');
@@ -202,11 +238,15 @@ export default function AdminPage() {
   const handleClearCache = () => {
     if (confirm('Bạn có chắc chắn muốn xóa toàn bộ bộ nhớ cache (localStorage & trạng thái tạm)?')) {
       try {
+        const auth = localStorage.getItem('manscaped_admin_auth');
         localStorage.clear();
+        if (auth) {
+          localStorage.setItem('manscaped_admin_auth', auth);
+        }
         setToastMessage({ text: 'Đã xóa bộ nhớ cache thành công! Đang tải lại trang...' });
         setTimeout(() => {
           window.location.reload();
-        }, 1000);
+        }, 800);
       } catch {
         setToastMessage({ text: 'Lỗi khi xóa cache.', isError: true });
       }
@@ -289,15 +329,22 @@ export default function AdminPage() {
       .map(s => s.trim())
       .filter(Boolean);
 
+    const slug = newHref.trim().replace(/^\/products\//, '').replace(/^\/+/, '');
+    const prodId = slug || `prod-${Date.now()}`;
+    const finalHref = `/products/${prodId}`;
+
+    const catStr = newCategories.join(',');
     const newProd: ProductItem = {
-      id: `prod-${Date.now()}`,
+      id: prodId,
       orderIndex: products.length,
       title: newTitle,
       subtitle: newSubtitle || 'Groin & Body Hair Trimmer',
-      categoryPath: ['Trang chủ', 'PRODUCTS', newTitle],
+      category: catStr,
+      categories: newCategories,
+      categoryPath: ['Trang chủ', newCategories.includes('deals') ? 'ƯU ĐÃI & COMBO' : newCategories.includes('groin') ? 'CHĂM SÓC VÙNG KÍN' : newCategories.includes('beard') ? 'RÂU & MẶT' : 'TÓC & TOÀN THÂN', newTitle],
       vipPrice: newVipPrice,
       regularPrice: newRegularPrice,
-      href: `/products/prod-${Date.now()}`,
+      href: finalHref,
       imageSrc: newImageSrc || parsedThumbnails[0] || '/assets/aistudio/30-00006-NA_f201a618.png',
       imageAlt: newTitle,
       thumbnails: parsedThumbnails.length > 0 ? parsedThumbnails : [newImageSrc],
@@ -314,7 +361,7 @@ export default function AdminPage() {
       ],
       gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml'],
       cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
-      warrantyText: 'BẢO HÀNH 12 THÁNG 1 ĐỔI 1',
+      warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1',
       detailedDescription: newDetailedDescription
     };
 
@@ -323,6 +370,8 @@ export default function AdminPage() {
       setShowAddProductModal(false);
       setNewTitle('');
       setNewSubtitle('');
+      setNewHref('');
+      setNewCategories(['deals']);
       setNewDetailedDescription('');
       showToast(`Đã thêm mới sản phẩm "${newProd.title}" thành công!`);
     } catch (err: any) {
@@ -363,9 +412,49 @@ export default function AdminPage() {
       }
     ];
 
+    const defaultPackageItems: PackageItem[] = [
+      {
+        id: 'pkg-1',
+        name: product.title.replace(' - NEW!', ''),
+        subtitle: 'Thân máy chính SkinSafe™',
+        imageSrc: product.thumbnails[0] || product.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png',
+        isGift: false,
+        description: 'Tông đơ cắt tỉa chuyên dụng cao cấp, chống nước 100% IPX7.'
+      },
+      {
+        id: 'pkg-2',
+        name: 'Đế sạc & Cáp USB-C',
+        subtitle: 'Sạc nhanh thông minh',
+        imageSrc: product.thumbnails[1] || product.imageSrc || '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
+        isGift: false,
+        description: 'Chân đế sạc không dây cao cấp kết hợp cáp sạc nhanh chuẩn USB-C.'
+      },
+      {
+        id: 'pkg-3',
+        name: 'Lược căn độ dài',
+        subtitle: 'Khóa an toàn SkinSafe™',
+        imageSrc: product.thumbnails[2] || product.imageSrc || '/assets/aistudio/b72c1da980f6_e399d627.webp',
+        isGift: false,
+        description: 'Bộ cữ định hình đa nấc tùy chỉnh độ dài cắt tỉa linh hoạt.'
+      },
+      {
+        id: 'pkg-4',
+        name: 'Chổi & Dầu tra lưỡi',
+        subtitle: 'Bộ bảo dưỡng máy',
+        imageSrc: product.thumbnails[3] || product.imageSrc || '/assets/aistudio/e25de805d015_f449fce7.webp',
+        isGift: false,
+        description: 'Dụng cụ vệ sinh và dầu bôi trơn giữ cho lưỡi máy luôn sắc bén.'
+      }
+    ];
+
+    const packageItems = (product.packageIncludes && product.packageIncludes.length > 0)
+      ? product.packageIncludes
+      : defaultPackageItems;
+
     setEditingProduct({ 
       ...product,
       orderIndex: typeof product.orderIndex === 'number' ? product.orderIndex : curIndex,
+      packageIncludes: packageItems,
       videoReviews: (product.videoReviews && product.videoReviews.length > 0) ? product.videoReviews : defaultReviews
     });
     setEditThumbnailsText(product.thumbnails.join('\n'));
@@ -381,8 +470,17 @@ export default function AdminPage() {
       .map(s => s.trim())
       .filter(Boolean);
 
+    const cleanSlug = (editingProduct.href || '').trim().replace(/^\/products\//, '').replace(/^\/+/, '');
+    const finalHref = cleanSlug ? `/products/${cleanSlug}` : (editingProduct.href || `/products/${editingProduct.id}`);
+
+    const cat = editingProduct.category || 'deals';
+    const catArray = cat.split(',').map(s => s.trim()).filter(Boolean);
     const updated: ProductItem = {
       ...editingProduct,
+      category: cat,
+      categories: catArray,
+      categoryPath: ['Trang chủ', catArray.includes('deals') ? 'ƯU ĐÃI & COMBO' : catArray.includes('groin') ? 'CHĂM SÓC VÙNG KÍN' : catArray.includes('beard') ? 'RÂU & MẶT' : 'TÓC & TOÀN THÂN', editingProduct.title],
+      href: finalHref,
       thumbnails: parsedThumbnails.length > 0 ? parsedThumbnails : [editingProduct.imageSrc]
     };
 
@@ -978,6 +1076,7 @@ export default function AdminPage() {
                       <th className="p-4 font-semibold text-center w-28">Thứ tự</th>
                       <th className="p-4 font-semibold">Ảnh chính & phụ</th>
                       <th className="p-4 font-semibold">Tên sản phẩm</th>
+                      <th className="p-4 font-semibold">Danh mục</th>
                       <th className="p-4 font-semibold">Mô tả / Subtitle</th>
                       <th className="p-4 font-semibold">Giá bán</th>
                       <th className="p-4 font-semibold">Giá niêm yết (Gốc)</th>
@@ -1025,10 +1124,40 @@ export default function AdminPage() {
                               </div>
                             </td>
                             <td className="p-4 font-bold text-neutral-900">{p.title}</td>
+                            <td className="p-4">
+                              <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                {(() => {
+                                  const catList = (p.category || 'deals').split(',').map(s => s.trim()).filter(Boolean);
+                                  return catList.map((c) => {
+                                    if (c === 'deals') return <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">Ưu Đãi & Combo</span>;
+                                    if (c === 'groin') return <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">Chăm Sóc Vùng Kín</span>;
+                                    if (c === 'beard') return <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Râu & Mặt</span>;
+                                    if (c === 'body') return <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">Tóc & Toàn Thân</span>;
+                                    return <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200">{c}</span>;
+                                  });
+                                })()}
+                              </div>
+                            </td>
                             <td className="p-4 text-neutral-600 text-xs max-w-xs truncate">{p.subtitle}</td>
-                            <td className="p-4 font-bold text-neutral-900">{formatVND(p.regularPrice || p.vipPrice)}</td>
-                            <td className="p-4 text-neutral-500">{formatVND(p.vipPrice || p.regularPrice)}</td>
+                            {(() => {
+                              const { salePrice, originalPrice } = getProductPrices(p.vipPrice, p.regularPrice);
+                              return (
+                                <>
+                                  <td className="p-4 font-bold text-neutral-900">{salePrice}</td>
+                                  <td className="p-4 text-neutral-400 line-through text-xs font-normal">{originalPrice}</td>
+                                </>
+                              );
+                            })()}
                             <td className="p-4 text-right space-x-2">
+                              <a
+                                href={p.href || `/products/${p.id}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 bg-neutral-100 text-neutral-600 rounded-lg hover:bg-neutral-200 hover:text-neutral-900 transition-colors inline-block cursor-pointer"
+                                title="Xem trang sản phẩm thực tế"
+                              >
+                                <ExternalLink className="w-4 h-4" />
+                              </a>
                               <button
                                 onClick={() => handleOpenEditModal(p)}
                                 className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors inline-block cursor-pointer"
@@ -1049,7 +1178,7 @@ export default function AdminPage() {
                       })}
                     {products.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-12 text-center text-neutral-500">
+                        <td colSpan={8} className="p-12 text-center text-neutral-500">
                           <Package className="w-10 h-10 mx-auto text-neutral-300 mb-2" />
                           <p className="font-bold text-neutral-700">Chưa có sản phẩm nào trong cơ sở dữ liệu</p>
                           <p className="text-xs text-neutral-400 mt-1">
@@ -1207,6 +1336,72 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1.5 flex items-center justify-between">
+                  <span>Danh mục sản phẩm (Chọn 1 hoặc nhiều danh mục) *</span>
+                  <span className="text-[11px] font-normal text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    Đã chọn: {newCategories.length} danh mục
+                  </span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'deals', label: 'Ưu Đãi & Combo', desc: 'Sets, Kits, Deals' },
+                    { id: 'groin', label: 'Chăm Sóc Vùng Kín', desc: 'Groin & Body' },
+                    { id: 'beard', label: 'Râu & Mặt', desc: 'Beard & Face' },
+                    { id: 'body', label: 'Tóc & Toàn Thân', desc: 'Head & Body' },
+                  ].map((cat) => {
+                    const isSelected = newCategories.includes(cat.id);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleNewCategory(cat.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                          isSelected
+                            ? 'bg-amber-50/90 border-amber-600 ring-2 ring-amber-600/20 text-amber-950 font-bold'
+                            : 'bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-extrabold flex items-center gap-1.5">
+                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[10px] ${isSelected ? 'bg-amber-600 border-amber-600 text-white' : 'border-neutral-400'}`}>
+                              {isSelected && '✓'}
+                            </span>
+                            <span>{cat.label}</span>
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-neutral-500 font-normal block">{cat.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Đường dẫn sản phẩm (Product URL / Slug)
+                  </label>
+                  <span className="text-[11px] text-neutral-400">Tùy chọn tạo link đẹp</span>
+                </div>
+                <div className="flex items-center rounded-xl border border-neutral-300 bg-neutral-50 overflow-hidden focus-within:border-amber-600 focus-within:ring-1 focus-within:ring-amber-600 shadow-2xs">
+                  <span className="px-3 text-xs font-mono text-neutral-600 bg-neutral-100 border-r border-neutral-300 py-2.5 select-none flex items-center gap-1.5 flex-shrink-0">
+                    <Globe className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>/products/</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={newHref.replace(/^\/products\//, '').replace(/^\//, '')}
+                    onChange={(e) => {
+                      const cleanSlug = e.target.value.trim().replace(/^\/+/, '');
+                      setNewHref(cleanSlug ? `/products/${cleanSlug}` : '');
+                    }}
+                    placeholder="ví dụ: tong-do-ultra-gen-6 (để trống sẽ tạo tự động)"
+                    className="w-full bg-white px-3 py-2 text-sm font-mono text-neutral-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">Giá bán chính thức</label>
@@ -1305,6 +1500,91 @@ export default function AdminPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-xs font-bold text-neutral-700 mb-1.5 flex items-center justify-between">
+                  <span>Danh mục sản phẩm (Chọn 1 hoặc nhiều danh mục) *</span>
+                  <span className="text-[11px] font-normal text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    Đã chọn: {((editingProduct.category || 'deals').split(',').map(s=>s.trim()).filter(Boolean)).length} danh mục
+                  </span>
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: 'deals', label: 'Ưu Đãi & Combo', desc: 'Sets, Kits, Deals' },
+                    { id: 'groin', label: 'Chăm Sóc Vùng Kín', desc: 'Groin & Body' },
+                    { id: 'beard', label: 'Râu & Mặt', desc: 'Beard & Face' },
+                    { id: 'body', label: 'Tóc & Toàn Thân', desc: 'Head & Body' },
+                  ].map((cat) => {
+                    const selectedList = (editingProduct.category || 'deals').split(',').map(s => s.trim()).filter(Boolean);
+                    const isSelected = selectedList.includes(cat.id);
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => toggleEditCategory(cat.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer select-none ${
+                          isSelected
+                            ? 'bg-amber-50/90 border-amber-600 ring-2 ring-amber-600/20 text-amber-950 font-bold'
+                            : 'bg-white border-neutral-300 text-neutral-700 hover:border-neutral-400'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-extrabold flex items-center gap-1.5">
+                            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[10px] ${isSelected ? 'bg-amber-600 border-amber-600 text-white' : 'border-neutral-400'}`}>
+                              {isSelected && '✓'}
+                            </span>
+                            <span>{cat.label}</span>
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-neutral-500 font-normal block">{cat.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-neutral-700">
+                    Đường dẫn URL sản phẩm (Product URL / Slug) *
+                  </label>
+                  <span className="text-[11px] text-neutral-400">Tùy biến link chi tiết sản phẩm</span>
+                </div>
+                <div className="flex items-center rounded-xl border border-neutral-300 bg-neutral-50 overflow-hidden focus-within:border-amber-600 focus-within:ring-1 focus-within:ring-amber-600 shadow-2xs">
+                  <span className="px-3 text-xs font-mono text-neutral-600 bg-neutral-100 border-r border-neutral-300 py-2.5 select-none flex items-center gap-1.5 flex-shrink-0">
+                    <Globe className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>/products/</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={(editingProduct.href || '').replace(/^\/products\//, '').replace(/^\//, '')}
+                    onChange={(e) => {
+                      const cleanSlug = e.target.value.trim().replace(/^\/+/, '');
+                      setEditingProduct({
+                        ...editingProduct,
+                        href: cleanSlug ? `/products/${cleanSlug}` : `/products/${editingProduct.id}`
+                      });
+                    }}
+                    placeholder={editingProduct.id}
+                    className="w-full bg-white px-3 py-2 text-sm font-mono text-neutral-900 focus:outline-none"
+                  />
+                  {editingProduct.href && (
+                    <a
+                      href={editingProduct.href.startsWith('/') ? editingProduct.href : `/products/${editingProduct.href}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3.5 py-2 text-xs font-semibold text-amber-700 hover:text-amber-800 hover:bg-amber-50 border-l border-neutral-300 flex items-center gap-1.5 transition select-none flex-shrink-0"
+                      title="Mở xem trang chi tiết sản phẩm này trên tab mới"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Xem thử</span>
+                    </a>
+                  )}
+                </div>
+                <p className="text-[11px] text-neutral-500 mt-1">
+                  Liên kết truy cập: <strong className="font-mono text-amber-900">{editingProduct.href || `/products/${editingProduct.id}`}</strong>
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-neutral-700 mb-1">Giá bán chính thức</label>
@@ -1371,6 +1651,166 @@ export default function AdminPage() {
                 onOpenMediaPickerForMain={() => setMediaPickerTarget('edit-main')}
                 onOpenMediaPickerForThumb={() => setMediaPickerTarget('edit-thumb')}
               />
+
+              {/* PACKAGE ACCESSORIES MANAGER ("TRỌN BỘ PHỤ KIỆN TRONG HỘP") */}
+              <div className="pt-5 border-t border-neutral-200 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-neutral-900 flex items-center space-x-2">
+                      <Package className="w-4 h-4 text-amber-600" />
+                      <span>Quản lý phụ kiện trong hộp (&ldquo;TRỌN BỘ PHỤ KIỆN TRONG HỘP&rdquo;)</span>
+                    </h4>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      Thêm, bớt, chỉnh sửa tên, ảnh và mô tả từng món phụ kiện hiển thị ở trang chi tiết sản phẩm.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const curItems = editingProduct.packageIncludes || [];
+                      const newItem: PackageItem = {
+                        id: `pkg-item-${Date.now()}`,
+                        name: 'Phụ kiện mới',
+                        subtitle: 'Thành phần trong hộp',
+                        imageSrc: editingProduct.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png',
+                        isGift: false,
+                        description: 'Mô tả chi tiết công dụng của món phụ kiện này.'
+                      };
+                      setEditingProduct({
+                        ...editingProduct,
+                        packageIncludes: [...curItems, newItem]
+                      });
+                    }}
+                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-2xs cursor-pointer select-none"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>+ Thêm món phụ kiện</span>
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {(editingProduct.packageIncludes || []).length === 0 ? (
+                    <div className="p-4 bg-neutral-50 rounded-2xl border border-dashed border-neutral-300 text-center text-xs text-neutral-500">
+                      Chưa có món phụ kiện nào. Bấm nút <strong>&ldquo;+ Thêm món phụ kiện&rdquo;</strong> ở trên để tạo danh sách món trong hộp.
+                    </div>
+                  ) : (
+                    (editingProduct.packageIncludes || []).map((pkgItem, pkgIdx) => (
+                      <div
+                        key={pkgItem.id || `pkg-${pkgIdx}`}
+                        className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3.5 relative space-y-3 shadow-2xs group hover:border-amber-400 transition"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          {/* Image Box & Media Picker Trigger */}
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-14 h-14 bg-white border border-neutral-200 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
+                              <img
+                                src={pkgItem.imageSrc}
+                                alt={pkgItem.name}
+                                className="w-full h-full object-contain"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => setMediaPickerTarget(`package-item-${pkgIdx}`)}
+                                className="px-2.5 py-1 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-lg text-xs font-semibold text-neutral-800 transition flex items-center gap-1 cursor-pointer select-none"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Đổi ảnh</span>
+                              </button>
+                              <p className="text-[10px] text-neutral-400 mt-1 truncate max-w-[140px]">
+                                {pkgItem.imageSrc?.split('/').pop() || 'Ảnh phụ kiện'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Badge Type Selector & Remove Button */}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newItems = [...(editingProduct.packageIncludes || [])];
+                                newItems[pkgIdx] = { ...newItems[pkgIdx], isGift: !newItems[pkgIdx].isGift };
+                                setEditingProduct({ ...editingProduct, packageIncludes: newItems });
+                              }}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer select-none border ${
+                                pkgItem.isGift
+                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                  : 'bg-neutral-200 text-neutral-700 border-neutral-300'
+                              }`}
+                            >
+                              {pkgItem.isGift ? '🎁 Quà tặng' : '📦 Trong hộp'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newItems = (editingProduct.packageIncludes || []).filter((_, idx) => idx !== pkgIdx);
+                                setEditingProduct({ ...editingProduct, packageIncludes: newItems });
+                              }}
+                              className="p-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                              title="Xóa món phụ kiện này"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Name & Subtitle inputs */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-bold text-neutral-600 mb-0.5">Tên món phụ kiện *</label>
+                            <input
+                              type="text"
+                              value={pkgItem.name}
+                              onChange={(e) => {
+                                const newItems = [...(editingProduct.packageIncludes || [])];
+                                newItems[pkgIdx] = { ...newItems[pkgIdx], name: e.target.value };
+                                setEditingProduct({ ...editingProduct, packageIncludes: newItems });
+                              }}
+                              placeholder="Ví dụ: Cáp sạc USB-C"
+                              className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-600 font-semibold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-neutral-600 mb-0.5">Mô tả ngắn / Subtitle</label>
+                            <input
+                              type="text"
+                              value={pkgItem.subtitle || ''}
+                              onChange={(e) => {
+                                const newItems = [...(editingProduct.packageIncludes || [])];
+                                newItems[pkgIdx] = { ...newItems[pkgIdx], subtitle: e.target.value };
+                                setEditingProduct({ ...editingProduct, packageIncludes: newItems });
+                              }}
+                              placeholder="Ví dụ: Sạc nhanh 90 phút"
+                              className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-600"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Extended Description input for Lightbox */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-neutral-600 mb-0.5">Mô tả chi tiết (khi bấm vào xem)</label>
+                          <input
+                            type="text"
+                            value={pkgItem.description || ''}
+                            onChange={(e) => {
+                              const newItems = [...(editingProduct.packageIncludes || [])];
+                              newItems[pkgIdx] = { ...newItems[pkgIdx], description: e.target.value };
+                              setEditingProduct({ ...editingProduct, packageIncludes: newItems });
+                            }}
+                            placeholder="Ví dụ: Dụng cụ vệ sinh và dầu bôi trơn chuyên dụng giữ cho lưỡi máy luôn sắc bén..."
+                            className="w-full bg-white border border-neutral-300 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-600"
+                          />
+                        </div>
+
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
 
               {/* VIDEO REVIEWS SECTION */}
               <div className="pt-5 border-t border-neutral-200">
@@ -1580,6 +2020,14 @@ export default function AdminPage() {
                       };
                       setEditingProduct({ ...editingProduct, videoReviews: currentReviews });
                       showToast(`Đã gán poster cho Review #${rIdx + 1}!`);
+                    }
+                  } else if (mediaPickerTarget?.startsWith('package-item-') && editingProduct) {
+                    const pkgIdx = parseInt(mediaPickerTarget.replace('package-item-', ''), 10);
+                    const currentPkg = [...(editingProduct.packageIncludes || [])];
+                    if (currentPkg[pkgIdx]) {
+                      currentPkg[pkgIdx] = { ...currentPkg[pkgIdx], imageSrc: url };
+                      setEditingProduct({ ...editingProduct, packageIncludes: currentPkg });
+                      showToast(`Đã đổi ảnh cho phụ kiện "${currentPkg[pkgIdx].name}"!`);
                     }
                   }
                   setMediaPickerTarget(null);
