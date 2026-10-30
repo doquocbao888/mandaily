@@ -35,13 +35,11 @@ export default function CartDrawer() {
   } = useCart();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [allProducts, setAllProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
+  const [allProducts, setAllProducts] = useState<ProductItem[]>([]);
 
   useEffect(() => {
     const unsub = subscribeProducts((data) => {
-      if (data && data.length > 0) {
-        setAllProducts(data);
-      }
+      setAllProducts(data || []);
     });
     return () => unsub();
   }, []);

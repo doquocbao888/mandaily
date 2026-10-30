@@ -1,5 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
+
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useSyncExternalStore } from 'react';
 import Image from 'next/image';

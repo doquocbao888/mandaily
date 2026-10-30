@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   // Allow access to remote image placeholder.
   images: {
     qualities: [75, 80, 85, 90, 95, 100],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     remotePatterns: [
       {
         protocol: 'https',
@@ -22,6 +25,12 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'img.vietqr.io',
         port: '',
         pathname: '/**',
       },

@@ -86,13 +86,12 @@ export function subscribeProducts(
         if (Array.isArray(data.products)) {
           onData(data.products);
         } else {
-          onData(featuredProductsConfig2.products);
+          onData([]);
         }
       }
     } catch (err) {
       if (isMounted) {
-        console.warn('Products fetch note, using local config:', err);
-        onData(featuredProductsConfig2.products);
+        console.warn('Products fetch note:', err);
         if (onError) onError(err);
       }
     }
@@ -116,7 +115,7 @@ export function subscribeProducts(
     window.addEventListener('visibilitychange', handleVisibility);
   }
 
-  // Poll every 3 seconds for snappy cross-device updates
+  // Poll every 60 seconds for snappy cross-device updates
   const interval = setInterval(fetchProducts, 60000);
 
   return () => {
@@ -163,33 +162,12 @@ export function subscribeProductById(
         if (found) {
           onData(found);
         } else {
-          const fallback = featuredProductsConfig2.products.find((p) => {
-            const pId = p.id.toLowerCase();
-            const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
-            return (
-              pId === cleanId ||
-              pHrefSlug === cleanId ||
-              p.href?.toLowerCase() === `/products/${cleanId}` ||
-              p.href?.toLowerCase() === cleanId
-            );
-          }) || null;
-          onData(fallback);
+          onData(null);
         }
       }
     } catch (err) {
       if (isMounted) {
-        const cleanId = decodeURIComponent(id).trim().toLowerCase();
-        const fallback = featuredProductsConfig2.products.find((p) => {
-          const pId = p.id.toLowerCase();
-          const pHrefSlug = (p.href || '').toLowerCase().replace(/^\/products\//, '').replace(/^\//, '');
-          return (
-            pId === cleanId ||
-            pHrefSlug === cleanId ||
-            p.href?.toLowerCase() === `/products/${cleanId}` ||
-            p.href?.toLowerCase() === cleanId
-          );
-        }) || null;
-        onData(fallback);
+        onData(null);
         if (onError) onError(err);
       }
     }

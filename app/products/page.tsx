@@ -74,13 +74,13 @@ function ProductsCatalogContent() {
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating'>('featured');
   const [priceFilter, setPriceFilter] = useState<'all' | 'under-50' | '50-150' | 'over-150'>('all');
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  const [products, setProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = subscribeProducts((data) => {
-      if (data && data.length > 0) {
-        setProducts(data);
-      }
+      setProducts(data || []);
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);

@@ -72,32 +72,26 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
   sectionSubtitle: 'Đỉnh cao công nghệ chăm sóc toàn diện dành riêng cho phái mạnh.',
   products: [
     {
-      id: 'lawn-mower-ultra-6',
+      id: 'prod-1793077647995',
       orderIndex: 0,
-      title: 'The Lawn Mower® Ultra Gen 6 - NEW!',
+      title: 'Gen 6',
       subtitle: 'Tông đơ cắt tỉa lông vùng kín & toàn thân',
-      categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
-      vipPrice: '450.000đ',
-      regularPrice: '500.000đ',
-      href: '/products/lawn-mower-ultra-6',
-      imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
-      imageAlt: 'Tông đơ MANFRESH Lawn Mower Ultra Gen 6',
+      categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'Gen 6'],
+      vipPrice: '500.000đ',
+      regularPrice: '545.500đ',
+      href: '/products/prod-1793077647995',
+      imageSrc: '/assets/aistudio/image_0fa308a5.png',
+      imageAlt: 'Tông đơ MANFRESH Gen 6',
       thumbnails: [
+        '/assets/aistudio/image_0fa308a5.png',
         '/assets/aistudio/30-00006-NA_f201a618.png',
-        '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
-        '/assets/aistudio/b72c1da980f6_e399d627.webp',
-        '/assets/aistudio/e25de805d015_f449fce7.webp',
-        '/assets/aistudio/e38aa911b5e9_8252c23e.webp',
-        '/assets/aistudio/fac0fd606c51_4d3a1ba2.webp',
-        '/assets/aistudio/685d42568afa_98fc3951.webp',
-        '/assets/aistudio/25106398e899_13ff16c1.webp',
       ],
       badge: '',
       rating: 5.0,
       reviewCount: '1,671 đánh giá',
       soldCount: 'Đã bán 75.8k',
-      salesBadge: 'Best Seller Shopee & TikTok Shop',
-      shortDescription: 'Máy cạo lông vùng kín chuyên dụng cao cấp, chống nước IPX7, lưỡi SkinSafe™ bo tròn – an toàn tuyệt đối, không lo trầy xước.',
+      salesBadge: 'Best Seller',
+      shortDescription: 'Máy cạo lông vùng kín chuyên dụng cao cấp, chống nước IPX7, lưỡi SkinSafe™ an toàn tuyệt đối.',
       highlights: [
         'Sạch chỉ 1 lần lướt',
         'Không đau, không xước (SkinSafe™)',
@@ -109,28 +103,11 @@ export const featuredProductsConfig: FeaturedProductsConfig = {
         rating: 5,
         comment: 'Giao hàng nhanh chóng sản phẩm dễ dùng đi lông khá là sạch mà vẫn khá mượt'
       },
-      variants: [
-        {
-          id: 'lite',
-          name: 'TRIMDAY LITE / Ultra Gen 6',
-          badge: 'Gọn nhẹ',
-          price: '450.000đ',
-          originalPrice: '500.000đ',
-          saving: 'Tiết kiệm 50.000đ'
-        },
-        {
-          id: 'max',
-          name: 'The Performance Package Ultra 6',
-          badge: 'Đầy đủ',
-          price: '650.000đ',
-          originalPrice: '750.000đ',
-          saving: 'Tiết kiệm 100.000đ'
-        }
-      ],
-      gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml', 'Tặng kèm Túi Đựng Chống Nước Du Lịch'],
-      cashbackText: 'Được hoàn lên đến 56.000 SpotCredit',
+      variants: [],
+      gifts: ['Tặng kèm Dung Dịch Vệ Sinh 150ml'],
+      cashbackText: 'Được hoàn lên đến 50.000 SpotCredit',
       warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1',
-      detailedDescription: `Tất cả những gì bạn cần để chăm sóc cơ thể gọn gàng, sạch sẽ và tự tin tuyệt đối.\n\n<strong>TRỌN BỘ SẢN PHẨM BAO GỒM</strong>\n• Tông đơ cắt tỉa lông vùng kín & toàn thân <strong>The Lawn Mower® Ultra Gen 6</strong>\n• Tông đơ tỉa lông mũi, tai & lông mày điện tử <strong>Weed Whacker® 3.0 Pro</strong>\n• Gel tẩy tế bào chết & làm sạch dịu nhẹ <strong>Ball Scrub</strong>\n• Gel cạo râu chống trầy xước không bọt <strong>Ball Shave Gel</strong>\n• Lăn khử mùi & chống hăm <strong>Ball Deo</strong> hương Warm Amber Night sang trọng\n\n<strong>QUÀ TẶNG KÈM MIỄN PHÍ</strong>\n• Thảm cạo dùng một lần <strong>Magic Mat®</strong>\n• Quần lót nam cao cấp <strong>Boxers 2.0</strong> (trị giá 350.000đ)\n• Túi đựng cá nhân chống nước cao cấp <strong>The Shed 2.0</strong> (trị giá 400.000đ)`
+      detailedDescription: `Tất cả những gì bạn cần để chăm sóc cơ thể gọn gàng, sạch sẽ và tự tin tuyệt đối.`
     },
     {
       id: 'the-platinum-package-ultra-gen-6',

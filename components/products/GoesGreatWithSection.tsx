@@ -20,7 +20,7 @@ export default function GoesGreatWithSection({
   title = 'Kết hợp hoàn hảo cùng...',
   subtitle = 'Các sản phẩm chăm sóc được yêu thích nhất để bạn luôn tỏa sáng.'
 }: GoesGreatWithSectionProps) {
-  const [products, setProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const isProgrammaticScroll = useRef<boolean>(false);
@@ -31,18 +31,17 @@ export default function GoesGreatWithSection({
   const touchStartY = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
 
-  // Real-time synchronization with Firestore products from Admin
+  // Real-time synchronization with products from Admin
   useEffect(() => {
     let isMounted = true;
     let unsubscribe: (() => void) | undefined;
 
     import('@/lib/dbService')
-      .then(({ subscribeProducts, seedInitialProductsIfNeeded }) => {
+      .then(({ subscribeProducts }) => {
         if (!isMounted) return;
-        seedInitialProductsIfNeeded().catch(() => {});
         unsubscribe = subscribeProducts((updatedProducts) => {
-          if (isMounted && updatedProducts) {
-            setProducts(updatedProducts);
+          if (isMounted) {
+            setProducts(updatedProducts || []);
           }
         });
       })

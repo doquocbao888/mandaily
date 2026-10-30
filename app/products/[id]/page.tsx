@@ -33,10 +33,8 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id as string;
-  const initialProduct = getProductById(id);
-
-  const [product, setProduct] = useState<ProductItem | null>(initialProduct || null);
-  const [loading, setLoading] = useState(!initialProduct);
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [addedToast, setAddedToast] = useState(false);
@@ -47,52 +45,18 @@ export default function ProductDetailPage() {
   const mobileThumbnailsRef = useRef<HTMLDivElement>(null);
   const isScrollingRef = useRef(false);
 
-  const fallbackProduct = initialProduct || getProductById(id) || {
-    id: id || 'default',
-    title: 'The Lawn Mower® Ultra Gen 6',
-    subtitle: 'Groin & Body Hair Trimmer',
-    categoryPath: ['Trang chủ', 'TRIMDAY™ SERIES', 'The Lawn Mower® Ultra Gen 6'],
-    vipPrice: '450.000đ',
-    regularPrice: '500.000đ',
-    href: `/products/${id || 'lawn-mower-ultra-6'}`,
-    imageSrc: '/assets/aistudio/30-00006-NA_f201a618.png',
-    imageAlt: 'The Lawn Mower Ultra Gen 6 Trimmer with blade attachment',
-    thumbnails: [
-      '/assets/aistudio/30-00006-NA_f201a618.png',
-      '/assets/aistudio/25aaeee852d4_1a4c043f.webp',
-      '/assets/aistudio/b72c1da980f6_e399d627.webp',
-      '/assets/aistudio/e25de805d015_f449fce7.webp',
-      '/assets/aistudio/e38aa911b5e9_8252c23e.webp',
-      '/assets/aistudio/fac0fd606c51_4d3a1ba2.webp',
-      '/assets/aistudio/685d42568afa_98fc3951.webp',
-      '/assets/aistudio/25106398e899_13ff16c1.webp',
-    ],
-    rating: 5.0,
-    reviewCount: '1,671 đánh giá',
-    soldCount: 'Đã bán 75.8k',
-    shortDescription: 'Máy cạo lông vùng kín chuyên dụng cao cấp, chống nước IPX7.',
-    highlights: ['Sạch chỉ 1 lần lướt', 'Không đau, không xước (SkinSafe™)', 'Da mịn, không ngứa rát'],
-    reviewSample: { author: 'Chi Hùng', rating: 5, comment: 'Sản phẩm tuyệt vời.' },
-    variants: [],
-    gifts: [],
-    cashbackText: '',
-    warrantyText: 'BẢO HÀNH CHÍNH HÃNG 2 NĂM 1 ĐỔI 1'
-  };
-
   const rawThumbs = (product?.thumbnails || []).filter(
     (t) => typeof t === 'string' && t.trim().length > 0
   );
   const currentThumbnails = rawThumbs.length > 0
     ? rawThumbs
-    : (fallbackProduct.thumbnails && fallbackProduct.thumbnails.length > 0
-        ? fallbackProduct.thumbnails
-        : ['/assets/aistudio/30-00006-NA_f201a618.png']);
+    : (product?.imageSrc ? [product.imageSrc] : []);
 
-  const DEFAULT_IMAGE = '/assets/aistudio/30-00006-NA_f201a618.png';
+  const DEFAULT_IMAGE = product?.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png';
   const SECONDARY_IMAGE = '/assets/aistudio/lawn-mower-gen6_product_desktop_59f3b73b.jpg';
 
   const getImageSrc = (src?: string, fallbackSrc?: string) => {
-    const fallback = fallbackSrc || fallbackProduct.imageSrc || DEFAULT_IMAGE;
+    const fallback = fallbackSrc || DEFAULT_IMAGE;
     if (!src || src.trim().length === 0 || failedImages[src]) {
       if (failedImages[fallback]) {
         return SECONDARY_IMAGE;
@@ -101,6 +65,8 @@ export default function ProductDetailPage() {
     }
     return src;
   };
+
+
 
   const handleImageError = (failedSrc?: string) => {
     if (!failedSrc) return;
@@ -167,18 +133,16 @@ export default function ProductDetailPage() {
       unsub = subscribeProductById(id, (updatedProd) => {
         if (isMounted) {
           if (updatedProd) {
-            const defaultProd = getProductById(id);
             const rawT = (updatedProd.thumbnails || []).filter(
               (t) => typeof t === 'string' && t.trim().length > 0
             );
             const safeT = rawT.length > 0
               ? rawT
-              : (defaultProd?.thumbnails || [updatedProd.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png']);
+              : (updatedProd.imageSrc ? [updatedProd.imageSrc] : []);
 
             setProduct({
-              ...defaultProd,
               ...updatedProd,
-              imageSrc: updatedProd.imageSrc || defaultProd?.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png',
+              imageSrc: updatedProd.imageSrc || '',
               thumbnails: safeT,
             });
           } else {
@@ -224,7 +188,7 @@ export default function ProductDetailPage() {
     const origPriceStr = originalPrice;
     const numericOriginalPrice = parseVND(origPriceStr);
     const variantLabel = 'Bản chính hãng';
-    const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
+    const mainImg = currentThumbnails[0] || product.imageSrc || DEFAULT_IMAGE;
 
     addToCart({
       id: product.id,
@@ -249,7 +213,7 @@ export default function ProductDetailPage() {
     const origPriceStr = originalPrice;
     const numericOriginalPrice = parseVND(origPriceStr);
     const variantLabel = 'Bản chính hãng';
-    const mainImg = currentThumbnails[0] || product.imageSrc || fallbackProduct.imageSrc;
+    const mainImg = currentThumbnails[0] || product.imageSrc || DEFAULT_IMAGE;
 
     addToCart({
       id: product.id,
@@ -333,12 +297,12 @@ export default function ProductDetailPage() {
               {/* Main Image Display */}
               <div className="relative w-full h-full flex items-center justify-center">
                 {(() => {
-                  const targetSrc = currentThumbnails[selectedImageIndex] || product?.imageSrc || fallbackProduct.imageSrc;
+                  const targetSrc = currentThumbnails[selectedImageIndex] || product?.imageSrc || DEFAULT_IMAGE;
                   const resolvedMain = getImageSrc(targetSrc);
                   return (
                     <Image
                       src={resolvedMain}
-                      alt={product?.imageAlt || fallbackProduct.imageAlt}
+                      alt={product?.imageAlt || product?.title || 'MANFRESH'}
                       fill
                       priority
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 850px"
@@ -380,7 +344,7 @@ export default function ProductDetailPage() {
                     <div key={idx} className="relative min-w-full w-full h-full snap-center flex-shrink-0">
                       <Image
                         src={resolvedImg}
-                        alt={`${product?.imageAlt || fallbackProduct.imageAlt} ${idx + 1}`}
+                        alt={`${product?.imageAlt || product?.title || 'MANFRESH'} ${idx + 1}`}
                         fill
                         priority={idx === 0}
                         sizes="100vw"

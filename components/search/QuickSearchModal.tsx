@@ -13,49 +13,11 @@ interface QuickSearchModalProps {
   onClose: () => void;
 }
 
-// Exact 4 trending items from reference screenshot
-const TRENDING_PRODUCTS = [
-  {
-    id: 'lawn-mower-ultra-6',
-    title: 'The Lawn Mower® Ultra Gen 6',
-    subtitle: 'Tông đơ cắt tỉa lông vùng kín & toàn thân cao cấp',
-    price: '1.490.000đ',
-    badge: 'MỚI',
-    badgeBg: 'bg-[#192638]',
-    imageSrc: '/assets/aistudio/search_dropdown_mower_6.png',
-  },
-  {
-    id: 'the-performance-package-ultra-6',
-    title: 'The Performance Package Ultra Gen 6',
-    subtitle: 'Bộ combo chăm sóc toàn thân chuyên nghiệp',
-    price: '2.190.000đ',
-    badge: 'MỚI',
-    badgeBg: 'bg-[#192638]',
-    imageSrc: '/assets/aistudio/search_dropdown_perf_pkg_6.png',
-  },
-  {
-    id: 'lawn-mower-5-ultra',
-    title: 'The Lawn Mower® 5.0 Ultra',
-    subtitle: 'Tông đơ vùng kín & toàn thân SkinSafe™',
-    price: '1.290.000đ',
-    badge: 'BÁN CHẠY',
-    badgeBg: 'bg-[#985a12]',
-    imageSrc: '/assets/aistudio/search_dropdown_mower_5.png',
-  },
-  {
-    id: 'lawn-mower-3-plus',
-    title: 'The Lawn Mower® 3.0 Plus',
-    subtitle: 'Tông đơ nhỏ gọn linh hoạt cho phái mạnh',
-    price: '890.000đ',
-    badge: null,
-    badgeBg: '',
-    imageSrc: '/assets/aistudio/search_dropdown_mower_3.png',
-  },
-];
+
 
 const SUGGESTED_KEYWORDS = [
+  'Gen 6',
   'Combo ưu đãi',
-  'Lawn Mower Gen 6',
   'Tông đơ râu & mặt',
   'Dao cạo SkinSafe',
   'Sữa tắm khử mùi',
@@ -63,14 +25,12 @@ const SUGGESTED_KEYWORDS = [
 
 export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState<ProductItem[]>(featuredProductsConfig2.products);
+  const [products, setProducts] = useState<ProductItem[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeProducts((data) => {
-      if (data && data.length > 0) {
-        setProducts(data);
-      }
+      setProducts(data || []);
     });
     return () => unsubscribe();
   }, []);
@@ -180,44 +140,46 @@ export default function QuickSearchModal({ isOpen, onClose }: QuickSearchModalPr
                     Xu hướng tìm kiếm
                   </h3>
 
-                  {/* 4-Product Horizontal Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-                    {TRENDING_PRODUCTS.map((prod) => (
-                      <Link
-                        key={prod.id}
-                        href={`/products/${prod.id === 'lawn-mower-5-ultra' || prod.id === 'lawn-mower-3-plus' ? 'lawn-mower-ultra-6' : prod.id}`}
-                        onClick={handleClose}
-                        className="group flex flex-col cursor-pointer"
-                      >
-                        {/* Square Card Box (Matching light beige/gray container) */}
-                        <div className="relative aspect-square w-full bg-[#eae9e4] flex items-center justify-center overflow-hidden rounded-[1px] transition-transform duration-300 group-hover:scale-[1.02]">
-                          <Image
-                            src={prod.imageSrc}
-                            alt={prod.title}
-                            fill
-                            sizes="(max-width: 640px) 50vw, 25vw"
-                            className="object-contain"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-
-                        {/* Title, Subtitle & Price */}
-                        <div className="mt-3 space-y-0.5">
-                          <h4 className="font-bold text-[14px] sm:text-[15px] text-neutral-900 leading-snug line-clamp-1 group-hover:text-[#9e6f1c] transition-colors">
-                            {prod.title}
-                          </h4>
-                          <p className="text-[12px] sm:text-[13px] text-neutral-500 line-clamp-1 font-normal">
-                            {prod.subtitle}
-                          </p>
-                          <div className="pt-0.5">
-                            <span className="font-bold text-[13.5px] sm:text-[14px] text-neutral-900">
-                              {prod.price}
-                            </span>
+                  {/* Active Products Grid */}
+                  {products.length > 0 && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                      {products.slice(0, 4).map((prod) => (
+                        <Link
+                          key={prod.id}
+                          href={prod.href || `/products/${prod.id}`}
+                          onClick={handleClose}
+                          className="group flex flex-col cursor-pointer"
+                        >
+                          {/* Square Card Box */}
+                          <div className="relative aspect-square w-full bg-[#eae9e4] flex items-center justify-center overflow-hidden rounded-[1px] transition-transform duration-300 group-hover:scale-[1.02]">
+                            <Image
+                              src={prod.imageSrc || '/assets/aistudio/30-00006-NA_f201a618.png'}
+                              alt={prod.title}
+                              fill
+                              sizes="(max-width: 640px) 50vw, 25vw"
+                              className="object-contain"
+                              referrerPolicy="no-referrer"
+                            />
                           </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+
+                          {/* Title, Subtitle & Price */}
+                          <div className="mt-3 space-y-0.5">
+                            <h4 className="font-bold text-[14px] sm:text-[15px] text-neutral-900 leading-snug line-clamp-1 group-hover:text-[#9e6f1c] transition-colors">
+                              {prod.title}
+                            </h4>
+                            <p className="text-[12px] sm:text-[13px] text-neutral-500 line-clamp-1 font-normal">
+                              {prod.subtitle}
+                            </p>
+                            <div className="pt-0.5">
+                              <span className="font-bold text-[13.5px] sm:text-[14px] text-neutral-900">
+                                {prod.vipPrice || prod.regularPrice}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Quick Suggestions Chips */}
                   <div className="mt-6 pt-5 border-t border-[#e5e2d8] flex flex-wrap items-center gap-2">

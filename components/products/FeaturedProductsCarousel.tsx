@@ -11,7 +11,8 @@ interface FeaturedProductsSectionProps {
 }
 
 export default function FeaturedProductsSection({ config }: FeaturedProductsSectionProps) {
-  const [products, setProducts] = useState<ProductItem[]>(config.products);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const isProgrammaticScroll = useRef<boolean>(false);
@@ -21,15 +22,17 @@ export default function FeaturedProductsSection({ config }: FeaturedProductsSect
     let isMounted = true;
     let unsubscribe: (() => void) | undefined;
 
-    import('@/lib/dbService').then(({ subscribeProducts, seedInitialProductsIfNeeded }) => {
+    import('@/lib/dbService').then(({ subscribeProducts }) => {
       if (!isMounted) return;
-      seedInitialProductsIfNeeded().catch(() => {});
       unsubscribe = subscribeProducts((updatedProducts) => {
-        if (isMounted && updatedProducts) {
-          setProducts(updatedProducts);
+        if (isMounted) {
+          setProducts(updatedProducts || []);
+          setIsLoading(false);
         }
       });
-    }).catch(() => {});
+    }).catch(() => {
+      if (isMounted) setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
@@ -135,6 +138,10 @@ export default function FeaturedProductsSection({ config }: FeaturedProductsSect
       }
     }
   };
+
+  if (!isLoading && products.length === 0) {
+    return null;
+  }
 
   return (
     <section

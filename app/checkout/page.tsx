@@ -4,7 +4,22 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { CheckCircle2, ShieldCheck, Copy, Check, ArrowRight, CreditCard, Truck, Lock, Tag, X, Package } from 'lucide-react';
+import {
+  CheckCircle2,
+  ShieldCheck,
+  Copy,
+  Check,
+  ArrowRight,
+  CreditCard,
+  Truck,
+  Lock,
+  Tag,
+  X,
+  Package,
+  QrCode,
+  Download,
+  ExternalLink,
+} from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createOrderInDb } from '@/lib/dbService';
 import { formatVND } from '@/lib/formatters';
@@ -65,6 +80,11 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cart.length === 0) {
+      alert('Giỏ hàng của bạn đang trống. Vui lòng chọn sản phẩm trước khi thanh toán.');
+      router.push('/products');
+      return;
+    }
     if (!fullName.trim() || !phone.trim() || !address.trim()) {
       alert('Vui lòng điền đầy đủ họ tên, số điện thoại và địa chỉ giao hàng.');
       return;
@@ -72,12 +92,11 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      const productSummary =
-        cart.length > 0
-          ? cart.map((c) => `${c.quantity}x ${c.title} (${c.variantName || 'Standard'})`).join(', ')
-          : 'The Lawn Mower® Ultra Gen 6 (Bản chính hãng)';
+      const productSummary = cart
+        .map((c) => `${c.quantity}x ${c.title} (${c.variantName || 'Bản chính hãng'})`)
+        .join(', ');
 
-      const totalQty = cart.reduce((s, c) => s + c.quantity, 0) || 1;
+      const totalQty = cart.reduce((s, c) => s + c.quantity, 0);
 
       await createOrderInDb({
         id: orderId,
@@ -173,9 +192,135 @@ export default function CheckoutPage() {
             </div>
 
             {successOrder.method.includes('VietQR') && (
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900 text-left">
-                <p className="font-bold mb-1">⚠️ Lưu ý chuyển khoản VietQR:</p>
-                Vui lòng chuyển khoản đúng số tiền và nội dung <strong className="font-mono">MANFRESH {successOrder.id}</strong> tới tài khoản MB Bank: <strong className="font-mono">8888688888</strong>. Đơn hàng sẽ được tự động duyệt ngay khi nhận được thanh toán.
+              <div className="bg-amber-50/70 border-2 border-amber-300/80 rounded-2xl p-5 text-left space-y-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-amber-200/80 pb-3">
+                  <div className="flex items-center space-x-2">
+                    <QrCode className="w-5 h-5 text-[#9e6f1c]" />
+                    <h3 className="font-bold text-neutral-900 text-sm uppercase tracking-wide">
+                      Quét mã VietQR thanh toán ngay
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-semibold bg-amber-200/70 text-amber-900 px-2 py-0.5 rounded-full">
+                    Napas 247 tức thì
+                  </span>
+                </div>
+
+                <div className="flex flex-col md:flex-row items-center gap-5">
+                  {/* Real Dynamic VietQR Code - Enriched and enlarged */}
+                  <div className="bg-white p-3 rounded-2xl border-2 border-amber-200/90 shadow-md flex flex-col items-center flex-shrink-0 w-64 sm:w-72">
+                    <Image
+                      src={`/api/vietqr?amount=${successOrder.total}&memo=${encodeURIComponent(`MANFRESH ${successOrder.id}`)}`}
+                      alt="VietQR VIB - DO QUOC BAO"
+                      width={280}
+                      height={280}
+                      className="w-full h-auto object-contain rounded-xl"
+                      referrerPolicy="no-referrer"
+                      priority
+                    />
+                    <a
+                      href={`https://img.vietqr.io/image/vib-023118718-compact2.svg?amount=${successOrder.total}&addInfo=${encodeURIComponent(`MANFRESH ${successOrder.id}`)}&accountName=${encodeURIComponent('DO QUOC BAO')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2.5 text-xs font-bold text-[#9e6f1c] hover:underline flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-amber-50 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Xem ảnh phóng to</span>
+                    </a>
+                  </div>
+
+                  {/* Account Details */}
+                  <div className="flex-1 space-y-2 text-xs text-neutral-800 w-full">
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 flex justify-between items-center">
+                      <div>
+                        <span className="text-neutral-500 block text-[10px]">Ngân hàng thụ hưởng:</span>
+                        <span className="font-bold text-neutral-900">VIB (Ngân hàng TMCP Quốc Tế Việt Nam)</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 flex justify-between items-center">
+                      <div>
+                        <span className="text-neutral-500 block text-[10px]">Số tài khoản (STK):</span>
+                        <span className="font-bold font-mono text-base text-neutral-900">023118718</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('023118718', 'success_stk')}
+                        className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                      >
+                        {copiedField === 'success_stk' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Đã chép</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Sao chép</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 flex justify-between items-center">
+                      <div>
+                        <span className="text-neutral-500 block text-[10px]">Chủ tài khoản:</span>
+                        <span className="font-bold text-neutral-900 uppercase">DO QUOC BAO</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 flex justify-between items-center">
+                      <div>
+                        <span className="text-neutral-500 block text-[10px]">Số tiền cần chuyển:</span>
+                        <span className="font-bold font-mono text-sm text-[#9e6f1c]">{formatVND(successOrder.total)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(String(successOrder.total), 'success_amount')}
+                        className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                      >
+                        {copiedField === 'success_amount' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Đã chép</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Sao chép</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-amber-100 flex justify-between items-center">
+                      <div>
+                        <span className="text-neutral-500 block text-[10px]">Nội dung chuyển khoản:</span>
+                        <span className="font-bold font-mono text-sm text-[#9e6f1c]">MANFRESH {successOrder.id}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(`MANFRESH ${successOrder.id}`, 'success_memo')}
+                        className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                      >
+                        {copiedField === 'success_memo' ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                            <span className="text-emerald-700 font-bold">Đã chép</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5" />
+                            <span>Sao chép</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-amber-900/80 leading-relaxed bg-amber-100/50 p-2.5 rounded-xl border border-amber-200/50">
+                  ⚡ <strong>Gợi ý:</strong> Quý khách chỉ cần mở ứng dụng ngân hàng (VIB, Vietcombank, Techcombank, MB, BIDV, MoMo...) và quét mã QR ở trên. Hệ thống sẽ tự động điền đúng Số tài khoản, Số tiền và Nội dung chuyển tiền mà không cần nhập thủ công.
+                </p>
               </div>
             )}
 
@@ -320,63 +465,137 @@ export default function CheckoutPage() {
 
                 {/* VietQR Details Box */}
                 {paymentMethod === 'vietqr' && (
-                  <div className="mt-4 p-5 bg-neutral-50 rounded-2xl border border-neutral-200 space-y-4 animate-fadeIn">
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      <div className="w-36 h-36 bg-white p-2 rounded-xl border border-neutral-300 flex items-center justify-center flex-shrink-0 shadow-inner">
-                        <div className="w-full h-full bg-neutral-900 text-white font-mono text-[10px] p-2 rounded-lg flex flex-col items-center justify-center text-center">
-                          <span className="font-bold text-amber-400">VIETQR PAY</span>
-                          <span className="text-[9px]">MB BANK</span>
-                          <div className="mt-2 bg-white text-black font-bold px-2 py-0.5 rounded text-xs">
-                            {formatVND(grandTotal)}
-                          </div>
-                        </div>
+                  <div className="mt-4 p-5 bg-amber-50/60 rounded-2xl border-2 border-amber-300/80 space-y-4 animate-fadeIn">
+                    <div className="flex items-center justify-between border-b border-amber-200/80 pb-3">
+                      <div className="flex items-center space-x-2">
+                        <QrCode className="w-5 h-5 text-[#9e6f1c]" />
+                        <span className="font-bold text-neutral-900 text-sm">
+                          Mã VietQR chuyển khoản nhanh 24/7
+                        </span>
+                      </div>
+                      <span className="text-[11px] font-semibold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        Tự động khớp lệnh
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-center gap-5">
+                      {/* Real Dynamic VietQR Image - Enriched and enlarged */}
+                      <div className="bg-white p-3 rounded-2xl border-2 border-amber-200/90 shadow-md flex flex-col items-center flex-shrink-0 w-60 sm:w-68">
+                        <Image
+                          src={`/api/vietqr?amount=${grandTotal}&memo=${encodeURIComponent(`MANFRESH ${orderId}`)}`}
+                          alt="VietQR VIB - DO QUOC BAO"
+                          width={280}
+                          height={280}
+                          className="w-full h-auto object-contain rounded-xl"
+                          referrerPolicy="no-referrer"
+                        />
+                        <a
+                          href={`https://img.vietqr.io/image/vib-023118718-compact2.svg?amount=${grandTotal}&addInfo=${encodeURIComponent(`MANFRESH ${orderId}`)}&accountName=${encodeURIComponent('DO QUOC BAO')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2.5 text-xs font-bold text-[#9e6f1c] hover:underline flex items-center gap-1.5 py-1 px-2.5 rounded-lg hover:bg-amber-50 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Mở ảnh QR lớn</span>
+                        </a>
                       </div>
 
-                      <div className="flex-1 space-y-2 text-xs text-neutral-700 w-full">
-                        <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
+                      {/* Account Details */}
+                      <div className="flex-1 space-y-2 text-xs text-neutral-800 w-full">
+                        <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
                           <div>
-                            <span className="text-neutral-400 block text-[10px]">Ngân hàng:</span>
-                            <span className="font-bold text-neutral-900">MB Bank (Quân Đội)</span>
+                            <span className="text-neutral-500 block text-[10px]">Ngân hàng:</span>
+                            <span className="font-bold text-neutral-900">VIB (Ngân hàng TMCP Quốc Tế Việt Nam)</span>
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
+                        <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
                           <div>
-                            <span className="text-neutral-400 block text-[10px]">Số tài khoản:</span>
-                            <span className="font-bold font-mono text-neutral-900">8888688888</span>
+                            <span className="text-neutral-500 block text-[10px]">Số tài khoản (STK):</span>
+                            <span className="font-bold font-mono text-base text-neutral-900">023118718</span>
                           </div>
                           <button
                             type="button"
-                            onClick={() => handleCopy('8888688888', 'stk')}
-                            className="text-[#9e6f1c] hover:underline font-semibold flex items-center space-x-1"
+                            onClick={() => handleCopy('023118718', 'stk')}
+                            className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
                           >
-                            {copiedField === 'stk' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedField === 'stk' ? 'Đã chép' : 'Sao chép'}</span>
+                            {copiedField === 'stk' ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Sao chép</span>
+                              </>
+                            )}
                           </button>
                         </div>
 
-                        <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
+                        <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
                           <div>
-                            <span className="text-neutral-400 block text-[10px]">Chủ tài khoản:</span>
-                            <span className="font-bold text-neutral-900">CONG TY TNHH MANFRESH VIET NAM</span>
+                            <span className="text-neutral-500 block text-[10px]">Chủ tài khoản:</span>
+                            <span className="font-bold text-neutral-900 uppercase">DO QUOC BAO</span>
                           </div>
                         </div>
 
-                        <div className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-neutral-200">
+                        <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
                           <div>
-                            <span className="text-neutral-400 block text-[10px]">Nội dung CK:</span>
-                            <span className="font-bold font-mono text-[#9e6f1c]">MANFRESH {orderId}</span>
+                            <span className="text-neutral-500 block text-[10px]">Số tiền:</span>
+                            <span className="font-bold font-mono text-sm text-[#9e6f1c]">{formatVND(grandTotal)}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(String(grandTotal), 'amount')}
+                            className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
+                          >
+                            {copiedField === 'amount' ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Sao chép</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-amber-100">
+                          <div>
+                            <span className="text-neutral-500 block text-[10px]">Nội dung CK:</span>
+                            <span className="font-bold font-mono text-sm text-[#9e6f1c]">MANFRESH {orderId}</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleCopy(`MANFRESH ${orderId}`, 'nd')}
-                            className="text-[#9e6f1c] hover:underline font-semibold flex items-center space-x-1"
+                            className="bg-amber-100 hover:bg-amber-200 text-[#9e6f1c] font-semibold px-2.5 py-1.5 rounded-lg flex items-center space-x-1 transition-colors cursor-pointer text-[11px]"
                           >
-                            {copiedField === 'nd' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{copiedField === 'nd' ? 'Đã chép' : 'Sao chép'}</span>
+                            {copiedField === 'nd' ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="text-emerald-700 font-bold">Đã chép</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5" />
+                                <span>Sao chép</span>
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="bg-amber-100/60 p-2.5 rounded-xl text-[11px] text-amber-900/90 leading-relaxed border border-amber-200/60 flex items-start gap-2">
+                      <ShieldCheck className="w-4 h-4 text-[#9e6f1c] flex-shrink-0 mt-0.5" />
+                      <span>
+                        Quét mã QR bằng ứng dụng ngân hàng hoặc MoMo/ZaloPay. STK, số tiền và nội dung sẽ được điền tự động 100%. Quý khách có thể bấm <strong>Hoàn tất đặt hàng</strong> ngay sau khi quét mã.
+                      </span>
                     </div>
                   </div>
                 )}
